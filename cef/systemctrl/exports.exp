@@ -1,0 +1,140 @@
+PSP_BEGIN_EXPORTS
+
+PSP_EXPORT_START(syslib, 0, 0x8000)
+PSP_EXPORT_FUNC_NID(module_start, 0xD3744BE0)
+PSP_EXPORT_VAR(module_info)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(LflashFatfmt, 0x0011, 0x0001)
+PSP_EXPORT_FUNC_HASH(sceLflashFatfmtStartFatfmt)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(sceLFatFs_driver, 0x0011, 0x0001)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(sceDve_driver, 0x0011, 0x0001)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(sceLed_driver, 0x0011, 0x0001)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(sceCodec_driver, 0x0011, 0x0001)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(sceClockgen_driver, 0x0011, 0x0001)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(sceNand_driver, 0x0011, 0x0001)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(sceSyscon_driver, 0x0011, 0x0001)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(KUBridge, 0, 0x4001)
+PSP_EXPORT_FUNC_HASH(kuKernelLoadModule)
+PSP_EXPORT_FUNC_HASH(kuKernelLoadModuleWithApitype2)
+PSP_EXPORT_FUNC_HASH(kuKernelInitApitype)
+PSP_EXPORT_FUNC_HASH(kuKernelInitFileName)
+PSP_EXPORT_FUNC_HASH(kuKernelBootFrom)
+PSP_EXPORT_FUNC_NID(kuKernelInitKeyConfig, 0x501E983D)
+PSP_EXPORT_FUNC_HASH(kuKernelInitKeyConfig)
+PSP_EXPORT_FUNC_HASH(kuKernelGetUserLevel)
+PSP_EXPORT_FUNC_HASH(kuKernelSetDdrMemoryProtection)
+PSP_EXPORT_FUNC_HASH(kuKernelGetModel)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(SystemCtrlForUser, 0, 0x4001)
+#PSP_EXPORT_FUNC_HASH(sctrlKernelSetInitApitype)
+#PSP_EXPORT_FUNC_HASH(sctrlKernelSetInitFileName)
+#PSP_EXPORT_FUNC_HASH(sctrlKernelSetInitMode)
+#PSP_EXPORT_FUNC_NID(sctrlKernelSetInitMode, 0xCB76B778)
+PSP_EXPORT_FUNC_HASH(sctrlKernelSetUserLevel)
+#PSP_EXPORT_FUNC_HASH(sctrlKernelSetDevkitVersion)
+PSP_EXPORT_FUNC_HASH(sctrlHENIsSE)
+PSP_EXPORT_FUNC_HASH(sctrlHENIsDevhook)
+PSP_EXPORT_FUNC_HASH(sctrlHENGetVersion)
+PSP_EXPORT_FUNC_HASH(sctrlHENFindDriver)
+PSP_EXPORT_FUNC(sctrlHENSetMemory)
+PSP_EXPORT_FUNC_HASH(sctrlSEGetVersion)
+PSP_EXPORT_FUNC_HASH(sctrlKernelExitVSH)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHDisc)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHDiscUpdater)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHMs1)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHMs2)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHMs3)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHMs4)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHWithApitype)
+PSP_EXPORT_FUNC_HASH(sctrlSESetConfig)
+PSP_EXPORT_FUNC_HASH(sctrlSEGetConfig)
+PSP_EXPORT_FUNC_HASH(sctrlSESetConfigEx)
+PSP_EXPORT_FUNC_HASH(sctrlSEGetConfigEx)
+PSP_EXPORT_FUNC_HASH(sctrlSEMountUmdFromFile)
+PSP_EXPORT_FUNC_HASH(sctrlHENSetStartModuleHandler)
+PSP_EXPORT_FUNC_NID(sctrlSESetBootConfFileIndex, 0x5CB025F0)
+#PSP_EXPORT_FUNC(sctrlSEUmountUmd)
+#PSP_EXPORT_FUNC(sctrlSESetDiscType)
+#PSP_EXPORT_FUNC(sctrlSESetDiscOut)
+PSP_EXPORT_FUNC_HASH(sctrlKernelQuerySystemCall)
+PSP_EXPORT_FUNC_HASH(sctrlGetUsbState)
+PSP_EXPORT_FUNC_HASH(sctrlStartUsb)
+PSP_EXPORT_FUNC_HASH(sctrlStopUsb)
+PSP_EXPORT_END
+
+PSP_EXPORT_START(SystemCtrlForKernel, 0, 0x0001)
+#PSP_EXPORT_FUNC_HASH(sctrlKernelSetInitApitype)
+#PSP_EXPORT_FUNC_HASH(sctrlKernelSetInitFileName)
+#PSP_EXPORT_FUNC_HASH(sctrlKernelSetInitMode)
+#PSP_EXPORT_FUNC_NID(sctrlKernelSetInitMode, 0xCB76B778)
+PSP_EXPORT_FUNC_HASH(sctrlKernelSetUserLevel)
+#PSP_EXPORT_FUNC_HASH(sctrlKernelSetDevkitVersion)
+PSP_EXPORT_FUNC_HASH(sctrlHENIsSE)
+PSP_EXPORT_FUNC_HASH(sctrlHENIsDevhook)
+PSP_EXPORT_FUNC_HASH(sctrlHENGetVersion)
+PSP_EXPORT_FUNC_HASH(sctrlHENFindDriver)
+PSP_EXPORT_FUNC_HASH(sctrlHENFindFunction)
+PSP_EXPORT_FUNC_HASH(sctrlSEGetVersion)
+PSP_EXPORT_FUNC_HASH(sctrlKernelExitVSH)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHDisc)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHDiscUpdater)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHMs1)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHMs2)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHMs3)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHMs4)
+PSP_EXPORT_FUNC_HASH(sctrlKernelLoadExecVSHWithApitype)
+PSP_EXPORT_FUNC_HASH(sctrlSESetConfig)
+PSP_EXPORT_FUNC_HASH(sctrlSEGetConfig)
+PSP_EXPORT_FUNC_HASH(sctrlSESetConfigEx)
+PSP_EXPORT_FUNC_HASH(sctrlSEGetConfigEx)
+PSP_EXPORT_FUNC_HASH(sctrlSEMountUmdFromFile)
+PSP_EXPORT_FUNC_HASH(sctrlHENSetStartModuleHandler)
+#PSP_EXPORT_FUNC_HASH(sctrlSEUmountUmd)
+#PSP_EXPORT_FUNC(sctrlSESetDiscType)
+#PSP_EXPORT_FUNC(sctrlSESetDiscOut)
+#PSP_EXPORT_FUNC(sctrlHENSetSpeed)
+PSP_EXPORT_FUNC(sctrlHENSetMemory)
+PSP_EXPORT_FUNC_HASH(GetUmdFile)
+PSP_EXPORT_FUNC_HASH(SetUmdFile)
+PSP_EXPORT_FUNC_NID(sctrlSESetBootConfFileIndex, 0x5CB025F0)
+# private:
+PSP_EXPORT_FUNC_HASH(sctrlHENLoadModuleOnReboot)
+PSP_EXPORT_FUNC_HASH(oe_malloc)
+PSP_EXPORT_FUNC_HASH(oe_free)
+PSP_EXPORT_FUNC_HASH(sctrlHENPatchSyscall)
+PSP_EXPORT_FUNC_NID(sctrlHENPatchSyscall, 0x826668E9)
+PSP_EXPORT_FUNC_NID(sctrlHENPatchSyscall, 0x02BFCB5F)
+PSP_EXPORT_FUNC_HASH(SetSpeed)
+PSP_EXPORT_FUNC(SetConfig)
+PSP_EXPORT_FUNC_HASH(sctrlKernelQuerySystemCall)
+PSP_EXPORT_FUNC(sctrlHENRegisterHomebrewLoader)
+#PSP_EXPORT_FUNC(sctrlHENRegisterKDecryptHandler)
+#PSP_EXPORT_FUNC(sctrlHENRegisterMDecryptHandler)
+#PSP_EXPORT_FUNC(sctrlHENGetInitControl)
+#PSP_EXPORT_FUNC(sctrlHENTakeInitControl)
+PSP_EXPORT_FUNC(ApplyMemory)
+#PSP_EXPORT_FUNC(sctrlHENRegisterLLEHandler)
+PSP_EXPORT_FUNC_HASH(sctrlGetUsbState)
+PSP_EXPORT_FUNC_HASH(sctrlStartUsb)
+PSP_EXPORT_FUNC_HASH(sctrlStopUsb)
+PSP_EXPORT_END
+
+PSP_END_EXPORTS

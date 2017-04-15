@@ -1,0 +1,13 @@
+AdrenalineKernel:
+  attributes: 0
+  version:
+    major: 1
+    minor: 0
+  main:
+    start: module_start
+    stop: module_stop
+  modules:
+    AdrenalineKubridge:
+      syscall: true
+      functions:
+        - kuCtrlPeekBufferPositive
