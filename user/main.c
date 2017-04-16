@@ -101,7 +101,7 @@ uint32_t text_addr, text_size, data_addr, data_size;
 
 static int lock_power = 0;
 
-static char cur_titleid[12];
+static char app_titleid[12];
 
 SceUID usbdevice_modid = -1;
 
@@ -350,7 +350,7 @@ static int AdrenalineExit(SceSize args, void *argp) {
 			if (doubleClick(SCE_CTRL_PS_BTN, 300 * 1000)) {
 				stopUsb(usbdevice_modid);
 
-				if (sceAppMgrLaunchAppByName2(cur_titleid, NULL, NULL) < 0)
+				if (sceAppMgrLaunchAppByName2(app_titleid, NULL, NULL) < 0)
 					ScePspemuErrorExit(0);
 			}
 		}
@@ -520,9 +520,6 @@ static SceUID sceKernelCreateThreadPatched(const char *name, SceKernelThreadEntr
 
 static int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
 	int res = 0;
-
-	// Copy titleid
-	strncpy(cur_titleid, titleid, sizeof(cur_titleid));
 
 	// Make __sce_menuinfo path
 	snprintf((char *)(data_addr + 0x11C7D0C), 0x80, "ms0:PSP/GAME/%s/__sce_menuinfo", titleid);
@@ -804,6 +801,9 @@ static int sceIoGetstatPatched(const char *file, SceIoStat *stat) {
 void _start() __attribute__ ((weak, alias("module_start")));
 int module_start(SceSize args, void *argp) {
 	int res;
+
+	// Get app titleid
+	sceAppMgrGetNameById(sceKernelGetProcessId(), app_titleid);
 
 	// Init vita newlib
 	_init_vita_newlib();

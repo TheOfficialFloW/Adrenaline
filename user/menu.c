@@ -482,7 +482,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
 int ScePspemuCustomSettingsHandler(int a1, int a2, int a3, int a4) {
 	if (a2 == 3) {
 		EnterAdrenalineMenu();
-	} else {
+	} else if (a2 == 1) {
 		sceKernelWaitSema(settings_semaid, 1, NULL);
 
 		if (!open_official_settings) {

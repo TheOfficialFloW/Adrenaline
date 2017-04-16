@@ -13,6 +13,10 @@
 - IMPORTANT NOTE -
   For 6.61 Adrenaline-2 or higher, you must put Adrenaline files to 'ux0:adrenaline' instead of 'ux0:pspemu/adrenaline'.
   
+- Changelog v3 fix -
+  - Fixed bug where 'Cannot find application' would show up instead of returning to livearea.
+  - Fixed bug where you couldn't access the Adrenaline Menu after enabling/disabling wifi.
+  
 - Changelog v3 -
   - Added ability to launch PS1 games from XMB and play them with full sound.
   - Added ability to save and load states using the 'States' tab in the Adrenaline menu.
