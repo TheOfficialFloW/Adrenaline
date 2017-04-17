@@ -33,8 +33,6 @@ int (* _sceIoDelDrv)(const char *drv_name);
 int (* _sceIoUnassign)(const char *dev);
 int (* _sceIoAssign)(const char *dev1, const char *dev2, const char *dev3, int mode, void* unk1, long unk2);
 
-int (* MsfsSysEventHandler)(int ev_id, char *ev_name, void *param, int *result);
-
 char *stristr(const char *str1, const char *str2) {
 	#define MAXLEN 256
 
@@ -105,6 +103,12 @@ int _msIoIoctl(u32 *args) {
 }
 
 int IoDevctlReinsertMs() {
+	SceModule2 *mod = sceKernelFindModuleByName661("sceKermitMsfs_driver");
+	if (!mod)
+		return -1;
+
+	int (* MsfsSysEventHandler)(int ev_id, char *ev_name, void *param, int *result) = mod->text_addr + 0x150;
+
 	// Perform a MS reinsertion
 	static int ev_ids[] = { 0x102, 0x400, 0x10000, 0x100000 };
 
@@ -612,14 +616,4 @@ void PatchIoFileMgr() {
 	// This fixes popsman flash2 assign
 	HIJACK_FUNCTION(K_EXTRACT_IMPORT(&sceIoUnassign), sceIoUnassignPatched, _sceIoUnassign);
 	HIJACK_FUNCTION(K_EXTRACT_IMPORT(&sceIoAssign), sceIoAssignPatched, _sceIoAssign);
-}
-
-int sceKernelRegisterSysEventHandlerPatched(PspSysEventHandler *handler) {
-	MsfsSysEventHandler = handler->handler;
-	return sceKernelRegisterSysEventHandler(handler);
-}
-
-void PatchMsfsDriver(SceModule2 *mod) {
-	MAKE_JUMP(sctrlHENFindImport(mod->modname, "sceSysEventForKernel", 0xCD9E4BB5), sceKernelRegisterSysEventHandlerPatched);
-	ClearCaches();
 }

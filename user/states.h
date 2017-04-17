@@ -21,6 +21,8 @@
 
 #include <vita2d.h>
 
+#include "../adrenaline_compat.h"
+
 #define MAX_STATES 32
 #define MAX_POSITION 3
 
@@ -32,7 +34,7 @@
 #define SCREENSHOT_SIZE (SCREENSHOT_WIDTH * SCREENSHOT_HEIGHT * 4)
 
 #define ADRENALINE_SAVESTATE_MAGIC 0x54535653
-#define ADRENALINE_SAVESTATE_VERSION 1
+#define ADRENALINE_SAVESTATE_VERSION ADRENALINE_VERSION
 
 typedef struct {
 	uint32_t magic;					// 0x00

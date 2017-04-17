@@ -38,6 +38,9 @@
 	IMPORT_FUNC  "ModuleMgrForKernel",0x939E4270,sceKernelLoadModule661
 	IMPORT_FUNC  "ModuleMgrForKernel",0x3FF74DF1,sceKernelStartModule661
 
+	IMPORT_START "sceDisplay_driver",0x00090011
+	IMPORT_FUNC  "sceDisplay_driver",0xA38B3F89,sceDisplaySetFrameBuf661
+
 	IMPORT_START "LoadExecForKernel",0x00090011
 	IMPORT_FUNC  "LoadExecForKernel",0x08F7166C,sceKernelExitVSHVSH661
 

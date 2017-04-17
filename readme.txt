@@ -14,8 +14,9 @@
   For 6.61 Adrenaline-2 or higher, you must put Adrenaline files to 'ux0:adrenaline' instead of 'ux0:pspemu/adrenaline'.
   
 - Changelog v3.1 -
-  - Fixed 'Please wait...' bug in some games.
+  - Added support for cwcheat in PS1 games.
   - Fixed sound problems after exiting a PS1 game.
+  - Fixed 'Please wait...' bug in some games.
   - Fixed problem where mounting ur0: as USB device would cause problems in livearea.
   
 - Changelog v3 fix -

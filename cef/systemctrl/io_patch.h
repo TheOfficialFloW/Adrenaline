@@ -20,6 +20,5 @@
 #define __IO_PATCH_H__
 
 void PatchIoFileMgr();
-void PatchMsfsDriver(SceModule2 *mod);
 
 #endif

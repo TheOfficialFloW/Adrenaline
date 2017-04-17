@@ -53,7 +53,7 @@ int sctrlHENGetVersion() {
 }
 
 int sctrlSEGetVersion() {
-	return (ADRENALINE_VERSION_MAJOR << 16) | ADRENALINE_VERSION_MINOR;
+	return ADRENALINE_VERSION;
 }
 
 PspIoDrv *sctrlHENFindDriver(char *drvname) {

@@ -213,10 +213,22 @@ int SetIdleCallbackPatched(int flags) {
 	return 0;
 }
 
+int RestoreSound() {
+	SceModule2 *mod = sceKernelFindModuleByName661("sceAudio_Driver");
+	if (!mod)
+		return -1;
+
+	int (* AudioSysEventHandler)(int ev_id, char *ev_name, void *param, int *result) = mod->text_addr + 0x179C;
+	AudioSysEventHandler(0x200, NULL, NULL, NULL);
+	AudioSysEventHandler(0x100000, NULL, NULL, NULL);
+
+	return 0;
+}
+
 int exit_callback(int arg1, int arg2, void *common) {
 	sceKernelSuspendAllUserThreads();
-
 	SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
+	RestoreSound();
 
 	static u32 vshmain_args[0x100];
 	memset(vshmain_args, 0, sizeof(vshmain_args));
@@ -260,32 +272,17 @@ SceUID SetupCallbacks() {
 	return thid;
 }
 
-int (* _sceDisplaySetFrameBufferInternal)(int pri, void *topaddr, int bufferwidth, int pixelformat, int sync);
+int sceKernelWaitEventFlagPatched(int evid, u32 bits, u32 wait, u32 *outBits, SceUInt *timeout) {
+	int res = sceKernelWaitEventFlag(evid, bits, wait, outBits, timeout);
 
-int sceDisplaySetFrameBufferInternalPatched(int pri, void *topaddr, int bufferwidth, int pixelformat, int sync) {
-	// Enable interrupts now
-	asm __volatile__ ( 
-			"mfc0	$v0, $12\n"
-			"ori	$v0, $v0, 1\n"
-			"mtc0	$v0, $12\n"
-			"nop\n"
-			);
-			
-	if (topaddr) {
+	if (*outBits & 0x1) {
 		SendAdrenalineCmd(ADRENALINE_VITA_CMD_PAUSE_POPS);
 		SendAdrenalineCmd(ADRENALINE_VITA_CMD_SET_FRAMEBUF);
-	} else {
+	} else if (*outBits & 0x2) {
 		SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
 	}
 
-	// Disable interrupts now
-	asm __volatile__ ( 
-			"mtic $0, $0\n"
-			"nop\n"
-			"nop\n"
-			);
-
-	return _sceDisplaySetFrameBufferInternal(pri, topaddr, bufferwidth, pixelformat, sync);
+	return res;
 }
 
 void PatchImposeDriver(u32 text_addr) {
@@ -295,12 +292,9 @@ void PatchImposeDriver(u32 text_addr) {
 	HIJACK_FUNCTION(text_addr + 0x381C, SetIdleCallbackPatched, SetIdleCallback);
 
 	if (sceKernelInitKeyConfig() == PSP_INIT_KEYCONFIG_POPS) {
-		MAKE_DUMMY_FUNCTION(text_addr + 0x91C8, PSP_INIT_KEYCONFIG_GAME);
-
-		_sceDisplaySetFrameBufferInternal = (void *)K_EXTRACT_IMPORT(text_addr + 0x9380);
-		REDIRECT_FUNCTION(text_addr + 0x9380, sceDisplaySetFrameBufferInternalPatched);
-		
 		SetupCallbacks();
+		MAKE_DUMMY_FUNCTION(text_addr + 0x91C8, PSP_INIT_KEYCONFIG_GAME);
+		REDIRECT_FUNCTION(text_addr + 0x92B0, sceKernelWaitEventFlagPatched);
 	}
 
 	ClearCaches();

@@ -243,6 +243,13 @@ void OnSystemStatusIdle() {
 	if (sceKernelBootFrom() == PSP_BOOT_DISC) {
 		SetSpeed(cpu_list[config.umdisocpuspeed % N_CPU], bus_list[config.umdisocpuspeed % N_CPU]);
 	}
+
+	// Set fake framebuffer so that cwcheat can be displayed
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
+	if (adrenaline->pops_mode) {
+		sceDisplaySetFrameBuf661((void *)0x0A000000, 512, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
+		memset(0xAA000000, 0, 16 * 1024 * 1024);
+	}
 }
 
 int (* sceMeAudio_driver_C300D466)(int codec, int unk, void *info);
@@ -254,6 +261,31 @@ int sceMeAudio_driver_C300D466_Patched(int codec, int unk, void *info) {
 		return 0;
 
 	return res;
+}
+
+int sceKernelSuspendThreadPatched(SceUID thid) {
+	SceKernelThreadInfo info;
+	info.size = sizeof(SceKernelThreadInfo);
+	if (sceKernelReferThreadStatus(thid, &info) == 0) {
+		if (strcmp(info.name, "popsmain") == 0) {
+			SendAdrenalineCmd(ADRENALINE_VITA_CMD_PAUSE_POPS);
+			SendAdrenalineCmd(ADRENALINE_VITA_CMD_SET_FRAMEBUF);
+		}
+	}
+
+	return sceKernelSuspendThread(thid);
+}
+
+int sceKernelResumeThreadPatched(SceUID thid) {
+	SceKernelThreadInfo info;
+	info.size = sizeof(SceKernelThreadInfo);
+	if (sceKernelReferThreadStatus(thid, &info) == 0) {
+		if (strcmp(info.name, "popsmain") == 0) {
+			SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
+		}
+	}
+
+	return sceKernelResumeThread(thid);
 }
 
 int OnModuleStart(SceModule2 *mod) {
@@ -277,8 +309,6 @@ int OnModuleStart(SceModule2 *mod) {
 		PatchLowIODriver2(text_addr);
 	} else if (strcmp(modname, "sceLoadExec") == 0) {
 		PatchLoadExec(text_addr);
-	} else if (strcmp(modname, "sceKermitMsfs_driver") == 0) {
-		PatchMsfsDriver(mod);
 	} else if (strcmp(modname, "scePower_Service") == 0) {
 		log("Built: %s %s\n", __DATE__, __TIME__);
 		log("Boot From: 0x%X\n", sceKernelBootFrom());
@@ -288,7 +318,7 @@ int OnModuleStart(SceModule2 *mod) {
 		
 		sctrlSEGetConfig(&config);
 
-		if (config.forcehighmemory) {
+		if (sceKernelInitKeyConfig() != PSP_INIT_KEYCONFIG_POPS && config.forcehighmemory) {
 			sctrlHENSetMemory(52, 0);
 			ApplyMemory();
 		}
@@ -333,6 +363,12 @@ int OnModuleStart(SceModule2 *mod) {
 		}
 
 		ClearCaches();
+	} else if (strcmp(mod->modname, "CWCHEATPRX") == 0) {
+		if (sceKernelInitKeyConfig() == PSP_INIT_KEYCONFIG_POPS) {
+			MAKE_JUMP(sctrlHENFindImport(mod->modname, "ThreadManForKernel", 0x9944F31F), sceKernelSuspendThreadPatched);
+			MAKE_JUMP(sctrlHENFindImport(mod->modname, "ThreadManForKernel", 0x75156E8F), sceKernelResumeThreadPatched);
+			ClearCaches();
+		}
 	}
 
 	if (!idle) {

@@ -160,67 +160,6 @@ int AdrenalineCompat(SceSize args, void *argp) {
 
 		int res = -1;
 		
-		if (request->cmd == ADRENALINE_VITA_CMD_GET_USB_STATE) {
-			SceUdcdDeviceState state;
-			sceUdcdGetDeviceState(&state);
-
-			// Response
-			res = state.state | state.cable | state.connection | state.use_usb_charging;
-			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-		} else if (request->cmd == ADRENALINE_VITA_CMD_START_USB) {
-			// Start usb
-			if (usbdevice_modid < 0 && !sceKernelIsPSVitaTV()) {
-				char *path;
-				
-				if (config.ms_location == MEMORY_STICK_LOCATION_UR0) {
-					path = "sdstor0:int-lp-ign-user";
-				} else {
-					path = "sdstor0:xmc-lp-ign-userext";
-
-					SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
-					
-					if (fd < 0)
-						path = "sdstor0:int-lp-ign-userext";
-					else
-						sceIoClose(fd);
-				}
-
-				usbdevice_modid = startUsb("ux0:adrenaline/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
-
-				// Response
-				if (usbdevice_modid < 0) {
-					res = usbdevice_modid;
-				} else {
-					res = 0;
-				}
-			} else {
-				// error already started
-				res = -1;
-			}
-
-			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-		} else if (request->cmd == ADRENALINE_VITA_CMD_STOP_USB) {
-			// Stop usb
-			res = stopUsb(usbdevice_modid);
-			if (res >= 0)
-				usbdevice_modid = -1;
-
-			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-		} else if (request->cmd == ADRENALINE_VITA_CMD_PAUSE_POPS) {
-			ScePspemuPausePops(1);
-			sceKernelDelayThread(10 * 1000);
-			res = 0;
-			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-		} else if (request->cmd == ADRENALINE_VITA_CMD_RESUME_POPS) {
-			ScePspemuPausePops(0);
-			res = 0;
-			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-		} else if (request->cmd == ADRENALINE_VITA_CMD_SET_FRAMEBUF) {
-			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
-			res = 0;
-			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-		}
-
 		if (request->cmd == ADRENALINE_VITA_CMD_SAVESTATE) {
 			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_PSPEMU_CACHE_NONE, PSP_RAM_SIZE);
 
@@ -272,6 +211,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 
 			adrenaline->vita_response = ADRENALINE_VITA_RESPONSE_SAVED;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			continue;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_LOADSTATE) {
 			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_PSPEMU_CACHE_INVALIDATE, PSP_RAM_SIZE);
 
@@ -315,7 +255,62 @@ int AdrenalineCompat(SceSize args, void *argp) {
 
 			adrenaline->vita_response = ADRENALINE_VITA_RESPONSE_LOADED;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			continue;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_GET_USB_STATE) {
+			SceUdcdDeviceState state;
+			sceUdcdGetDeviceState(&state);
+
+			// Response
+			res = state.state | state.cable | state.connection | state.use_usb_charging;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_START_USB) {
+			// Start usb
+			if (usbdevice_modid < 0 && !sceKernelIsPSVitaTV()) {
+				char *path;
+				
+				if (config.ms_location == MEMORY_STICK_LOCATION_UR0) {
+					path = "sdstor0:int-lp-ign-user";
+				} else {
+					path = "sdstor0:xmc-lp-ign-userext";
+
+					SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
+					
+					if (fd < 0)
+						path = "sdstor0:int-lp-ign-userext";
+					else
+						sceIoClose(fd);
+				}
+
+				usbdevice_modid = startUsb("ux0:adrenaline/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
+
+				// Response
+				if (usbdevice_modid < 0) {
+					res = usbdevice_modid;
+				} else {
+					res = 0;
+				}
+			} else {
+				// error already started
+				res = -1;
+			}
+		} else if (request->cmd == ADRENALINE_VITA_CMD_STOP_USB) {
+			// Stop usb
+			res = stopUsb(usbdevice_modid);
+			if (res >= 0)
+				usbdevice_modid = -1;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_PAUSE_POPS) {
+			ScePspemuPausePops(1);
+			sceDisplayWaitVblankStart();
+			res = 0;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_RESUME_POPS) {
+			if (!menu_open)
+				ScePspemuPausePops(0);
+			res = 0;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_SET_FRAMEBUF) {
+			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
+			res = 0;
 		}
+
+		ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
 	}
 
 	return sceKernelExitDeleteThread(0);
