@@ -274,9 +274,6 @@ int OnModuleStart(SceModule2 *mod) {
 		memset((void *)0x49F40000, 0, 0x80000);
 		memset((void *)0xABCD0000, 0, 0x1B0);
 
-		SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
-		adrenaline->open_homescreen = 2;
-
 		PatchLowIODriver2(text_addr);
 	} else if (strcmp(modname, "sceLoadExec") == 0) {
 		PatchLoadExec(text_addr);

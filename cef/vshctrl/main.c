@@ -762,6 +762,24 @@ void PatchGamePlugin(u32 text_addr) {
 	ClearCaches();	
 }
 
+int sceUpdateDownloadSetVersionPatched(int version) {
+	int k1 = pspSdkSetK1(0);
+
+	int (* sceUpdateDownloadSetVersion)(int version) = (void *)FindProc("SceUpdateDL_Library", "sceLibUpdateDL", 0xC1AF1076);
+	int (* sceUpdateDownloadSetUrl)(const char *url) = (void *)FindProc("SceUpdateDL_Library", "sceLibUpdateDL", 0xF7E66CB4);
+
+	sceUpdateDownloadSetUrl("TODO: ADD WEBSITE HERE");
+	int res = sceUpdateDownloadSetVersion(sctrlSEGetVersion());
+
+	pspSdkSetK1(k1);
+	return res;
+}
+
+void PatchUpdatePlugin(u32 text_addr) {
+	// MAKE_CALL(text_addr + 0x82A8, MakeSyscallStub(sceUpdateDownloadSetVersionPatched));
+	ClearCaches();
+}
+
 int OnModuleStart(SceModule2 *mod) {
 	char *modname = mod->modname;
 	u32 text_addr = mod->text_addr;
@@ -772,6 +790,8 @@ int OnModuleStart(SceModule2 *mod) {
 		PatchSysconfPlugin(text_addr);
 	} else if (strcmp(modname, "game_plugin_module") == 0) {
 		PatchGamePlugin(text_addr);
+	} else if (strcmp(modname, "update_plugin_module") == 0) {
+		PatchUpdatePlugin(text_addr);
 	}
 
 	if (!previous)

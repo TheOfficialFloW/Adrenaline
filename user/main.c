@@ -315,7 +315,6 @@ static int doubleClick(uint32_t buttons, uint64_t max_time) {
 	int double_clicked = 0;
 
 	SceCtrlData pad;
-	memset(&pad, 0, sizeof(SceCtrlData));
 	kuCtrlPeekBufferPositive(0, &pad, 1);
 
 	old_buttons = current_buttons;
@@ -355,26 +354,20 @@ static int AdrenalineExit(SceSize args, void *argp) {
 			}
 		}
 
-		if (adrenaline->pops_mode) {
-			if (adrenaline->open_homescreen == 1) {
-				ScePspemuPausePops(1);
-				sceDisplayWaitVblankStart();
-				sceDisplayWaitVblankStart();
-				SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
+		if (adrenaline->open_homescreen == 1) {
+			ScePspemuPausePops(1);
+			sceDisplayWaitVblankStart();
+			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
 
-				adrenaline->open_homescreen = 0;
-				ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
-			} else if (adrenaline->open_homescreen == 2) {
-				if (!menu_open) {
-					ScePspemuPausePops(0);
-					sceDisplayWaitVblankStart();
-					sceDisplayWaitVblankStart();
-					SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
-				}
-
-				adrenaline->open_homescreen = 0;
-				ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			adrenaline->open_homescreen = 0;
+			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+		} else if (adrenaline->open_homescreen == 2) {
+			if (!menu_open) {
+				ScePspemuPausePops(0);
 			}
+
+			adrenaline->open_homescreen = 0;
+			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 		}
 
 		sceDisplayWaitVblankStart();
@@ -733,10 +726,12 @@ static int sceCtrlPeekBufferNegative2Patched(int port, SceCtrlData *pad_data, in
 	int res = TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, port, pad_data, count);
 
 	if (res == 0x80340001) {
-		if (config.use_ds3_ds4) {
-			return TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, 0, pad_data, count);
-		} else {
-			*(uint8_t *)(CONVERT_ADDRESS(0xABCD00A7)) = 0;
+		if (!sceKernelIsPSVitaTV()) {
+			if (config.use_ds3_ds4) {
+				return TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, 0, pad_data, count);
+			} else {
+				*(uint8_t *)(CONVERT_ADDRESS(0xABCD00A7)) = 0;
+			}
 		}
 	}
 
