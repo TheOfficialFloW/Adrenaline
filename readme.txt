@@ -16,7 +16,6 @@
 - Changelog v3.1 -
   - Fixed 'Please wait...' bug in some games.
   - Fixed sound problems after exiting a PS1 game.
-  - Fixed problem where PS1 multiplayer didn't work on PSTV.
   - Fixed problem where mounting ur0: as USB device would cause problems in livearea.
   
 - Changelog v3 fix -

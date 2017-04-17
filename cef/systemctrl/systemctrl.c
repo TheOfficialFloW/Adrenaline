@@ -177,46 +177,13 @@ void sctrlHENLoadModuleOnReboot(char *module_after, void *buf, int size, int fla
 }
 
 int sctrlGetUsbState() {
-	int k1 = pspSdkSetK1(0);
-
-	char buf[sizeof(SceKermitRequest) + 0x40];
-	SceKermitRequest *request_aligned = (SceKermitRequest *)ALIGN((u32)buf, 0x40);
-	SceKermitRequest *request_uncached = (SceKermitRequest *)((u32)request_aligned | 0x20000000);
-	sceKernelDcacheInvalidateRange(request_aligned, sizeof(SceKermitRequest));
-
-	u64 resp;
-	sceKermitSendRequest661(request_uncached, KERMIT_MODE_EXTRA_2, ADRENALINE_VITA_CMD_GET_USB_STATE, 0, 0, &resp);
-
-	pspSdkSetK1(k1);
-	return resp;
+	return SendAdrenalineCmd(ADRENALINE_VITA_CMD_GET_USB_STATE);
 }
 
 int sctrlStartUsb() {
-	int k1 = pspSdkSetK1(0);
-
-	char buf[sizeof(SceKermitRequest) + 0x40];
-	SceKermitRequest *request_aligned = (SceKermitRequest *)ALIGN((u32)buf, 0x40);
-	SceKermitRequest *request_uncached = (SceKermitRequest *)((u32)request_aligned | 0x20000000);
-	sceKernelDcacheInvalidateRange(request_aligned, sizeof(SceKermitRequest));
-
-	u64 resp;
-	sceKermitSendRequest661(request_uncached, KERMIT_MODE_EXTRA_2, ADRENALINE_VITA_CMD_START_USB, 0, 0, &resp);
-
-	pspSdkSetK1(k1);
-	return resp;
+	return SendAdrenalineCmd(ADRENALINE_VITA_CMD_START_USB);
 }
 
 int sctrlStopUsb() {
-	int k1 = pspSdkSetK1(0);
-
-	char buf[sizeof(SceKermitRequest) + 0x40];
-	SceKermitRequest *request_aligned = (SceKermitRequest *)ALIGN((u32)buf, 0x40);
-	SceKermitRequest *request_uncached = (SceKermitRequest *)((u32)request_aligned | 0x20000000);
-	sceKernelDcacheInvalidateRange(request_aligned, sizeof(SceKermitRequest));
-
-	u64 resp;
-	sceKermitSendRequest661(request_uncached, KERMIT_MODE_EXTRA_2, ADRENALINE_VITA_CMD_STOP_USB, 0, 0, &resp);
-
-	pspSdkSetK1(k1);
-	return resp;
+	return SendAdrenalineCmd(ADRENALINE_VITA_CMD_STOP_USB);
 }

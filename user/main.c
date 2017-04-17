@@ -206,8 +206,21 @@ int AdrenalineCompat(SceSize args, void *argp) {
 				usbdevice_modid = -1;
 
 			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
+		} else if (request->cmd == ADRENALINE_VITA_CMD_PAUSE_POPS) {
+			ScePspemuPausePops(1);
+			sceKernelDelayThread(10 * 1000);
+			res = 0;
+			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
+		} else if (request->cmd == ADRENALINE_VITA_CMD_RESUME_POPS) {
+			ScePspemuPausePops(0);
+			res = 0;
+			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
+		} else if (request->cmd == ADRENALINE_VITA_CMD_SET_FRAMEBUF) {
+			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
+			res = 0;
+			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
 		}
-		
+
 		if (request->cmd == ADRENALINE_VITA_CMD_SAVESTATE) {
 			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_PSPEMU_CACHE_NONE, PSP_RAM_SIZE);
 
@@ -341,8 +354,6 @@ static int doubleClick(uint32_t buttons, uint64_t max_time) {
 }
 
 static int AdrenalineExit(SceSize args, void *argp) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
-
 	while (1) {
 		// Double click detection
 		if (menu_open == 0) {
@@ -352,22 +363,6 @@ static int AdrenalineExit(SceSize args, void *argp) {
 				if (sceAppMgrLaunchAppByName2(app_titleid, NULL, NULL) < 0)
 					ScePspemuErrorExit(0);
 			}
-		}
-
-		if (adrenaline->open_homescreen == 1) {
-			ScePspemuPausePops(1);
-			sceDisplayWaitVblankStart();
-			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
-
-			adrenaline->open_homescreen = 0;
-			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
-		} else if (adrenaline->open_homescreen == 2) {
-			if (!menu_open) {
-				ScePspemuPausePops(0);
-			}
-
-			adrenaline->open_homescreen = 0;
-			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 		}
 
 		sceDisplayWaitVblankStart();

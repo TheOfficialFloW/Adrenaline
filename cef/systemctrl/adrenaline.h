@@ -19,6 +19,8 @@
 #ifndef __ADRENALINE_H__
 #define __ADRENALINE_H__
 
+int SendAdrenalineCmd(int cmd);
+
 void initAdrenalineInfo();
 
 void PatchSasCore();
