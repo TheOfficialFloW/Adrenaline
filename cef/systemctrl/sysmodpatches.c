@@ -214,6 +214,20 @@ int SetIdleCallbackPatched(int flags) {
 }
 
 int exit_callback(int arg1, int arg2, void *common) {
+	sceKernelSuspendAllUserThreads();
+
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
+
+	adrenaline->open_homescreen = 2;
+
+	while (adrenaline->open_homescreen != 0)
+		sceKernelDelayThread(100);
+
+	adrenaline->pops_mode = 0;
+
+	memset((void *)0x49F40000, 0, 0x80000);
+	memset((void *)0xABCD0000, 0, 0x1B0);
+
 	static u32 vshmain_args[0x100];
 	memset(vshmain_args, 0, sizeof(vshmain_args));
 
@@ -263,13 +277,16 @@ int sceKernelInitKeyConfigPatched() {
 int (* _sceDisplaySetFrameBufferInternal)(int pri, void *topaddr, int bufferwidth, int pixelformat, int sync);
 
 int sceDisplaySetFrameBufferInternalPatched(int pri, void *topaddr, int bufferwidth, int pixelformat, int sync) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
+	volatile SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
 
 	if (topaddr) {
 		adrenaline->open_homescreen = 1;
 	} else {
 		adrenaline->open_homescreen = 2;
 	}
+
+	while (adrenaline->open_homescreen != 0)
+		sceKernelDelayThread(100);
 
 	return _sceDisplaySetFrameBufferInternal(pri, topaddr, bufferwidth, pixelformat, sync);
 }

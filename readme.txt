@@ -13,6 +13,12 @@
 - IMPORTANT NOTE -
   For 6.61 Adrenaline-2 or higher, you must put Adrenaline files to 'ux0:adrenaline' instead of 'ux0:pspemu/adrenaline'.
   
+- Changelog v3.1 -
+  - Fixed 'Please wait...' bug in some games.
+  - Fixed sound problems after exiting a PS1 game.
+  - Fixed problem where PS1 multiplayer didn't work on PSTV.
+  - Fixed problem where mounting ur0: as USB device would cause problems in livearea.
+  
 - Changelog v3 fix -
   - Fixed bug where 'Cannot find application' would show up instead of returning to livearea.
   - Fixed bug where you couldn't access the Adrenaline Menu after enabling/disabling wifi.
