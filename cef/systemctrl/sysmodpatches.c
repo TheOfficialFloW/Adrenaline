@@ -216,17 +216,7 @@ int SetIdleCallbackPatched(int flags) {
 int exit_callback(int arg1, int arg2, void *common) {
 	sceKernelSuspendAllUserThreads();
 
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
-
-	adrenaline->open_homescreen = 2;
-
-	while (adrenaline->open_homescreen != 0)
-		sceKernelDelayThread(100);
-
-	adrenaline->pops_mode = 0;
-
-	memset((void *)0x49F40000, 0, 0x80000);
-	memset((void *)0xABCD0000, 0, 0x1B0);
+	SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
 
 	static u32 vshmain_args[0x100];
 	memset(vshmain_args, 0, sizeof(vshmain_args));
@@ -270,23 +260,30 @@ SceUID SetupCallbacks() {
 	return thid;
 }
 
-int sceKernelInitKeyConfigPatched() {
-	return PSP_INIT_KEYCONFIG_GAME;
-}
-
 int (* _sceDisplaySetFrameBufferInternal)(int pri, void *topaddr, int bufferwidth, int pixelformat, int sync);
 
 int sceDisplaySetFrameBufferInternalPatched(int pri, void *topaddr, int bufferwidth, int pixelformat, int sync) {
-	volatile SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
-
+	// Enable interrupts now
+	asm __volatile__ ( 
+			"mfc0	$v0, $12\n"
+			"ori	$v0, $v0, 1\n"
+			"mtc0	$v0, $12\n"
+			"nop\n"
+			);
+			
 	if (topaddr) {
-		adrenaline->open_homescreen = 1;
+		SendAdrenalineCmd(ADRENALINE_VITA_CMD_PAUSE_POPS);
+		SendAdrenalineCmd(ADRENALINE_VITA_CMD_SET_FRAMEBUF);
 	} else {
-		adrenaline->open_homescreen = 2;
+		SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
 	}
 
-	while (adrenaline->open_homescreen != 0)
-		sceKernelDelayThread(100);
+	// Disable interrupts now
+	asm __volatile__ ( 
+			"mtic $0, $0\n"
+			"nop\n"
+			"nop\n"
+			);
 
 	return _sceDisplaySetFrameBufferInternal(pri, topaddr, bufferwidth, pixelformat, sync);
 }
@@ -298,7 +295,7 @@ void PatchImposeDriver(u32 text_addr) {
 	HIJACK_FUNCTION(text_addr + 0x381C, SetIdleCallbackPatched, SetIdleCallback);
 
 	if (sceKernelInitKeyConfig() == PSP_INIT_KEYCONFIG_POPS) {
-		REDIRECT_FUNCTION(text_addr + 0x91C8, sceKernelInitKeyConfigPatched);
+		MAKE_DUMMY_FUNCTION(text_addr + 0x91C8, PSP_INIT_KEYCONFIG_GAME);
 
 		_sceDisplaySetFrameBufferInternal = (void *)K_EXTRACT_IMPORT(text_addr + 0x9380);
 		REDIRECT_FUNCTION(text_addr + 0x9380, sceDisplaySetFrameBufferInternalPatched);

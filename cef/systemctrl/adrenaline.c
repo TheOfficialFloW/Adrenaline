@@ -51,6 +51,21 @@ int (* sceSasCoreExit)();
 
 int (* __sceSasInit)(void *sasCore, int grainSamples, int maxVoices, int outMode, int sampleRate);
 
+int SendAdrenalineCmd(int cmd) {
+	int k1 = pspSdkSetK1(0);
+
+	char buf[sizeof(SceKermitRequest) + 0x40];
+	SceKermitRequest *request_aligned = (SceKermitRequest *)ALIGN((u32)buf, 0x40);
+	SceKermitRequest *request_uncached = (SceKermitRequest *)((u32)request_aligned | 0x20000000);
+	sceKernelDcacheInvalidateRange(request_aligned, sizeof(SceKermitRequest));
+
+	u64 resp;
+	sceKermitSendRequest661(request_uncached, KERMIT_MODE_EXTRA_2, cmd, 0, 0, &resp);
+
+	pspSdkSetK1(k1);
+	return resp;
+}
+
 int getSfoTitle(char *title, int n) {
 	SceUID fd = -1;
 	int size = 0;
