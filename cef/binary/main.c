@@ -63,7 +63,7 @@ __attribute__((noinline)) void sceKermitWait() {
 
 void sceKermitSendRequest(u32 mode, u32 cmd) {
 	// Kermit request
-	SceKermitRequest *request = (SceKermitRequest *)0xABFF8000;
+	SceKermitRequest *request = (SceKermitRequest *)0xABCC0000;
 	request->cmd = cmd;
 	request->sema_id = 0x12345678;
 	request->response = (uint64_t *)request;

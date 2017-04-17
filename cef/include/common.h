@@ -39,7 +39,7 @@
 #include "../../adrenaline_compat.h"
 
 #define ADRENALINE_VERSION_MAJOR 3
-#define ADRENALINE_VERSION_MINOR 0
+#define ADRENALINE_VERSION_MINOR 1
 
 #define PBP_MAGIC 0x50425000
 #define ELF_MAGIC 0x464C457F

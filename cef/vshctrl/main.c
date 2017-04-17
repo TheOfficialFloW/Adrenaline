@@ -683,14 +683,22 @@ void PatchVshMain(u32 text_addr) {
 	ClearCaches();	
 }
 
-wchar_t verinfo[] = L"6.61 Adrenaline  ";
+wchar_t verinfo[] = L"6.61 Adrenaline    ";
 wchar_t macinfo[] = L"00:00:00:00:00:00";
 
 void PatchSysconfPlugin(u32 text_addr) {
-	int version = sctrlSEGetVersion() >> 16;
-	if (version > 1) {
+	int version = sctrlSEGetVersion();
+	int version_major = version >> 16;
+	int version_minor = version & 0xFFFF;
+
+	if (version_major > 1) {
 		verinfo[15] = '-';
-		verinfo[16] = '0' + version;
+		verinfo[16] = '0' + version_major;
+
+		if (version_minor > 0) {
+			verinfo[17] = '.';
+			verinfo[18] = '0' + version_minor;
+		}
 	}
 
 	memcpy((void *)text_addr + 0x2A62C, verinfo, sizeof(verinfo));
