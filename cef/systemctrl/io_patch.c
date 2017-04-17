@@ -107,7 +107,7 @@ int IoDevctlReinsertMs() {
 	if (!mod)
 		return -1;
 
-	int (* MsfsSysEventHandler)(int ev_id, char *ev_name, void *param, int *result) = mod->text_addr + 0x150;
+	int (* MsfsSysEventHandler)(int ev_id, char *ev_name, void *param, int *result) = (void *)mod->text_addr + 0x150;
 
 	// Perform a MS reinsertion
 	static int ev_ids[] = { 0x102, 0x400, 0x10000, 0x100000 };

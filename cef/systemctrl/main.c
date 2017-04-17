@@ -235,7 +235,25 @@ int bus_list[] = { 0, 10, 37,  50,  66, 111, 133, 150, 166 };
 
 #define N_CPU (sizeof(cpu_list) / sizeof(int))
 
+int RestoreSound() {
+	SceModule2 *mod = sceKernelFindModuleByName661("sceAudio_Driver");
+	if (!mod)
+		return -1;
+
+	int (* AudioSysEventHandler)(int ev_id, char *ev_name, void *param, int *result) = (void *)mod->text_addr + 0x179C;
+	AudioSysEventHandler(0x200, NULL, NULL, NULL);
+	AudioSysEventHandler(0x100000, NULL, NULL, NULL);
+
+	return 0;
+}
+
 void OnSystemStatusIdle() {
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
+
+	// Restore sound after exiting from pops mode
+	if (adrenaline->pops_mode)
+		RestoreSound();
+	
 	initAdrenalineInfo();
 
 	PatchVolatileMemBug();
@@ -245,10 +263,9 @@ void OnSystemStatusIdle() {
 	}
 
 	// Set fake framebuffer so that cwcheat can be displayed
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
 	if (adrenaline->pops_mode) {
-		sceDisplaySetFrameBuf661((void *)0x0A000000, 512, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
-		memset(0xAA000000, 0, 16 * 1024 * 1024);
+		sceDisplaySetFrameBuf661((void *)0x0A000000, PSP_SCREEN_LINE, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
+		memset(0xAA000000, 0, SCE_PSPEMU_FRAMEBUFFER_SIZE);
 	}
 }
 
