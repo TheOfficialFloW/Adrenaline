@@ -404,6 +404,9 @@ static int AdrenalinePowerTick(SceSize args, void *argp) {
 }
 
 static int InitAdrenaline() {
+	// Set ARM frequency to highest
+	scePowerSetArmClockFrequency(444);
+
 	// Set GPU frequency to highest
 	scePowerSetGpuClockFrequency(222);
 
@@ -706,7 +709,7 @@ static int sceAudioOutOpenPortPatched(int type, int len, int freq, int mode) {
 }
 
 static int sceAudioOutOutputPatched(int port, const void *buf) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
 
 	if (port == pops_audio_port && !adrenaline->pops_mode) {
 		sceDisplayWaitVblankStart();
@@ -717,7 +720,7 @@ static int sceAudioOutOutputPatched(int port, const void *buf) {
 }
 
 static int ScePspemuDecodePopsAudioPatched(int a1, int a2, int a3, int a4) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
 
 	if (!adrenaline->pops_mode) {
 		return 0;
@@ -733,7 +736,7 @@ static int sceCtrlPeekBufferNegative2Patched(int port, SceCtrlData *pad_data, in
 		if (config.use_ds3_ds4) {
 			return TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, 0, pad_data, count);
 		} else {
-			*(uint8_t *)0x73FF00A7 = 0;
+			*(uint8_t *)(CONVERT_ADDRESS(0xABCD00A7)) = 0;
 		}
 	}
 
@@ -747,7 +750,7 @@ static char *ScePspemuGetTitleidPatched() {
 
 static int ScePspemuConvertAddressPatched(uint32_t addr, int mode, uint32_t cache_size) {
 	if (addr >= 0x09FE0000 && addr < 0x09FE01B0) {
-		addr = 0x0BFF0000 | (addr & 0xFFFF);
+		addr = 0x0BCD0000 | (addr & 0xFFFF);
 	}
 
 	return TAI_CONTINUE(int, ScePspemuConvertAddressRef, addr, mode, cache_size);
@@ -960,7 +963,7 @@ int module_start(SceSize args, void *argp) {
 	// Use available code memory at text_addr + 0x811A0784 - 0x81180400 (ScePspemuInitTitleSpecificInfo)
 	// For custom function: isPopsPatched
 	uint32_t isPopsPatched[4];
-	uint32_t pops_mode_offset = 0x73FFC000 + offsetof(SceAdrenaline, pops_mode);
+	uint32_t pops_mode_offset = CONVERT_ADDRESS(ADRENALINE_ADDRESS) + offsetof(SceAdrenaline, pops_mode);
 	isPopsPatched[0] = encode_movw(0, pops_mode_offset & 0xFFFF);
 	isPopsPatched[1] = encode_movt(0, pops_mode_offset >> 0x10);
 	isPopsPatched[2] = 0xBF006800; // ldr a1, [a1]

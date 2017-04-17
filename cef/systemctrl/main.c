@@ -272,7 +272,7 @@ int OnModuleStart(SceModule2 *mod) {
 		}
 
 		memset((void *)0x49F40000, 0, 0x80000);
-		memset((void *)0x4BFF0000, 0, 0x1B0);
+		memset((void *)0xABCD0000, 0, 0x1B0);
 
 		SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
 		adrenaline->open_homescreen = 2;

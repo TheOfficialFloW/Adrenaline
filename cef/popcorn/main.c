@@ -143,10 +143,11 @@ int GetVersionKeyContentIdPatched(char *file, u8 *version_key, char *content_id)
 
 int OnModuleStart(SceModule2 *mod) {
 	if (strcmp(mod->modname, "pops") == 0) {
+		// Use different pops register location
 		u32 i;
 		for (i = 0; i < mod->text_size; i += 4) {
 			if ((_lw(mod->text_addr+i) & 0xFFE0FFFF) == 0x3C0049FE) {
-				_sh(0x4BFF, mod->text_addr+i);
+				_sh(0x4BCD, mod->text_addr+i);
 			}
 		}
 
@@ -217,7 +218,7 @@ int module_start(SceSize args, void *argp) {
 	_sw(0x2405000E, text_addr + 0x21A0);
 
 	// Use different pops register location
-	_sw(0x3C014BFF, text_addr + 0x11B4);
+	_sw(0x3C014BCD, text_addr + 0x11B4);
 
 	// Patch key function. With this, KEYS.BIN or license files are not required anymore. Also this gives support to custom PSone games
 	SetVersionKeyContentId = (void *)text_addr + 0x124;

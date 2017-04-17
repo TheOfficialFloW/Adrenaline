@@ -1,4 +1,4 @@
-all: clean _payloadex _rebootex _binary _systemctrl _popcorn _vshctrl _satelite _recovery bin2h
+all: _payloadex _rebootex _binary _systemctrl _popcorn _vshctrl _satelite _recovery bin2h
 
 _payloadex:
 	make -C payloadex clean
