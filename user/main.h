@@ -54,6 +54,13 @@ enum AdrenalineScreenSizes {
 	SCREEN_SIZE_1_00,
 };
 
+enum AdrenalineScreenModes {
+	SCREEN_MODE_ORIGINAL,
+	SCREEN_MODE_NORMAL,
+	SCREEN_MODE_ZOOM,
+	SCREEN_MODE_FULL,
+};
+
 typedef struct {
 	int magic[2];
 	int graphics_filtering;
@@ -61,7 +68,8 @@ typedef struct {
 	int screen_size;
 	int ms_location;
 	int use_ds3_ds4;
-	int reserved[3];
+	int screen_mode;
+	int reserved[2];
 } AdrenalineConfig;
 
 extern AdrenalineConfig config;

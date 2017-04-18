@@ -235,13 +235,37 @@ int bus_list[] = { 0, 10, 37,  50,  66, 111, 133, 150, 166 };
 
 #define N_CPU (sizeof(cpu_list) / sizeof(int))
 
+int RestoreSound() {
+	SceModule2 *mod = sceKernelFindModuleByName661("sceAudio_Driver");
+	if (!mod)
+		return -1;
+
+	int (* AudioSysEventHandler)(int ev_id, char *ev_name, void *param, int *result) = (void *)mod->text_addr + 0x179C;
+	AudioSysEventHandler(0x200, NULL, NULL, NULL);
+	AudioSysEventHandler(0x100000, NULL, NULL, NULL);
+
+	return 0;
+}
+
 void OnSystemStatusIdle() {
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
+
+	// Restore sound after exiting from pops mode
+	if (adrenaline->pops_mode)
+		RestoreSound();
+	
 	initAdrenalineInfo();
 
 	PatchVolatileMemBug();
 
 	if (sceKernelBootFrom() == PSP_BOOT_DISC) {
 		SetSpeed(cpu_list[config.umdisocpuspeed % N_CPU], bus_list[config.umdisocpuspeed % N_CPU]);
+	}
+
+	// Set fake framebuffer so that cwcheat can be displayed
+	if (adrenaline->pops_mode) {
+		sceDisplaySetFrameBuf661((void *)0x0A000000, PSP_SCREEN_LINE, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
+		memset(0xAA000000, 0, SCE_PSPEMU_FRAMEBUFFER_SIZE);
 	}
 }
 
@@ -254,6 +278,30 @@ int sceMeAudio_driver_C300D466_Patched(int codec, int unk, void *info) {
 		return 0;
 
 	return res;
+}
+
+int sceKernelSuspendThreadPatched(SceUID thid) {
+	SceKernelThreadInfo info;
+	info.size = sizeof(SceKernelThreadInfo);
+	if (sceKernelReferThreadStatus(thid, &info) == 0) {
+		if (strcmp(info.name, "popsmain") == 0) {
+			SendAdrenalineCmd(ADRENALINE_VITA_CMD_PAUSE_POPS);
+		}
+	}
+
+	return sceKernelSuspendThread(thid);
+}
+
+int sceKernelResumeThreadPatched(SceUID thid) {
+	SceKernelThreadInfo info;
+	info.size = sizeof(SceKernelThreadInfo);
+	if (sceKernelReferThreadStatus(thid, &info) == 0) {
+		if (strcmp(info.name, "popsmain") == 0) {
+			SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
+		}
+	}
+
+	return sceKernelResumeThread(thid);
 }
 
 int OnModuleStart(SceModule2 *mod) {
@@ -272,16 +320,11 @@ int OnModuleStart(SceModule2 *mod) {
 		}
 
 		memset((void *)0x49F40000, 0, 0x80000);
-		memset((void *)0x4BFF0000, 0, 0x1B0);
-
-		SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
-		adrenaline->open_homescreen = 2;
+		memset((void *)0xABCD0000, 0, 0x1B0);
 
 		PatchLowIODriver2(text_addr);
 	} else if (strcmp(modname, "sceLoadExec") == 0) {
 		PatchLoadExec(text_addr);
-	} else if (strcmp(modname, "sceKermitMsfs_driver") == 0) {
-		PatchMsfsDriver(mod);
 	} else if (strcmp(modname, "scePower_Service") == 0) {
 		log("Built: %s %s\n", __DATE__, __TIME__);
 		log("Boot From: 0x%X\n", sceKernelBootFrom());
@@ -291,7 +334,7 @@ int OnModuleStart(SceModule2 *mod) {
 		
 		sctrlSEGetConfig(&config);
 
-		if (config.forcehighmemory) {
+		if (sceKernelInitKeyConfig() != PSP_INIT_KEYCONFIG_POPS && config.forcehighmemory) {
 			sctrlHENSetMemory(52, 0);
 			ApplyMemory();
 		}
@@ -317,6 +360,18 @@ int OnModuleStart(SceModule2 *mod) {
 		PatchImposeDriver(text_addr);
 	} else if (strcmp(modname, "sceMediaSync") == 0) {
 		PatchMediaSync(text_addr);
+	} else if (strcmp(modname, "sceNpSignupPlugin_Module") == 0) {
+		// ImageVersion = 0x10000000
+		_sw(0x3C041000, text_addr + 0x38CBC);
+		ClearCaches();
+	} else if (strcmp(modname, "sceVshNpSignin_Module") == 0) {
+		// Kill connection error
+		_sw(0x10000008, text_addr + 0x6CF4);
+
+		// ImageVersion = 0x10000000
+		_sw(0x3C041000, text_addr + 0x96C4);
+
+		ClearCaches();
 	} else if (strcmp(modname, "sceSAScore") == 0) {
 		PatchSasCore();
 	} else if (strcmp(modname, "DJMAX") == 0 || strcmp(modname, "djmax") == 0) {
@@ -336,6 +391,12 @@ int OnModuleStart(SceModule2 *mod) {
 		}
 
 		ClearCaches();
+	} else if (strcmp(mod->modname, "CWCHEATPRX") == 0) {
+		if (sceKernelInitKeyConfig() == PSP_INIT_KEYCONFIG_POPS) {
+			MAKE_JUMP(sctrlHENFindImport(mod->modname, "ThreadManForKernel", 0x9944F31F), sceKernelSuspendThreadPatched);
+			MAKE_JUMP(sctrlHENFindImport(mod->modname, "ThreadManForKernel", 0x75156E8F), sceKernelResumeThreadPatched);
+			ClearCaches();
+		}
 	}
 
 	if (!idle) {

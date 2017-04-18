@@ -124,11 +124,11 @@ u32 sctrlHENFindImport(const char *szMod, const char *szLib, u32 nid) {
 		if (!mod)
 			return 0;
 	}
-
+/*
 	u32 new_nid = ResolveOldNIDs(szLib, nid);
 	if (new_nid)
 		nid = new_nid;
-
+*/
 	int i = 0;
 	while (i < mod->stub_size) {
 		SceLibraryStubTable *stub = (SceLibraryStubTable *)(mod->stub_top + i);
@@ -149,31 +149,7 @@ u32 sctrlHENFindImport(const char *szMod, const char *szLib, u32 nid) {
 
 	return 0;
 }
-/*
-int hookImportByNID(SceModule2 *mod, const char *library, u32 nid, void *func) {
-	u32 function = sctrlHENFindImport(mod->modname, library, nid);
 
-	if ((u32)func >= 0 && (u32)func <= 0xFFFF) {
-		MAKE_DUMMY_FUNCTION(function, (u32)func);
-	} else
-	{
-		if ((function & 0x08800000) == 0x08800000 && ((u32)func & 0x88000000) == 0x88000000) {
-			int (* sceKernelQuerySystemCall660)(void *function) = (void *)FindProc("sceInterruptManager", "InterruptManagerForKernel", 0x8B61808B);
-			int syscall = sceKernelQuerySystemCall661(func);
-			if (syscall < 0) return -1;
-			MAKE_SYSCALL_JUMP(function, syscall);
-		} else
-		{
-			REDIRECT_FUNCTION(function, func);
-		}
-	}
-
-	sceKernelDcacheWritebackInvalidateRange((void *)function, 8);
-	sceKernelIcacheInvalidateRange((void *)function, 8);
-
-	return 0;
-}
-*/
 int aLinkLibEntriesPatched(void *lib) {
 	char *libname = (char *)((u32 *)lib)[8/4];
 

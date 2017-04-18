@@ -19,10 +19,16 @@
 #ifndef __ADRENALINE_COMPAT_H__
 #define __ADRENALINE_COMPAT_H__
 
+#define ADRENALINE_VERSION_MAJOR 4
+#define ADRENALINE_VERSION_MINOR 0
+#define ADRENALINE_VERSION ((ADRENALINE_VERSION_MAJOR << 16) | ADRENALINE_VERSION_MINOR)
+
 #define SCE_PSPEMU_FLASH0_PACKAGE_SIZE 0x920000
 #define SCE_PSPEMU_EXTRA_MEMORY 0x8B000000
+#define SCE_PSPEMU_SCRATCHPAD 0x8BD00000
+#define SCE_PSPEMU_VRAM 0x8BE00000
 
-#define SCE_PSPEMU_FRAMEBUFFER	0x74000000
+#define SCE_PSPEMU_FRAMEBUFFER 0x74000000
 #define SCE_PSPEMU_FRAMEBUFFER_SIZE 0x88000
 
 #define PSP_RAM_SIZE (64 * 1024 * 1024)
@@ -126,6 +132,10 @@ enum AdrenalineVitaCommands {
 	ADRENALINE_VITA_CMD_GET_USB_STATE,
 	ADRENALINE_VITA_CMD_START_USB,
 	ADRENALINE_VITA_CMD_STOP_USB,
+	ADRENALINE_VITA_CMD_PAUSE_POPS,
+	ADRENALINE_VITA_CMD_RESUME_POPS,
+	ADRENALINE_VITA_CMD_POWER_SHUTDOWN,
+	ADRENALINE_VITA_CMD_POWER_REBOOT,
 };
 
 enum AdrenalineVitaResponse {
@@ -141,11 +151,10 @@ typedef struct {
 	unsigned int ra;
 
 	int pops_mode;
+	int draw_psp_screen_in_pops;
 	char title[128];
 	char titleid[12];
 	char filename[256];
-
-	int open_homescreen;
 
 	int psp_cmd;
 	int vita_cmd;
@@ -153,7 +162,9 @@ typedef struct {
 	int vita_response;
 } SceAdrenaline;
 
-#define ADRENALINE_SIZE 0x4000
-#define ADRENALINE_ADDRESS 0xABFFC000
+#define ADRENALINE_SIZE 0x2000
+#define ADRENALINE_ADDRESS 0xABCDE000
+
+#define CONVERT_ADDRESS(addr) (0x68000000 + (addr & 0x0FFFFFFF))
 
 #endif

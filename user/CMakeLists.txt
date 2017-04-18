@@ -61,6 +61,6 @@ vita_create_self(adrenaline.suprx adrenaline CONFIG exports.yml UNSAFE)
 vita_create_stubs(stubs adrenaline ${CMAKE_SOURCE_DIR}/exports.yml)
 
 add_custom_target(copy
-  COMMAND cp adrenaline.suprx G:/adrenaline/adrenaline.suprx
+  COMMAND cp adrenaline.suprx F:/adrenaline/adrenaline.suprx
   DEPENDS adrenaline.suprx
 )

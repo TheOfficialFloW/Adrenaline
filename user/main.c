@@ -89,6 +89,7 @@ static tai_hook_ref_t sceIoGetstatRef;
 static tai_hook_ref_t sceAudioOutOpenPortRef;
 static tai_hook_ref_t sceAudioOutOutputRef;
 static tai_hook_ref_t sceCtrlPeekBufferNegative2Ref;
+static tai_hook_ref_t sceDisplaySetFrameBufForCompatRef;
 
 static tai_hook_ref_t ScePspemuInitTitleSpecificInfoRef;
 static tai_hook_ref_t ScePspemuGetStartupPngRef;
@@ -101,7 +102,7 @@ uint32_t text_addr, text_size, data_addr, data_size;
 
 static int lock_power = 0;
 
-static char cur_titleid[12];
+static char app_titleid[12];
 
 SceUID usbdevice_modid = -1;
 
@@ -160,54 +161,6 @@ int AdrenalineCompat(SceSize args, void *argp) {
 
 		int res = -1;
 		
-		if (request->cmd == ADRENALINE_VITA_CMD_GET_USB_STATE) {
-			SceUdcdDeviceState state;
-			sceUdcdGetDeviceState(&state);
-
-			// Response
-			res = state.state | state.cable | state.connection | state.use_usb_charging;
-			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-		} else if (request->cmd == ADRENALINE_VITA_CMD_START_USB) {
-			// Start usb
-			if (usbdevice_modid < 0 && !sceKernelIsPSVitaTV()) {
-				char *path;
-				
-				if (config.ms_location == MEMORY_STICK_LOCATION_UR0) {
-					path = "sdstor0:int-lp-ign-user";
-				} else {
-					path = "sdstor0:xmc-lp-ign-userext";
-
-					SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
-					
-					if (fd < 0)
-						path = "sdstor0:int-lp-ign-userext";
-					else
-						sceIoClose(fd);
-				}
-
-				usbdevice_modid = startUsb("ux0:adrenaline/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
-
-				// Response
-				if (usbdevice_modid < 0) {
-					res = usbdevice_modid;
-				} else {
-					res = 0;
-				}
-			} else {
-				// error already started
-				res = -1;
-			}
-
-			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-		} else if (request->cmd == ADRENALINE_VITA_CMD_STOP_USB) {
-			// Stop usb
-			res = stopUsb(usbdevice_modid);
-			if (res >= 0)
-				usbdevice_modid = -1;
-
-			ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-		}
-		
 		if (request->cmd == ADRENALINE_VITA_CMD_SAVESTATE) {
 			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_PSPEMU_CACHE_NONE, PSP_RAM_SIZE);
 
@@ -259,6 +212,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 
 			adrenaline->vita_response = ADRENALINE_VITA_RESPONSE_SAVED;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			continue;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_LOADSTATE) {
 			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_PSPEMU_CACHE_INVALIDATE, PSP_RAM_SIZE);
 
@@ -302,7 +256,69 @@ int AdrenalineCompat(SceSize args, void *argp) {
 
 			adrenaline->vita_response = ADRENALINE_VITA_RESPONSE_LOADED;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			continue;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_GET_USB_STATE) {
+			SceUdcdDeviceState state;
+			sceUdcdGetDeviceState(&state);
+
+			// Response
+			res = state.state | state.cable | state.connection | state.use_usb_charging;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_START_USB) {
+			// Start usb
+			if (usbdevice_modid < 0 && !sceKernelIsPSVitaTV()) {
+				char *path;
+				
+				if (config.ms_location == MEMORY_STICK_LOCATION_UR0) {
+					path = "sdstor0:int-lp-ign-user";
+				} else {
+					path = "sdstor0:xmc-lp-ign-userext";
+
+					SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
+					
+					if (fd < 0)
+						path = "sdstor0:int-lp-ign-userext";
+					else
+						sceIoClose(fd);
+				}
+
+				usbdevice_modid = startUsb("ux0:adrenaline/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
+
+				// Response
+				if (usbdevice_modid < 0) {
+					res = usbdevice_modid;
+				} else {
+					res = 0;
+				}
+			} else {
+				// error already started
+				res = -1;
+			}
+		} else if (request->cmd == ADRENALINE_VITA_CMD_STOP_USB) {
+			// Stop usb
+			res = stopUsb(usbdevice_modid);
+			if (res >= 0)
+				usbdevice_modid = -1;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_PAUSE_POPS) {
+			ScePspemuPausePops(1);
+			adrenaline->draw_psp_screen_in_pops = 1;
+			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			res = 0;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_RESUME_POPS) {
+			if (!menu_open)
+				ScePspemuPausePops(0);
+			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
+			adrenaline->draw_psp_screen_in_pops = 0;
+			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			res = 0;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_POWER_SHUTDOWN) {
+			scePowerRequestStandby();
+			res = 0;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_POWER_REBOOT) {
+			scePowerRequestColdReset();
+			res = 0;
 		}
+
+		ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
 	}
 
 	return sceKernelExitDeleteThread(0);
@@ -315,7 +331,6 @@ static int doubleClick(uint32_t buttons, uint64_t max_time) {
 	int double_clicked = 0;
 
 	SceCtrlData pad;
-	memset(&pad, 0, sizeof(SceCtrlData));
 	kuCtrlPeekBufferPositive(0, &pad, 1);
 
 	old_buttons = current_buttons;
@@ -342,38 +357,14 @@ static int doubleClick(uint32_t buttons, uint64_t max_time) {
 }
 
 static int AdrenalineExit(SceSize args, void *argp) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
-
 	while (1) {
 		// Double click detection
 		if (menu_open == 0) {
 			if (doubleClick(SCE_CTRL_PS_BTN, 300 * 1000)) {
 				stopUsb(usbdevice_modid);
 
-				if (sceAppMgrLaunchAppByName2(cur_titleid, NULL, NULL) < 0)
+				if (sceAppMgrLaunchAppByName2(app_titleid, NULL, NULL) < 0)
 					ScePspemuErrorExit(0);
-			}
-		}
-
-		if (adrenaline->pops_mode) {
-			if (adrenaline->open_homescreen == 1) {
-				ScePspemuPausePops(1);
-				sceDisplayWaitVblankStart();
-				sceDisplayWaitVblankStart();
-				SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
-
-				adrenaline->open_homescreen = 0;
-				ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
-			} else if (adrenaline->open_homescreen == 2) {
-				if (!menu_open) {
-					ScePspemuPausePops(0);
-					sceDisplayWaitVblankStart();
-					sceDisplayWaitVblankStart();
-					SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
-				}
-
-				adrenaline->open_homescreen = 0;
-				ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 			}
 		}
 
@@ -404,6 +395,9 @@ static int AdrenalinePowerTick(SceSize args, void *argp) {
 }
 
 static int InitAdrenaline() {
+	// Set ARM frequency to highest
+	scePowerSetArmClockFrequency(444);
+
 	// Set GPU frequency to highest
 	scePowerSetGpuClockFrequency(222);
 
@@ -472,7 +466,7 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
 	memset(n, 0, 0x100);
 
 	SceCtrlData pad;
-	kuCtrlPeekBufferPositive(0, &pad, 1);
+	sceCtrlPeekBufferPositive(0, &pad, 1);
 
 	if (pad.buttons & SCE_CTRL_RTRIGGER)
 		n[0] = 4; // Recovery mode
@@ -520,9 +514,6 @@ static SceUID sceKernelCreateThreadPatched(const char *name, SceKernelThreadEntr
 
 static int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
 	int res = 0;
-
-	// Copy titleid
-	strncpy(cur_titleid, titleid, sizeof(cur_titleid));
 
 	// Make __sce_menuinfo path
 	snprintf((char *)(data_addr + 0x11C7D0C), 0x80, "ms0:PSP/GAME/%s/__sce_menuinfo", titleid);
@@ -709,7 +700,7 @@ static int sceAudioOutOpenPortPatched(int type, int len, int freq, int mode) {
 }
 
 static int sceAudioOutOutputPatched(int port, const void *buf) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
 
 	if (port == pops_audio_port && !adrenaline->pops_mode) {
 		sceDisplayWaitVblankStart();
@@ -720,7 +711,7 @@ static int sceAudioOutOutputPatched(int port, const void *buf) {
 }
 
 static int ScePspemuDecodePopsAudioPatched(int a1, int a2, int a3, int a4) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
 
 	if (!adrenaline->pops_mode) {
 		return 0;
@@ -733,10 +724,12 @@ static int sceCtrlPeekBufferNegative2Patched(int port, SceCtrlData *pad_data, in
 	int res = TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, port, pad_data, count);
 
 	if (res == 0x80340001) {
-		if (config.use_ds3_ds4) {
-			return TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, 0, pad_data, count);
-		} else {
-			*(uint8_t *)0x73FF00A7 = 0;
+		if (!sceKernelIsPSVitaTV()) {
+			if (config.use_ds3_ds4 && port == 1) {
+				return TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, 0, pad_data, count);
+			} else {
+				*(uint8_t *)(CONVERT_ADDRESS(0xABCD00A7)) = 0;
+			}
 		}
 	}
 
@@ -750,7 +743,7 @@ static char *ScePspemuGetTitleidPatched() {
 
 static int ScePspemuConvertAddressPatched(uint32_t addr, int mode, uint32_t cache_size) {
 	if (addr >= 0x09FE0000 && addr < 0x09FE01B0) {
-		addr = 0x0BFF0000 | (addr & 0xFFFF);
+		addr = 0x0BCD0000 | (addr & 0xFFFF);
 	}
 
 	return TAI_CONTINUE(int, ScePspemuConvertAddressRef, addr, mode, cache_size);
@@ -801,9 +794,29 @@ static int sceIoGetstatPatched(const char *file, SceIoStat *stat) {
 	return TAI_CONTINUE(int, sceIoGetstatRef, file, stat);
 }
 
+extern void *pops_data;
+
+static int sceDisplaySetFrameBufForCompatPatched(int a1, int a2, int a3, int a4, int a5, SceDisplayFrameBuf *pParam) {
+	if (pParam == NULL) {
+		static SceDisplayFrameBuf param;
+		param.size = sizeof(SceDisplayFrameBuf);
+		param.base = pops_data;
+		param.pitch = SCREEN_LINE;
+		param.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
+		param.width = SCREEN_WIDTH;
+		param.height = SCREEN_HEIGHT;
+		pParam = &param;
+	}
+
+	return TAI_CONTINUE(int, sceDisplaySetFrameBufForCompatRef, a1, a2, a3, a4, a5, pParam);
+}
+
 void _start() __attribute__ ((weak, alias("module_start")));
 int module_start(SceSize args, void *argp) {
 	int res;
+
+	// Get app titleid
+	sceAppMgrGetNameById(sceKernelGetProcessId(), app_titleid);
 
 	// Init vita newlib
 	_init_vita_newlib();
@@ -855,6 +868,9 @@ int module_start(SceSize args, void *argp) {
 
 	// SceCtrl
 	hooks[n_hooks++] = taiHookFunctionImport(&sceCtrlPeekBufferNegative2Ref, "ScePspemu", 0xD197E3C7, 0x81A89660, sceCtrlPeekBufferNegative2Patched);
+
+	// SceDisplayUser
+	hooks[n_hooks++] = taiHookFunctionImport(&sceDisplaySetFrameBufForCompatRef, "ScePspemu", 0x4FAACD11, 0x8C36B628, sceDisplaySetFrameBufForCompatPatched);
 
 	// ScePspemu
 	hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuInitTitleSpecificInfoRef, tai_info.modid, 0, 0x20374, 0x1, ScePspemuInitTitleSpecificInfoPatched);
@@ -960,7 +976,7 @@ int module_start(SceSize args, void *argp) {
 	// Use available code memory at text_addr + 0x811A0784 - 0x81180400 (ScePspemuInitTitleSpecificInfo)
 	// For custom function: isPopsPatched
 	uint32_t isPopsPatched[4];
-	uint32_t pops_mode_offset = 0x73FFC000 + offsetof(SceAdrenaline, pops_mode);
+	uint32_t pops_mode_offset = CONVERT_ADDRESS(ADRENALINE_ADDRESS) + offsetof(SceAdrenaline, pops_mode);
 	isPopsPatched[0] = encode_movw(0, pops_mode_offset & 0xFFFF);
 	isPopsPatched[1] = encode_movt(0, pops_mode_offset >> 0x10);
 	isPopsPatched[2] = 0xBF006800; // ldr a1, [a1]
@@ -985,7 +1001,7 @@ int module_start(SceSize args, void *argp) {
 		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0794 - 0x81180400, isVitaTVPatched, sizeof(isVitaTVPatched));
 	}
 
-	// Fake vita mode
+	// Fake vita mode for ctrlEmulation
 	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0B3C - 0x81180400, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
 	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0C4E - 0x81180400, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
 	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811B05DC - 0x81180400, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
@@ -1005,6 +1021,7 @@ int module_stop(SceSize args, void *argp) {
 	taiHookRelease(hooks[--n_hooks], ScePspemuGetStartupPngRef);
 	taiHookRelease(hooks[--n_hooks], ScePspemuInitTitleSpecificInfoRef);
 
+	taiHookRelease(hooks[--n_hooks], sceDisplaySetFrameBufForCompatRef);
 	taiHookRelease(hooks[--n_hooks], sceCtrlPeekBufferNegative2Ref);
 	taiHookRelease(hooks[--n_hooks], sceAudioOutOutputRef);
 	taiHookRelease(hooks[--n_hooks], sceAudioOutOpenPortRef);

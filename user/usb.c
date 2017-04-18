@@ -125,7 +125,7 @@ int stopUsb(SceUID modid) {
 	unlockPower();
 
 	// Remount
-	remount(config.ms_location == MEMORY_STICK_LOCATION_UX0 ? 0x800 : 0x600);
+	remount(0x800);
 
 	return 0;
 }

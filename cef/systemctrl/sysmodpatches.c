@@ -214,6 +214,11 @@ int SetIdleCallbackPatched(int flags) {
 }
 
 int exit_callback(int arg1, int arg2, void *common) {
+	sceKernelSuspendAllUserThreads();
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
+	adrenaline->pops_mode = 0;
+	SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
+
 	static u32 vshmain_args[0x100];
 	memset(vshmain_args, 0, sizeof(vshmain_args));
 
@@ -256,22 +261,16 @@ SceUID SetupCallbacks() {
 	return thid;
 }
 
-int sceKernelInitKeyConfigPatched() {
-	return PSP_INIT_KEYCONFIG_GAME;
-}
+int sceKernelWaitEventFlagPatched(int evid, u32 bits, u32 wait, u32 *outBits, SceUInt *timeout) {
+	int res = sceKernelWaitEventFlag(evid, bits, wait, outBits, timeout);
 
-int (* _sceDisplaySetFrameBufferInternal)(int pri, void *topaddr, int bufferwidth, int pixelformat, int sync);
-
-int sceDisplaySetFrameBufferInternalPatched(int pri, void *topaddr, int bufferwidth, int pixelformat, int sync) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
-
-	if (topaddr) {
-		adrenaline->open_homescreen = 1;
-	} else {
-		adrenaline->open_homescreen = 2;
+	if (*outBits & 0x1) {
+		SendAdrenalineCmd(ADRENALINE_VITA_CMD_PAUSE_POPS);
+	} else if (*outBits & 0x2) {
+		SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
 	}
 
-	return _sceDisplaySetFrameBufferInternal(pri, topaddr, bufferwidth, pixelformat, sync);
+	return res;
 }
 
 void PatchImposeDriver(u32 text_addr) {
@@ -281,12 +280,9 @@ void PatchImposeDriver(u32 text_addr) {
 	HIJACK_FUNCTION(text_addr + 0x381C, SetIdleCallbackPatched, SetIdleCallback);
 
 	if (sceKernelInitKeyConfig() == PSP_INIT_KEYCONFIG_POPS) {
-		REDIRECT_FUNCTION(text_addr + 0x91C8, sceKernelInitKeyConfigPatched);
-
-		_sceDisplaySetFrameBufferInternal = (void *)K_EXTRACT_IMPORT(text_addr + 0x9380);
-		REDIRECT_FUNCTION(text_addr + 0x9380, sceDisplaySetFrameBufferInternalPatched);
-		
 		SetupCallbacks();
+		MAKE_DUMMY_FUNCTION(text_addr + 0x91C8, PSP_INIT_KEYCONFIG_GAME);
+		REDIRECT_FUNCTION(text_addr + 0x92B0, sceKernelWaitEventFlagPatched);
 	}
 
 	ClearCaches();

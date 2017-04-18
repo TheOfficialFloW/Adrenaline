@@ -683,14 +683,22 @@ void PatchVshMain(u32 text_addr) {
 	ClearCaches();	
 }
 
-wchar_t verinfo[] = L"6.61 Adrenaline  ";
+wchar_t verinfo[] = L"6.61 Adrenaline    ";
 wchar_t macinfo[] = L"00:00:00:00:00:00";
 
 void PatchSysconfPlugin(u32 text_addr) {
-	int version = sctrlSEGetVersion() >> 16;
-	if (version > 1) {
+	int version = sctrlSEGetVersion();
+	int version_major = version >> 16;
+	int version_minor = version & 0xFFFF;
+
+	if (version_major > 1) {
 		verinfo[15] = '-';
-		verinfo[16] = '0' + version;
+		verinfo[16] = '0' + version_major;
+
+		if (version_minor > 0) {
+			verinfo[17] = '.';
+			verinfo[18] = '0' + version_minor;
+		}
 	}
 
 	memcpy((void *)text_addr + 0x2A62C, verinfo, sizeof(verinfo));
@@ -754,6 +762,24 @@ void PatchGamePlugin(u32 text_addr) {
 	ClearCaches();	
 }
 
+int sceUpdateDownloadSetVersionPatched(int version) {
+	int k1 = pspSdkSetK1(0);
+
+	int (* sceUpdateDownloadSetVersion)(int version) = (void *)FindProc("SceUpdateDL_Library", "sceLibUpdateDL", 0xC1AF1076);
+	int (* sceUpdateDownloadSetUrl)(const char *url) = (void *)FindProc("SceUpdateDL_Library", "sceLibUpdateDL", 0xF7E66CB4);
+
+	sceUpdateDownloadSetUrl("http://adrenaline.abertschi.ch/psp-updatelist.txt");
+	int res = sceUpdateDownloadSetVersion(sctrlSEGetVersion());
+
+	pspSdkSetK1(k1);
+	return res;
+}
+
+void PatchUpdatePlugin(u32 text_addr) {
+	MAKE_CALL(text_addr + 0x82A8, MakeSyscallStub(sceUpdateDownloadSetVersionPatched));
+	ClearCaches();
+}
+
 int OnModuleStart(SceModule2 *mod) {
 	char *modname = mod->modname;
 	u32 text_addr = mod->text_addr;
@@ -764,6 +790,8 @@ int OnModuleStart(SceModule2 *mod) {
 		PatchSysconfPlugin(text_addr);
 	} else if (strcmp(modname, "game_plugin_module") == 0) {
 		PatchGamePlugin(text_addr);
+	} else if (strcmp(modname, "update_plugin_module") == 0) {
+		PatchUpdatePlugin(text_addr);
 	}
 
 	if (!previous)
