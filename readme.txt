@@ -13,7 +13,7 @@
 - IMPORTANT NOTE -
   For 6.61 Adrenaline-2 or higher, you must put Adrenaline files to 'ux0:adrenaline' instead of 'ux0:pspemu/adrenaline'.
   
-- Changelog v3.2 -
+- Changelog v4 -
   - Added custom graphics filtering support for PS1 games.
   - Added screen mode adjustment for PS1 games. If you're using this feature on a PS Vita, select 'Original' screen mode in the
     offical settings, then apply the custom screen mode. On the other hand, if you want to the screen mode of the official settings,
