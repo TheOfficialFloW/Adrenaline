@@ -466,9 +466,9 @@ static int ScePspemuMsfsChstat(const char *file, SceIoStat *stat, int bits) {
 }
 
 static int ScePspemuMsfsRename(const char *oldname, const char *newname) {
-	char old_path[MAX_PATH_LENGTH], msfs_path[MAX_PATH_LENGTH];
+	char old_path[MAX_PATH_LENGTH], new_path[MAX_PATH_LENGTH];
 	buildPspemuMsfsPath(old_path, oldname);
-	buildPspemuMsfsPath(msfs_path, newname);
+	buildPspemuMsfsPath(new_path, newname);
 
 	// Invalid path
 	if (oldname[0] == '\0' || newname[0] == '\0') {
@@ -482,11 +482,11 @@ static int ScePspemuMsfsRename(const char *oldname, const char *newname) {
 			return SCE_ERROR_ERRNO_EINVAL;
 
 		*p = '\0';
-		snprintf(msfs_path, MAX_PATH_LENGTH, "%s/%s", old_path, newname);
+		snprintf(new_path, MAX_PATH_LENGTH, "%s/%s", old_path, newname);
 		*p = '/';
 	}
 
-	return sceIoRename(old_path, msfs_path);
+	return sceIoRename(old_path, new_path);
 }
 
 static int ScePspemuMsfsChdir(const char *path) {
