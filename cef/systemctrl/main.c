@@ -286,7 +286,6 @@ int sceKernelSuspendThreadPatched(SceUID thid) {
 	if (sceKernelReferThreadStatus(thid, &info) == 0) {
 		if (strcmp(info.name, "popsmain") == 0) {
 			SendAdrenalineCmd(ADRENALINE_VITA_CMD_PAUSE_POPS);
-			SendAdrenalineCmd(ADRENALINE_VITA_CMD_SET_FRAMEBUF);
 		}
 	}
 
@@ -361,6 +360,18 @@ int OnModuleStart(SceModule2 *mod) {
 		PatchImposeDriver(text_addr);
 	} else if (strcmp(modname, "sceMediaSync") == 0) {
 		PatchMediaSync(text_addr);
+	} else if (strcmp(modname, "sceNpSignupPlugin_Module") == 0) {
+		// ImageVersion = 0x10000000
+		_sw(0x3C041000, text_addr + 0x38CBC);
+		ClearCaches();
+	} else if (strcmp(modname, "sceVshNpSignin_Module") == 0) {
+		// Kill connection error
+		_sw(0x10000008, text_addr + 0x6CF4);
+
+		// ImageVersion = 0x10000000
+		_sw(0x3C041000, text_addr + 0x96C4);
+
+		ClearCaches();
 	} else if (strcmp(modname, "sceSAScore") == 0) {
 		PatchSasCore();
 	} else if (strcmp(modname, "DJMAX") == 0 || strcmp(modname, "djmax") == 0) {

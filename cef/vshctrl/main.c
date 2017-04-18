@@ -768,7 +768,7 @@ int sceUpdateDownloadSetVersionPatched(int version) {
 	int (* sceUpdateDownloadSetVersion)(int version) = (void *)FindProc("SceUpdateDL_Library", "sceLibUpdateDL", 0xC1AF1076);
 	int (* sceUpdateDownloadSetUrl)(const char *url) = (void *)FindProc("SceUpdateDL_Library", "sceLibUpdateDL", 0xF7E66CB4);
 
-	sceUpdateDownloadSetUrl("TODO: ADD WEBSITE HERE");
+	sceUpdateDownloadSetUrl("http://adrenaline.abertschi.ch/psp-updatelist.txt");
 	int res = sceUpdateDownloadSetVersion(sctrlSEGetVersion());
 
 	pspSdkSetK1(k1);
@@ -776,7 +776,7 @@ int sceUpdateDownloadSetVersionPatched(int version) {
 }
 
 void PatchUpdatePlugin(u32 text_addr) {
-	// MAKE_CALL(text_addr + 0x82A8, MakeSyscallStub(sceUpdateDownloadSetVersionPatched));
+	MAKE_CALL(text_addr + 0x82A8, MakeSyscallStub(sceUpdateDownloadSetVersionPatched));
 	ClearCaches();
 }
 

@@ -13,6 +13,16 @@
 - IMPORTANT NOTE -
   For 6.61 Adrenaline-2 or higher, you must put Adrenaline files to 'ux0:adrenaline' instead of 'ux0:pspemu/adrenaline'.
   
+- Changelog v3.2 -
+  - Added custom graphics filtering support for PS1 games.
+  - Added screen mode adjustment for PS1 games. If you're using this feature on a PS Vita, select 'Original' screen mode in the
+    offical settings, then apply the custom screen mode. On the other hand, if you want to the screen mode of the official settings,
+	select 'Original' screen mode in Adrenaline settings. On a PS TV this will finally allow you to play your games in fullscreen.
+  - Added screenshot support in PS1 games.
+  - Added network update feature for future updates.
+  - Fixed a bug in msfs driver that caused weird behaviour in XMB after resuming from standby.
+  - Removed 'Official' graphics filtering in order to support the features mentioned above.
+  
 - Changelog v3.1 -
   - Added support for cwcheat in PS1 games.
   - Fixed sound problems after exiting a PS1 game.
@@ -86,3 +96,6 @@
 - About right analog stick in games -
   The right analog patch for GTA LCS/GTA VCS will be downloaded from here: https://github.com/TheOfficialFloW/GTA_Remastered
   Don't think that any other games will now have right analog stick patch too ;)
+  
+- Build -
+https://github.com/frangarcj/vita2dlib/tree/fbo

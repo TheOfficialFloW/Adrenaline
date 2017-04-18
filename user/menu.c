@@ -63,7 +63,8 @@ static int EnterStandbyMode();
 static int OpenOfficialSettings();
 static int ExitPspEmuApplication();
 
-static char *graphics_options[] = { "Official", "Bilinear (GPU)", "Sharp bilinear", "Advanced AA", "LCD3x" };
+static char *graphics_options[] = { "Bilinear", "Sharp bilinear", "Advanced AA", "LCD3x" };
+static char *screen_mode_options[] = { "Original", "Normal", "Zoom", "Full" };
 static char *no_yes_options[] = { "No", "Yes" };
 static char *yes_no_options[] = { "Yes", "No" };
 static char *screen_size_options[] = { "2.0x", "1.75x", "1.5x", "1.25x", "1.0x" };
@@ -79,7 +80,8 @@ static MenuEntry main_entries[] = {
 static MenuEntry settings_entries[] = {
 	{ "Graphics Filtering", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.graphics_filtering, graphics_options, sizeof(graphics_options) / sizeof(char **) },
 	{ "Smooth Graphics", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.no_smooth_graphics, yes_no_options, sizeof(yes_no_options) / sizeof(char **) },
-	{ "Screen Size", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.screen_size, screen_size_options, sizeof(screen_size_options) / sizeof(char **) },
+	{ "Screen Size (PSP)", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.screen_size, screen_size_options, sizeof(screen_size_options) / sizeof(char **) },
+	{ "Screen Mode (PS1)", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.screen_mode, screen_mode_options, sizeof(screen_mode_options) / sizeof(char **) },
 	{ "Memory Stick Location", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.ms_location, ms_location_options, sizeof(ms_location_options) / sizeof(char **) },
 	{ "Use DS3/DS4 controller", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.use_ds3_ds4, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
 };
@@ -302,6 +304,56 @@ void ctrlMenu() {
 	}
 }
 
+void getPspScreenSize(float *scale) {
+	switch (config.screen_size) {
+		case SCREEN_SIZE_1_75:
+			*scale = 1.75f;
+			break;
+			
+		case SCREEN_SIZE_1_50:
+			*scale = 1.5f;
+			break;
+			
+		case SCREEN_SIZE_1_25:
+			*scale = 1.25f;
+			break;
+			
+		case SCREEN_SIZE_1_00:
+			*scale = 1.0f;
+			break;
+			
+		case SCREEN_SIZE_2_00:
+		default:
+			*scale = 2.0f;
+			break;
+	}	
+}
+
+void getPopsScreenSize(float *scale_x, float *scale_y) {
+	switch (config.screen_mode) {
+		case SCREEN_MODE_NORMAL:
+			*scale_x = 1.0625f;
+			*scale_y = 1.0625f;
+			break;
+			
+		case SCREEN_MODE_ZOOM:
+			*scale_x = 1.5f;
+			*scale_y = 1.5f;
+			break;
+			
+		case SCREEN_MODE_FULL:
+			*scale_x = 1.5f;
+			*scale_y = 1.0625f;
+			break;
+			
+		case SCREEN_MODE_ORIGINAL:
+		default:
+			*scale_x = 1.0f;
+			*scale_y = 1.0f;
+			break;
+	}	
+}
+
 void *pops_data = NULL;
 
 int AdrenalineDraw(SceSize args, void *argp) {
@@ -348,6 +400,13 @@ int AdrenalineDraw(SceSize args, void *argp) {
 	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
 
 	while (1) {
+		// Do not draw if dialog is running
+		if (sceCommonDialogIsRunning()) {
+			sceDisplayWaitVblankStart();
+			continue;
+		}
+
+		// Draw savestate screen
 		if (adrenaline->savestate_mode != SAVESTATE_MODE_NONE) {
 			vita2d_start_drawing_advanced(fbo, VITA_2D_RESET_POOL | VITA_2D_SCENE_FRAGMENT_SET_DEPENDENCY);
 			vita2d_clear_screen();
@@ -364,73 +423,56 @@ int AdrenalineDraw(SceSize args, void *argp) {
 			vita2d_swap_buffers();
 
 			// Sync
-			sceCompatLCDCSync();
+			if (!adrenaline->pops_mode)
+				sceCompatLCDCSync();
 
 			continue;
 		}
 
-		// Continue if dialog is running or official screen is used or pops mode is on
-		if (sceCommonDialogIsRunning() || (config.graphics_filtering == 0 && menu_open == 0) || (adrenaline->pops_mode && menu_open == 0)) {
-			sceDisplayWaitVblankStart();
-			continue;
-		}
-
-		// Draw PSP framebuffer
+		// Draw display
 		vita2d_start_drawing_advanced(fbo, VITA_2D_RESET_POOL | VITA_2D_SCENE_FRAGMENT_SET_DEPENDENCY);
 		vita2d_clear_screen();
 
-		// Do custom rendering if not pops mode and graphics filtering is used
-		if (!adrenaline->pops_mode && config.graphics_filtering != 0) {
+		// Select shader
+		if (config.graphics_filtering == 0)
+			shader = opaque_shader;
+		else if (config.graphics_filtering == 1)
+			shader = sharp_shader;
+		else if (config.graphics_filtering == 2)
+			shader = advanced_aa_shader;
+		else if (config.graphics_filtering == 3)
+			shader = lcd3x_shader;
+		else
+			shader = opaque_shader;
+
+		vita2d_texture_set_program(shader->vertexProgram, shader->fragmentProgram);
+		vita2d_texture_set_wvp(shader->wvpParam);
+		vita2d_texture_set_vertexInput(&shader->vertexInput);
+		vita2d_texture_set_fragmentInput(&shader->fragmentInput);
+
+		// Smooth
+		if (config.no_smooth_graphics == 0) {
+			vita2d_texture_set_filters(psp_tex, SCE_GXM_TEXTURE_FILTER_LINEAR, SCE_GXM_TEXTURE_FILTER_LINEAR);
+			vita2d_texture_set_filters(pops_tex, SCE_GXM_TEXTURE_FILTER_LINEAR, SCE_GXM_TEXTURE_FILTER_LINEAR);
+		} else {
+			vita2d_texture_set_filters(psp_tex, SCE_GXM_TEXTURE_FILTER_POINT, SCE_GXM_TEXTURE_FILTER_POINT);
+			vita2d_texture_set_filters(pops_tex, SCE_GXM_TEXTURE_FILTER_POINT, SCE_GXM_TEXTURE_FILTER_POINT);
+		}
+
+		if (!adrenaline->pops_mode || adrenaline->draw_psp_screen_in_pops) {
 			// Copy PSP framebuffer
 			sceDmacMemcpy(psp_data, (void *)SCE_PSPEMU_FRAMEBUFFER, SCE_PSPEMU_FRAMEBUFFER_SIZE);
 
-			// Smooth
-			if (config.no_smooth_graphics == 0)
-				vita2d_texture_set_filters(psp_tex, SCE_GXM_TEXTURE_FILTER_LINEAR, SCE_GXM_TEXTURE_FILTER_LINEAR);
-			else
-				vita2d_texture_set_filters(psp_tex, SCE_GXM_TEXTURE_FILTER_POINT, SCE_GXM_TEXTURE_FILTER_POINT);
-
-			// Shader
-			if (config.graphics_filtering == 1)
-				shader = opaque_shader;
-			else if (config.graphics_filtering == 2)
-				shader = sharp_shader;
-			else if (config.graphics_filtering == 3)
-				shader = advanced_aa_shader;
-			else if (config.graphics_filtering == 4)
-				shader = lcd3x_shader;
-			else
-				shader = opaque_shader;
-
+			// Draw psp screen
 			float scale = 2.00f;
-		
-			switch (config.screen_size) {
-				case SCREEN_SIZE_2_00:
-					scale = 2.00f;
-					break;
-					
-				case SCREEN_SIZE_1_75:
-					scale = 1.75f;
-					break;
-					
-				case SCREEN_SIZE_1_50:
-					scale = 1.50f;
-					break;
-					
-				case SCREEN_SIZE_1_25:
-					scale = 1.25f;
-					break;
-					
-				case SCREEN_SIZE_1_00:
-					scale = 1.00f;
-					break;
-			}
-
-			vita2d_texture_set_program(shader->vertexProgram, shader->fragmentProgram);
-			vita2d_texture_set_wvp(shader->wvpParam);
-			vita2d_texture_set_vertexInput(&shader->vertexInput);
-			vita2d_texture_set_fragmentInput(&shader->fragmentInput);
+			getPspScreenSize(&scale);
 			vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, scale, scale, 0.0, 240.0, 136.0);
+		} else {
+			// Draw pops screen
+			float scale_x = 1.0f;
+			float scale_y = 1.0f;
+			getPopsScreenSize(&scale_x, &scale_y);
+			vita2d_draw_texture_scale_rotate_hotspot(pops_tex, 480.0f, 272.0f, scale_x, scale_y, 0.0, 480.0, 272.0);
 		}
 
 		vita2d_end_drawing();
@@ -445,31 +487,16 @@ int AdrenalineDraw(SceSize args, void *argp) {
 		vita2d_draw_texture(fbo, 0, 0);
 
 		// Draw Menu
-		if (menu_open) {
-			if (adrenaline->pops_mode) {
-				int (* ScePspemuDrawPopsDisplay)(void *data, int unk) = (void *)text_addr + 0x300D8 + 0x1;
-				ScePspemuDrawPopsDisplay(pops_data, 0);
-
-				vita2d_draw_texture(pops_tex, 0, 0);
-			} else {
-				if (config.graphics_filtering == 0) {
-					int (* ScePspemuDrawPspDisplay)(void *data, void *frame_buffer) = (void *)text_addr + 0x1161C + 0x1;
-					void *(* ScePspemuGetFramebuffer)() = (void *)text_addr + 0x3F90 + 0x1;
-					ScePspemuDrawPspDisplay(pops_data, ScePspemuGetFramebuffer());
-
-					vita2d_draw_texture(pops_tex, 0, 0);
-				}
-			}
-
+		if (menu_open)
 			drawMenu();
-		}
 
 		// End drawing
 		vita2d_end_drawing();
 		vita2d_swap_buffers();
 
 		// Sync
-		sceCompatLCDCSync();
+		if (!adrenaline->pops_mode || adrenaline->draw_psp_screen_in_pops)
+			sceCompatLCDCSync();
 
 		// Ctrl
 		if (menu_open)

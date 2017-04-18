@@ -215,6 +215,8 @@ int SetIdleCallbackPatched(int flags) {
 
 int exit_callback(int arg1, int arg2, void *common) {
 	sceKernelSuspendAllUserThreads();
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
+	adrenaline->pops_mode = 0;
 	SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
 
 	static u32 vshmain_args[0x100];
@@ -259,37 +261,16 @@ SceUID SetupCallbacks() {
 	return thid;
 }
 
-int pause = 0;
-SceUID pops_semaid = -1;
-
 int sceKernelWaitEventFlagPatched(int evid, u32 bits, u32 wait, u32 *outBits, SceUInt *timeout) {
 	int res = sceKernelWaitEventFlag(evid, bits, wait, outBits, timeout);
 
 	if (*outBits & 0x1) {
-		pause = 1;
-		sceKernelSignalSema(pops_semaid, 1);
+		SendAdrenalineCmd(ADRENALINE_VITA_CMD_PAUSE_POPS);
 	} else if (*outBits & 0x2) {
-		pause = 0,
-		sceKernelSignalSema(pops_semaid, 1);
+		SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
 	}
 
 	return res;
-}
-
-int adrenaline_pops() {
-	while (1) {
-		// Wait for semaphore signal
-		sceKernelWaitSema(pops_semaid, 1, NULL);
-		
-		if (pause) {
-			SendAdrenalineCmd(ADRENALINE_VITA_CMD_PAUSE_POPS);
-			SendAdrenalineCmd(ADRENALINE_VITA_CMD_SET_FRAMEBUF);
-		} else {
-			SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
-		}
-	}
-
-	return 0;
 }
 
 void PatchImposeDriver(u32 text_addr) {
@@ -302,14 +283,6 @@ void PatchImposeDriver(u32 text_addr) {
 		SetupCallbacks();
 		MAKE_DUMMY_FUNCTION(text_addr + 0x91C8, PSP_INIT_KEYCONFIG_GAME);
 		REDIRECT_FUNCTION(text_addr + 0x92B0, sceKernelWaitEventFlagPatched);
-
-		// Create pops semaphore
-		pops_semaid = sceKernelCreateSema("", 0, 0, 1, NULL);
-
-		// Create and start pops thread
-		SceUID thid = sceKernelCreateThread("adrenaline_pops", adrenaline_pops, 0x10, 0x4000, 0, NULL);
-		if (thid >= 0)
-			sceKernelStartThread(thid, 0, NULL);
 	}
 
 	ClearCaches();

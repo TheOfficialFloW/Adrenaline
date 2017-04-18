@@ -187,3 +187,7 @@ int sctrlStartUsb() {
 int sctrlStopUsb() {
 	return SendAdrenalineCmd(ADRENALINE_VITA_CMD_STOP_USB);
 }
+
+int sctrlRebootDevice() {
+	return SendAdrenalineCmd(ADRENALINE_VITA_CMD_POWER_REBOOT);
+}

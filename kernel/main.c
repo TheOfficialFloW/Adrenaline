@@ -113,7 +113,8 @@ int kuCtrlPeekBufferPositive(int port, SceCtrlData *pad_data, int count) {
 
 static int AdrenalineCtrl(SceSize args, void *argp) {
 	while (1) {
-		ksceCtrlReadBufferPositive(0, &pad, 1);
+		ksceCtrlPeekBufferPositive(0, &pad, 1);
+		ksceKernelDelayThread(1000);
 	}
 
 	return ksceKernelExitDeleteThread(0);

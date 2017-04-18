@@ -89,6 +89,7 @@ static tai_hook_ref_t sceIoGetstatRef;
 static tai_hook_ref_t sceAudioOutOpenPortRef;
 static tai_hook_ref_t sceAudioOutOutputRef;
 static tai_hook_ref_t sceCtrlPeekBufferNegative2Ref;
+static tai_hook_ref_t sceDisplaySetFrameBufForCompatRef;
 
 static tai_hook_ref_t ScePspemuInitTitleSpecificInfoRef;
 static tai_hook_ref_t ScePspemuGetStartupPngRef;
@@ -299,14 +300,21 @@ int AdrenalineCompat(SceSize args, void *argp) {
 				usbdevice_modid = -1;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_PAUSE_POPS) {
 			ScePspemuPausePops(1);
-			sceDisplayWaitVblankStart();
+			adrenaline->draw_psp_screen_in_pops = 1;
+			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 			res = 0;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_RESUME_POPS) {
 			if (!menu_open)
 				ScePspemuPausePops(0);
-			res = 0;
-		} else if (request->cmd == ADRENALINE_VITA_CMD_SET_FRAMEBUF) {
 			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
+			adrenaline->draw_psp_screen_in_pops = 0;
+			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			res = 0;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_POWER_SHUTDOWN) {
+			scePowerRequestStandby();
+			res = 0;
+		} else if (request->cmd == ADRENALINE_VITA_CMD_POWER_REBOOT) {
+			scePowerRequestColdReset();
 			res = 0;
 		}
 
@@ -458,7 +466,7 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
 	memset(n, 0, 0x100);
 
 	SceCtrlData pad;
-	kuCtrlPeekBufferPositive(0, &pad, 1);
+	sceCtrlPeekBufferPositive(0, &pad, 1);
 
 	if (pad.buttons & SCE_CTRL_RTRIGGER)
 		n[0] = 4; // Recovery mode
@@ -717,7 +725,7 @@ static int sceCtrlPeekBufferNegative2Patched(int port, SceCtrlData *pad_data, in
 
 	if (res == 0x80340001) {
 		if (!sceKernelIsPSVitaTV()) {
-			if (config.use_ds3_ds4) {
+			if (config.use_ds3_ds4 && port == 1) {
 				return TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, 0, pad_data, count);
 			} else {
 				*(uint8_t *)(CONVERT_ADDRESS(0xABCD00A7)) = 0;
@@ -786,6 +794,23 @@ static int sceIoGetstatPatched(const char *file, SceIoStat *stat) {
 	return TAI_CONTINUE(int, sceIoGetstatRef, file, stat);
 }
 
+extern void *pops_data;
+
+static int sceDisplaySetFrameBufForCompatPatched(int a1, int a2, int a3, int a4, int a5, SceDisplayFrameBuf *pParam) {
+	if (pParam == NULL) {
+		static SceDisplayFrameBuf param;
+		param.size = sizeof(SceDisplayFrameBuf);
+		param.base = pops_data;
+		param.pitch = SCREEN_LINE;
+		param.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
+		param.width = SCREEN_WIDTH;
+		param.height = SCREEN_HEIGHT;
+		pParam = &param;
+	}
+
+	return TAI_CONTINUE(int, sceDisplaySetFrameBufForCompatRef, a1, a2, a3, a4, a5, pParam);
+}
+
 void _start() __attribute__ ((weak, alias("module_start")));
 int module_start(SceSize args, void *argp) {
 	int res;
@@ -843,6 +868,9 @@ int module_start(SceSize args, void *argp) {
 
 	// SceCtrl
 	hooks[n_hooks++] = taiHookFunctionImport(&sceCtrlPeekBufferNegative2Ref, "ScePspemu", 0xD197E3C7, 0x81A89660, sceCtrlPeekBufferNegative2Patched);
+
+	// SceDisplayUser
+	hooks[n_hooks++] = taiHookFunctionImport(&sceDisplaySetFrameBufForCompatRef, "ScePspemu", 0x4FAACD11, 0x8C36B628, sceDisplaySetFrameBufForCompatPatched);
 
 	// ScePspemu
 	hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuInitTitleSpecificInfoRef, tai_info.modid, 0, 0x20374, 0x1, ScePspemuInitTitleSpecificInfoPatched);
@@ -973,7 +1001,7 @@ int module_start(SceSize args, void *argp) {
 		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0794 - 0x81180400, isVitaTVPatched, sizeof(isVitaTVPatched));
 	}
 
-	// Fake vita mode
+	// Fake vita mode for ctrlEmulation
 	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0B3C - 0x81180400, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
 	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0C4E - 0x81180400, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
 	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811B05DC - 0x81180400, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
@@ -993,6 +1021,7 @@ int module_stop(SceSize args, void *argp) {
 	taiHookRelease(hooks[--n_hooks], ScePspemuGetStartupPngRef);
 	taiHookRelease(hooks[--n_hooks], ScePspemuInitTitleSpecificInfoRef);
 
+	taiHookRelease(hooks[--n_hooks], sceDisplaySetFrameBufForCompatRef);
 	taiHookRelease(hooks[--n_hooks], sceCtrlPeekBufferNegative2Ref);
 	taiHookRelease(hooks[--n_hooks], sceAudioOutOutputRef);
 	taiHookRelease(hooks[--n_hooks], sceAudioOutOpenPortRef);

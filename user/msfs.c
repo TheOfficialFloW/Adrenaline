@@ -55,9 +55,8 @@ static void convertFileStat(SceIoStat *stat) {
 static int ScePspemuMsfsAddDescriptor(SceUID fd, char *path, int flags, int folder) {
 	int i;
 	for (i = 0; i < MAX_DESCRIPTORS; i++) {
-		if (!descriptor_list[i].fd) {
+		if (!descriptor_list[i].fd)
 			break;
-		}
 	}
 
 	if (i == MAX_DESCRIPTORS)
@@ -100,25 +99,29 @@ static void ScePspemuMsfsCloseAllDescriptors() {
 	for (i = 0; i < MAX_DESCRIPTORS; i++) {
 		if (descriptor_list[i].fd) {
 			int res = sceIoClose(descriptor_list[i].fd);
-			if (res < 0) {
+			if (res < 0)
 				res = sceIoDclose(descriptor_list[i].fd);
-			}
 		}
 	}
 
 	memset(descriptor_list, 0, sizeof(descriptor_list));
 }
 
-ScePspemuMsfsDescriptor *ScePspemuMsfsGetFileDescriptors() {
-	int i;
-	for (i = 0; i < MAX_DESCRIPTORS; i++) {
-		if (descriptor_list[i].fd) {
-			if (!descriptor_list[i].folder) {
-				descriptor_list[i].offset = sceIoLseek(descriptor_list[i].fd, 0, SCE_SEEK_CUR);
-			}
-		}
+static SceUID ScePspemuMsfsReopenFile(ScePspemuMsfsDescriptor *descriptor) {
+	char msfs_path[MAX_PATH_LENGTH];
+	buildPspemuMsfsPath(msfs_path, descriptor->path);
+
+	if (descriptor->folder) {
+		descriptor->fd = sceIoDopen(msfs_path);
+	} else {
+		descriptor->fd = sceIoOpen(msfs_path, descriptor->flags, 0777);
+		sceIoLseek(descriptor->fd, descriptor->offset, SCE_SEEK_SET);
 	}
 
+	return descriptor->fd;
+}
+
+ScePspemuMsfsDescriptor *ScePspemuMsfsGetFileDescriptors() {
 	return descriptor_list;
 }
 
@@ -129,22 +132,13 @@ void ScePspemuMsfsSetFileDescriptors(ScePspemuMsfsDescriptor *descriptors) {
 
 	int i;
 	for (i = 0; i < MAX_DESCRIPTORS; i++) {
-		if (descriptor_list[i].fd) {
-			char new_path[MAX_PATH_LENGTH];
-			buildPspemuMsfsPath(new_path, descriptor_list[i].path);
-
-			if (descriptor_list[i].folder) {
-				descriptor_list[i].fd = sceIoDopen(new_path);
-			} else {
-				descriptor_list[i].fd = sceIoOpen(new_path, descriptor_list[i].flags, 0777);
-				sceIoLseek(descriptor_list[i].fd, descriptor_list[i].offset, SCE_SEEK_SET);
-			}
-		}
+		if (descriptor_list[i].fd)
+			ScePspemuMsfsReopenFile(&descriptor_list[i]);
 	}
 }
 
 static int ScePspemuMsfsInit() {
-	memset(descriptor_list, 0, sizeof(descriptor_list));
+	ScePspemuMsfsCloseAllDescriptors();
 	return 0;
 }
 
@@ -154,14 +148,13 @@ static int ScePspemuMsfsExit() {
 }
 
 static SceUID ScePspemuMsfsOpen(const char *file, int flags, SceMode mode) {
-	char new_path[MAX_PATH_LENGTH];
-	buildPspemuMsfsPath(new_path, file);
+	char msfs_path[MAX_PATH_LENGTH];
+	buildPspemuMsfsPath(msfs_path, file);
 
-	if (file[0] == '\0') {
+	if (file[0] == '\0')
 		return SCE_ERROR_ERRNO_EINVAL;
-	}
 
-	SceUID fd = sceIoOpen(new_path, flags, 0777);
+	SceUID fd = sceIoOpen(msfs_path, flags, 0777);
 	if (fd < 0)
 		return fd;
 
@@ -174,6 +167,10 @@ static int ScePspemuMsfsClose(SceUID fd) {
 		return SCE_ERROR_ERRNO_EINVAL;
 
 	int res = sceIoClose(descriptor->fd);
+
+	// Fake close success
+	if (res == SCE_ERROR_ERRNO_ENODEV)
+		res = 0;
 
 	if (res >= 0) {
 		ScePspemuMsfsRemoveDescriptor(fd);
@@ -191,8 +188,14 @@ static int ScePspemuMsfsRead(SceUID fd, void *data, SceSize size) {
 
 	do {
 		int remain = size - seek;
+		int buf_size = (remain < MAX_IO_SIZE) ? remain : MAX_IO_SIZE;
 
-		int res = sceIoRead(descriptor->fd, data + seek, (remain < MAX_IO_SIZE) ? remain : MAX_IO_SIZE);
+		int res = sceIoRead(descriptor->fd, data + seek, buf_size);
+
+		if (res == SCE_ERROR_ERRNO_ENODEV) {
+			if (ScePspemuMsfsReopenFile(descriptor) >= 0)
+				res = sceIoRead(descriptor->fd, data + seek, buf_size);
+		}
 
 		if (res < 0)
 			return res;
@@ -201,6 +204,7 @@ static int ScePspemuMsfsRead(SceUID fd, void *data, SceSize size) {
 			break;
 
 		seek += res;
+		descriptor->offset += res;
 	} while (seek < size);
 
 	return seek;
@@ -215,8 +219,14 @@ static int ScePspemuMsfsWrite(SceUID fd, const void *data, SceSize size) {
 
 	do {
 		int remain = size - seek;
+		int buf_size = (remain < MAX_IO_SIZE) ? remain : MAX_IO_SIZE;
 
-		int res = sceIoWrite(descriptor->fd, data + seek, (remain < MAX_IO_SIZE) ? remain : MAX_IO_SIZE);
+		int res = sceIoWrite(descriptor->fd, data + seek, buf_size);
+
+		if (res == SCE_ERROR_ERRNO_ENODEV) {
+			if (ScePspemuMsfsReopenFile(descriptor) >= 0)
+				res = sceIoWrite(descriptor->fd, data + seek, buf_size);
+		}
 
 		if (res < 0)
 			return res;
@@ -225,6 +235,7 @@ static int ScePspemuMsfsWrite(SceUID fd, const void *data, SceSize size) {
 			break;
 
 		seek += res;
+		descriptor->offset += res;
 	} while (seek < size);
 
 	return seek;
@@ -235,7 +246,17 @@ static SceOff ScePspemuMsfsLseek(SceUID fd, SceOff offset, int whence) {
 	if (!descriptor)
 		return SCE_ERROR_ERRNO_EINVAL;
 
-	return sceIoLseek(descriptor->fd, offset, whence);
+	SceOff res = sceIoLseek(descriptor->fd, offset, whence);
+
+	if ((int)res == SCE_ERROR_ERRNO_ENODEV) {
+		if (ScePspemuMsfsReopenFile(descriptor) >= 0)
+			res = sceIoLseek(descriptor->fd, offset, whence);
+	}
+
+	if (res >= 0)
+		descriptor->offset = res;
+
+	return res;
 }
 
 static int ScePspemuMsfsIoctl(SceUID fd, unsigned int cmd, void *indata, int inlen, void *outdata, int outlen) {
@@ -246,9 +267,7 @@ static int ScePspemuMsfsIoctl(SceUID fd, unsigned int cmd, void *indata, int inl
 	// Directory filter command
 	if (cmd == 0x02415050 && indata && inlen == sizeof(uint32_t)) {
 		char *name = (char *)ScePspemuConvertAddress(*(uint32_t *)indata, SCE_PSPEMU_CACHE_NONE, 0x4000);
-
 		strcpy(descriptor->filter, name);
-
 		return 0;
 	}
 
@@ -256,46 +275,43 @@ static int ScePspemuMsfsIoctl(SceUID fd, unsigned int cmd, void *indata, int inl
 }
 
 static int ScePspemuMsfsRemove(const char *file) {
-	char new_path[MAX_PATH_LENGTH];
-	buildPspemuMsfsPath(new_path, file);
+	char msfs_path[MAX_PATH_LENGTH];
+	buildPspemuMsfsPath(msfs_path, file);
 
 	// Invalid path
-	if (file[0] == '\0') {
+	if (file[0] == '\0')
 		return SCE_ERROR_ERRNO_EINVAL;
-	}
 
-	return sceIoRemove(new_path);
+	return sceIoRemove(msfs_path);
 }
 
 static int ScePspemuMsfsMkdir(const char *dir, SceMode mode) {
-	char new_path[MAX_PATH_LENGTH];
-	buildPspemuMsfsPath(new_path, dir);
+	char msfs_path[MAX_PATH_LENGTH];
+	buildPspemuMsfsPath(msfs_path, dir);
 
 	// Invalid path
-	if (dir[0] == '\0') {
+	if (dir[0] == '\0')
 		return SCE_ERROR_ERRNO_EINVAL;
-	}
 
-	return sceIoMkdir(new_path, 0777);
+	return sceIoMkdir(msfs_path, 0777);
 }
 
 static int ScePspemuMsfsRmdir(const char *path) {
-	char new_path[MAX_PATH_LENGTH];
-	buildPspemuMsfsPath(new_path, path);
+	char msfs_path[MAX_PATH_LENGTH];
+	buildPspemuMsfsPath(msfs_path, path);
 
 	// Invalid path
-	if (path[0] == '\0') {
+	if (path[0] == '\0')
 		return SCE_ERROR_ERRNO_EINVAL;
-	}
 
-	return sceIoRmdir(new_path);
+	return sceIoRmdir(msfs_path);
 }
 
 static SceUID ScePspemuMsfsDopen(const char *dirname) {
-	char new_path[MAX_PATH_LENGTH];
-	buildPspemuMsfsPath(new_path, dirname);
+	char msfs_path[MAX_PATH_LENGTH];
+	buildPspemuMsfsPath(msfs_path, dirname);
 
-	SceUID dfd = sceIoDopen(new_path);
+	SceUID dfd = sceIoDopen(msfs_path);
 	if (dfd < 0)
 		return dfd;
 
@@ -308,6 +324,10 @@ static int ScePspemuMsfsDclose(SceUID fd) {
 		return SCE_ERROR_ERRNO_EINVAL;
 
 	int res = sceIoDclose(descriptor->fd);
+
+	// Fake close success
+	if (res == SCE_ERROR_ERRNO_ENODEV)
+		res = 0;
 
 	if (res >= 0) {
 		ScePspemuMsfsRemoveDescriptor(fd);
@@ -414,15 +434,14 @@ static int ScePspemuMsfsDread(SceUID fd, SceIoDirent *dir) {
 }
 
 int ScePspemuMsfsGetstat(const char *file, SceIoStat *stat) {
-	char new_path[MAX_PATH_LENGTH];
-	buildPspemuMsfsPath(new_path, file);
+	char msfs_path[MAX_PATH_LENGTH];
+	buildPspemuMsfsPath(msfs_path, file);
 
 	// Invalid path
-	if (file[0] == '\0') {
+	if (file[0] == '\0')
 		return SCE_ERROR_ERRNO_EINVAL;
-	}
 
-	int res = sceIoGetstat(new_path, stat);
+	int res = sceIoGetstat(msfs_path, stat);
 
 	convertFileStat(stat);
 
@@ -430,13 +449,12 @@ int ScePspemuMsfsGetstat(const char *file, SceIoStat *stat) {
 }
 
 static int ScePspemuMsfsChstat(const char *file, SceIoStat *stat, int bits) {
-	char new_path[MAX_PATH_LENGTH];
-	buildPspemuMsfsPath(new_path, file);
+	char msfs_path[MAX_PATH_LENGTH];
+	buildPspemuMsfsPath(msfs_path, file);
 
 	// Invalid path
-	if (file[0] == '\0') {
+	if (file[0] == '\0')
 		return SCE_ERROR_ERRNO_EINVAL;
-	}
 
 	bits &= ~(PSP_CST_MODE | PSP_CST_ATTR | PSP_CST_SIZE | PSP_CST_PRVT);
 
@@ -444,13 +462,13 @@ static int ScePspemuMsfsChstat(const char *file, SceIoStat *stat, int bits) {
 
 	ScePspemuConvertStatTimeToUtc(stat);
 
-	return sceIoChstat(new_path, stat, bits);
+	return sceIoChstat(msfs_path, stat, bits);
 }
 
 static int ScePspemuMsfsRename(const char *oldname, const char *newname) {
-	char old_path[MAX_PATH_LENGTH], new_path[MAX_PATH_LENGTH];
+	char old_path[MAX_PATH_LENGTH], msfs_path[MAX_PATH_LENGTH];
 	buildPspemuMsfsPath(old_path, oldname);
-	buildPspemuMsfsPath(new_path, newname);
+	buildPspemuMsfsPath(msfs_path, newname);
 
 	// Invalid path
 	if (oldname[0] == '\0' || newname[0] == '\0') {
@@ -464,11 +482,11 @@ static int ScePspemuMsfsRename(const char *oldname, const char *newname) {
 			return SCE_ERROR_ERRNO_EINVAL;
 
 		*p = '\0';
-		snprintf(new_path, MAX_PATH_LENGTH, "%s/%s", old_path, newname);
+		snprintf(msfs_path, MAX_PATH_LENGTH, "%s/%s", old_path, newname);
 		*p = '/';
 	}
 
-	return sceIoRename(old_path, new_path);
+	return sceIoRename(old_path, msfs_path);
 }
 
 static int ScePspemuMsfsChdir(const char *path) {
