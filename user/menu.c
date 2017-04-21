@@ -480,9 +480,9 @@ int AdrenalineDraw(SceSize args, void *argp) {
 			float scale_x = 1.0f;
 			float scale_y = 1.0f;
 			getPopsScreenSize(&scale_x, &scale_y);
-				vita2d_draw_texture_scale_rotate_hotspot(pops_tex, 480.0f, 272.0f, 2.0f, 2.0f, 0.0, 480.0, 272.0);
-				vita2d_draw_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_ALPHA(GRAY, 0xAF));
-				vita2d_draw_texture_part(pops_tex, ALIGN_CENTER(SCREEN_WIDTH, 640), ALIGN_CENTER(SCREEN_HEIGHT, 480), 160, 32, 640, 480);
+			vita2d_draw_texture_scale_rotate_hotspot(pops_tex, 480.0f, 272.0f, 2.0f, 2.0f, 0.0, 480.0, 272.0);
+			vita2d_draw_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_ALPHA(GRAY, 0xAF));
+			vita2d_draw_texture_part(pops_tex, ALIGN_CENTER(SCREEN_WIDTH, 640), ALIGN_CENTER(SCREEN_HEIGHT, 480), ALIGN_CENTER(SCREEN_WIDTH, 640), ALIGN_CENTER(SCREEN_HEIGHT, 480), 640, 480);
 		}
 
 		vita2d_end_drawing();
