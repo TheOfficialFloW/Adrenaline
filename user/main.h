@@ -45,6 +45,7 @@ typedef struct {
 
 #define MEMORY_STICK_LOCATION_UX0 0
 #define MEMORY_STICK_LOCATION_UR0 1
+#define MEMORY_STICK_LOCATION_IMC0 2
 
 enum AdrenalineScreenSizes {
 	SCREEN_SIZE_2_00,

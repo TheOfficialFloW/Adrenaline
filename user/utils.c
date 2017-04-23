@@ -89,6 +89,12 @@ int WriteFile(char *file, void *buf, int size) {
 	return written;
 }
 
+int hasImc0() {
+	SceIoStat stat;
+	memset(&stat, 0, sizeof(SceIoStat));
+	return sceIoGetstat("imc0:", &stat) >= 0;
+}
+
 void readPad() {
 	static int hold_n = 0, hold2_n = 0;
 
@@ -195,7 +201,14 @@ void SetPspemuFrameBuffer(void *base) {
 }
 
 char *getPspemuMemoryStickLocation() {
-	return config.ms_location == MEMORY_STICK_LOCATION_UX0 ? "ux0:pspemu" : "ur0:pspemu";		
+	switch (config.ms_location) {
+		case MEMORY_STICK_LOCATION_UX0:
+			return "ux0:pspemu";
+		case MEMORY_STICK_LOCATION_UR0:
+			return "ur0:pspemu";
+		default:
+			return "imc0:pspemu";
+	}
 }
 
 #define THUMB_SHUFFLE(x) ((((x) & 0xFFFF0000) >> 16) | (((x) & 0xFFFF) << 16))
