@@ -270,6 +270,8 @@ int AdrenalineCompat(SceSize args, void *argp) {
 				
 				if (config.ms_location == MEMORY_STICK_LOCATION_UR0) {
 					path = "sdstor0:int-lp-ign-user";
+				} else if (config.ms_location == MEMORY_STICK_LOCATION_IMC0) {
+					path = "sdstor0:int-lp-ign-userext";
 				} else {
 					path = "sdstor0:xmc-lp-ign-userext";
 
@@ -824,6 +826,10 @@ int module_start(SceSize args, void *argp) {
 	// Read config
 	memset(&config, 0, sizeof(AdrenalineConfig));
 	ReadFile("ux0:adrenaline/adrenaline.bin", &config, sizeof(AdrenalineConfig));
+
+	// Use ux0 if imc0 is unavailable
+	if (config.ms_location == MEMORY_STICK_LOCATION_IMC0 && !hasImc0())
+		config.ms_location = MEMORY_STICK_LOCATION_UX0;
 
 	// Tai module info
 	tai_module_info_t tai_info;

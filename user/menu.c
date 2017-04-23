@@ -68,7 +68,7 @@ static char *screen_mode_options[] = { "Original", "Normal", "Zoom", "Full" };
 static char *no_yes_options[] = { "No", "Yes" };
 static char *yes_no_options[] = { "Yes", "No" };
 static char *screen_size_options[] = { "2.0x", "1.75x", "1.5x", "1.25x", "1.0x" };
-static char *ms_location_options[] = { "ux0:pspemu", "ur0:pspemu" };
+static char *ms_location_options[] = { "ux0:pspemu", "ur0:pspemu", "imc0:pspemu" };
 
 static MenuEntry main_entries[] = {
 	{ "Enter Standby Mode", MENU_ENTRY_TYPE_CALLBACK, 0, EnterStandbyMode, NULL, NULL, 0 },
@@ -148,6 +148,15 @@ static int EnterAdrenalineMenu() {
 	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
 	if (adrenaline->pops_mode)
 		ScePspemuPausePops(1);
+
+	int i;
+	for (i = 0; i < sizeof(settings_entries) / sizeof(MenuEntry); i++)
+	{
+		if (settings_entries[i].options == ms_location_options && !hasImc0()) {
+			settings_entries[i].n_options = sizeof(ms_location_options) / sizeof(char **) - 1;
+			break;
+		}
+	}
 
 	return 0;
 }
