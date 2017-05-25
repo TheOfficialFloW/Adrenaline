@@ -108,8 +108,10 @@
   * Enjoy
   
 - About right analog stick in games -
-  The right analog patch for GTA LCS/GTA VCS will be downloaded from here: https://github.com/TheOfficialFloW/GTA_Remastered
-  Don't think that any other games will now have right analog stick patch too ;)
+  GTA LCS/VCS: https://github.com/TheOfficialFloW/GTA_Remastered
+  Splinter Cell: https://github.com/TheOfficialFloW/SplinterCellRemastered
+  Tomb Raider: https://github.com/TheOfficialFloW/TombRaiderRemastered
+  Resistance: https://github.com/TheOfficialFloW/ResistanceRemastered
   
 - Build -
 https://github.com/frangarcj/vita2dlib/tree/fbo
