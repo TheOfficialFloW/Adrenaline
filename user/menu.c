@@ -361,7 +361,12 @@ void getPopsScreenSize(float *scale_x, float *scale_y) {
 			*scale_x = 1.0f;
 			*scale_y = 1.0f;
 			break;
-	}	
+	}
+
+	// PSTV scale fix
+	if (sceKernelIsPSVitaTV()) {
+		(*scale_y) *= 0.845f;
+	}
 }
 
 void *pops_data = NULL;

@@ -43,3 +43,8 @@ add_custom_target(copy
   COMMAND cp adrenaline.skprx G:/adrenaline/adrenaline.skprx
   DEPENDS adrenaline.skprx
 )
+
+add_custom_target(updater
+  COMMAND bin2c adrenaline.skprx ../../cef/updater/adrenaline_skprx.h adrenaline_skprx
+  DEPENDS adrenaline.skprx
+)

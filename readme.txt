@@ -13,6 +13,11 @@
 - IMPORTANT NOTE -
   For 6.61 Adrenaline-2 or higher, you must put Adrenaline files to 'ux0:adrenaline' instead of 'ux0:pspemu/adrenaline'.
   
+- Changelog v4.1 -
+  - Fixed bug where holding R trigger while launching Adrenaline didn't open the recovery menu.
+  - Fixed msfs truncation bug that caused savedata corruption for Little Big Planet and maybe other games.
+  - Fixed wrong scale of PS1 games on PS TV.
+  
 - Changelog v4 -
   - Added custom graphics filtering support for PS1 games.
   - Added screen mode adjustment for PS1 games. If you're using this feature on a PS Vita, select 'Original' screen mode in the
