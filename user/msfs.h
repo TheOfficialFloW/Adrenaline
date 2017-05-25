@@ -36,7 +36,8 @@
 #define PSP_CST_MT      0x0020
 #define PSP_CST_PRVT    0x0040
 
-#define MAX_IO_SIZE 50 * 1024 * 1024
+#define MAX_IO_SIZE (50 * 1024 * 1024)
+#define TRANSFER_SIZE (64 * 1024)
 
 #define KERMIT_CMD_MSFS_INIT			(0x00000C63)
 #define KERMIT_CMD_MSFS_EXIT			(0x00000C6E)
@@ -78,7 +79,10 @@ typedef struct {
 	char filter[MAX_NAME_LENGTH];
 	SceUID fd;
 	SceOff offset;
+	SceOff first_write_offset;
+	int first_write;
 	int flags;
+	int trunc;
 	int folder;
 	int extra;
 } ScePspemuMsfsDescriptor;

@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
 
 #include "main.h"
 #include "utils.h"
@@ -52,7 +53,7 @@ static void convertFileStat(SceIoStat *stat) {
 	ScePspemuConvertStatTimeToLocaltime(stat);
 }
 
-static int ScePspemuMsfsAddDescriptor(SceUID fd, char *path, int flags, int folder) {
+static int ScePspemuMsfsAddDescriptor(SceUID fd, char *path, int flags, int trunc, int folder) {
 	int i;
 	for (i = 0; i < MAX_DESCRIPTORS; i++) {
 		if (!descriptor_list[i].fd)
@@ -66,6 +67,7 @@ static int ScePspemuMsfsAddDescriptor(SceUID fd, char *path, int flags, int fold
 	strcpy(descriptor_list[i].path, path);
 	descriptor_list[i].fd = fd;
 	descriptor_list[i].flags = flags;
+	descriptor_list[i].trunc = trunc;
 	descriptor_list[i].folder = folder;
 	descriptor_list[i].extra = folder ? 0 : -1;
 
@@ -148,17 +150,92 @@ static int ScePspemuMsfsExit() {
 }
 
 static SceUID ScePspemuMsfsOpen(const char *file, int flags, SceMode mode) {
+	int trunc = 0;
+
 	char msfs_path[MAX_PATH_LENGTH];
 	buildPspemuMsfsPath(msfs_path, file);
 
 	if (file[0] == '\0')
 		return SCE_ERROR_ERRNO_EINVAL;
 
+	if (flags & SCE_O_TRUNC) {
+		char msfs_path_trunc[MAX_PATH_LENGTH];
+		strcpy(msfs_path_trunc, msfs_path);
+		strcat(msfs_path_trunc, "__TRUNC__");
+		if (sceIoRename(msfs_path, msfs_path_trunc) >= 0) {
+			// Create empty file
+			SceUID fd = sceIoOpen(msfs_path, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+			if (fd >= 0) {
+				sceIoClose(fd);
+				trunc = 1;
+			}
+		}
+	}
+
 	SceUID fd = sceIoOpen(msfs_path, flags, 0777);
 	if (fd < 0)
 		return fd;
 
-	return ScePspemuMsfsAddDescriptor(fd, (char *)file, flags, 0);
+	return ScePspemuMsfsAddDescriptor(fd, (char *)file, flags, trunc, 0);
+}
+
+static int ScePspemuMsfsTruncateFix(ScePspemuMsfsDescriptor *descriptor) {
+	int res = 0;
+	SceUID fd = -1;
+	char *buf = NULL;
+
+	char msfs_path_trunc[MAX_PATH_LENGTH];
+	buildPspemuMsfsPath(msfs_path_trunc, descriptor->path);
+	strcat(msfs_path_trunc, "__TRUNC__");
+
+	fd = sceIoOpen(msfs_path_trunc, SCE_O_RDONLY, 0);
+	if (fd < 0) {
+		res = fd;
+		goto EXIT;
+	}
+
+	sceIoLseek(descriptor->fd, 0, SCE_SEEK_SET);
+
+	buf = malloc(TRANSFER_SIZE);
+	if (!buf) {
+		res = -1;
+		goto EXIT;
+	}
+
+	SceOff seek = 0;
+
+	do {
+		SceOff remain = descriptor->first_write_offset - seek;
+		int buf_size = remain < TRANSFER_SIZE ? (int)remain : TRANSFER_SIZE;
+
+		if (buf_size == 0)
+			break;
+
+		int read = sceIoRead(fd, buf, buf_size);
+		if (read < 0) {
+			res = read;
+			goto EXIT;
+		}
+
+		int written = sceIoWrite(descriptor->fd, buf, buf_size);
+		if (written < 0) {
+			res = written;
+			goto EXIT;
+		}
+
+		seek += buf_size;
+	} while (seek < descriptor->first_write_offset);
+
+EXIT:
+	if (buf)
+		free(buf);
+
+	if (fd >= 0)
+		sceIoClose(fd);
+
+	sceIoRemove(msfs_path_trunc);
+
+	return res;
 }
 
 static int ScePspemuMsfsClose(SceUID fd) {
@@ -166,15 +243,22 @@ static int ScePspemuMsfsClose(SceUID fd) {
 	if (!descriptor)
 		return SCE_ERROR_ERRNO_EINVAL;
 
+	// Truncation on vita sets everything to 0
+	// This doesn't happen on PSP though, so we need to copy back the data
+	if (descriptor->trunc) {
+		int res = ScePspemuMsfsTruncateFix(descriptor);
+		if (res < 0)
+			return res;
+	}
+
 	int res = sceIoClose(descriptor->fd);
 
 	// Fake close success
 	if (res == SCE_ERROR_ERRNO_ENODEV)
 		res = 0;
 
-	if (res >= 0) {
+	if (res >= 0)
 		ScePspemuMsfsRemoveDescriptor(fd);
-	}
 
 	return res;
 }
@@ -215,6 +299,12 @@ static int ScePspemuMsfsWrite(SceUID fd, const void *data, SceSize size) {
 	if (!descriptor)
 		return SCE_ERROR_ERRNO_EINVAL;
 
+	// Set first write offset for truncation hack
+	if (!descriptor->first_write && size > 0) {
+		descriptor->first_write_offset = descriptor->offset;
+		descriptor->first_write = 1;
+	}
+
 	int seek = 0;
 
 	do {
@@ -253,7 +343,7 @@ static SceOff ScePspemuMsfsLseek(SceUID fd, SceOff offset, int whence) {
 			res = sceIoLseek(descriptor->fd, offset, whence);
 	}
 
-	if (res >= 0)
+	if ((int)res >= 0)
 		descriptor->offset = res;
 
 	return res;
@@ -315,7 +405,7 @@ static SceUID ScePspemuMsfsDopen(const char *dirname) {
 	if (dfd < 0)
 		return dfd;
 
-	return ScePspemuMsfsAddDescriptor(dfd, (char *)dirname, 0, 1);
+	return ScePspemuMsfsAddDescriptor(dfd, (char *)dirname, 0, 0, 1);
 }
 
 static int ScePspemuMsfsDclose(SceUID fd) {
@@ -329,9 +419,8 @@ static int ScePspemuMsfsDclose(SceUID fd) {
 	if (res == SCE_ERROR_ERRNO_ENODEV)
 		res = 0;
 
-	if (res >= 0) {
+	if (res >= 0)
 		ScePspemuMsfsRemoveDescriptor(fd);
-	}
 
 	return res;
 }
