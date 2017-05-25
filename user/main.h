@@ -90,9 +90,6 @@ extern int (* ScePspemuPausePops)(int pause);
 extern int (* sceCompatGetDevInf)(SceIoDevInfo *info);
 extern int (* sceCompatLCDCSync)();
 extern int (* sceCompatInterrupt)(int num);
-extern int (* sceScreenShotEnable)();
-extern void *(* sceDmacMemcpy)(void *destination, const void *source, size_t num);
-extern void *(* sceDmacMemset)(void *ptr, int value, size_t num);
 
 extern uint32_t text_addr, text_size, data_addr, data_size;
 

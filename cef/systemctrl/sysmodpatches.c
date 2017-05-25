@@ -289,6 +289,9 @@ void PatchImposeDriver(u32 text_addr) {
 }
 
 void PatchMediaSync(u32 text_addr) {
+	// Dummy function that checks flash0 files
+	_sw(0x00001021, text_addr + 0xC8);
+
 	// Fixes: ELF boot, boot not from /PSP/GAME/
 	_sw(0x00008821, text_addr + 0x864);
 	_sw(0x00008821, text_addr + 0x988);

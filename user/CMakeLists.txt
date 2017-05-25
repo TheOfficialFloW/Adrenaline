@@ -38,6 +38,7 @@ target_link_libraries(adrenaline
   SceCtrl_stub
   SceCommonDialog_stub
   SceDisplay_stub
+  SceKernelDmacMgr_stub
   SceGxm_stub
   SceIofilemgr_stub
   SceKernelModulemgr_stub
@@ -48,6 +49,7 @@ target_link_libraries(adrenaline
   ScePower_stub
   SceProcessMgr_stub
   SceRtc_stub
+  SceScreenShot_stub_weak
   SceShellSvc_stub
   SceSysmem_stub
   SceSysmodule_stub

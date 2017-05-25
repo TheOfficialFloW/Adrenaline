@@ -21,12 +21,14 @@
 #include <psp2/ctrl.h>
 #include <psp2/display.h>
 #include <psp2/power.h>
+#include <psp2/screenshot.h>
 #include <psp2/shellutil.h>
 #include <psp2/udcd.h>
 #include <psp2/usbstorvstor.h>
 #include <psp2/io/dirent.h>
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
+#include <psp2/kernel/dmac.h>
 #include <psp2/kernel/modulemgr.h>
 #include <psp2/kernel/sysmem.h>
 #include <psp2/kernel/processmgr.h>
@@ -70,9 +72,6 @@ int (* sceCompatGetDevInf)(SceIoDevInfo *info);
 int (* sceCompatCache)(int mode, uint32_t addr, uint32_t size);
 int (* sceCompatLCDCSync)();
 int (* sceCompatInterrupt)(int num);
-int (* sceScreenShotEnable)();
-void *(* sceDmacMemcpy)(void *destination, const void *source, size_t num);
-void *(* sceDmacMemset)(void *ptr, int value, size_t num);
 
 static SceUID hooks[16];
 static SceUID uids[64];
@@ -125,9 +124,6 @@ void GetFunctions() {
 	sceCompatCache = (void *)text_addr + 0x6F3C;
 	sceCompatLCDCSync = (void *)text_addr + 0x700C;
 	sceCompatInterrupt = (void *)text_addr + 0x705C;
-	sceScreenShotEnable = (void *)text_addr + 0x7BCC;
-	sceDmacMemcpy = (void *)text_addr + 0x6B0C;
-	sceDmacMemset = (void *)text_addr + 0x6B1C;
 }
 
 void SendAdrenalineRequest(int cmd) {
@@ -420,7 +416,7 @@ static int InitAdrenaline() {
 		sceKernelStartThread(compat_thid, 0, NULL);
 
 	// Create and start AdrenalineDraw thread
-	SceUID draw_thid = sceKernelCreateThread("AdrenalineDraw", AdrenalineDraw, 0xA0, 0x10000, 0, 0, NULL);
+	SceUID draw_thid = sceKernelCreateThread("AdrenalineDraw", AdrenalineDraw, 0x60, 0x10000, 0, 0, NULL);
 	if (draw_thid >= 0)
 		sceKernelStartThread(draw_thid, 0, NULL);
 
@@ -468,7 +464,7 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
 	memset(n, 0, 0x100);
 
 	SceCtrlData pad;
-	sceCtrlPeekBufferPositive(0, &pad, 1);
+	kuCtrlPeekBufferPositive(0, &pad, 1);
 
 	if (pad.buttons & SCE_CTRL_RTRIGGER)
 		n[0] = 4; // Recovery mode
@@ -1021,6 +1017,7 @@ int module_stop(SceSize args, void *argp) {
 		taiInjectRelease(uids[i]);
 	}
 
+	taiHookRelease(hooks[--n_hooks], ScePspemuDecodePopsAudioRef);
 	taiHookRelease(hooks[--n_hooks], ScePspemuConvertAddressRef);
 	taiHookRelease(hooks[--n_hooks], ScePspemuInitAudioOutRef);
 	taiHookRelease(hooks[--n_hooks], ScePspemuGetTitleidRef);
