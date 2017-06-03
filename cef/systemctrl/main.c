@@ -198,6 +198,15 @@ void PatchLoadCore() {
 	LoadCoreForKernel_nids[1].function = (void *)text_addr + 0x73F0;
 }
 
+void PatchSysmem() {
+	u32 offsets[] = { 0x88009F76, 0x8800A096, 0x8800A12E, 0x8800A1DE, 0x8800A2B2, 0x8800A356, 0x8800A3FA, 0x8800A492, 0x8800A542, 0x8800A5F2 };
+
+	int i;
+	for (i = 0; i < (sizeof(offsets) / sizeof(u32)); i++) {
+		_sh(0x1000, offsets[i]);
+	}
+}
+
 int (* sceKernelVolatileMemTryLock)(int unk, void **ptr, int *size);
 
 int sceKernelVolatileMemTryLockPatched(int unk, void **ptr, int *size) {
@@ -331,7 +340,7 @@ int OnModuleStart(SceModule2 *mod) {
 		log("Key Config: 0x%X\n", sceKernelInitKeyConfig());
 		log("Apitype: 0x%X\n", sceKernelInitApitype());
 		log("Filename: %s\n", sceKernelInitFileName());
-		
+
 		sctrlSEGetConfig(&config);
 
 		if (sceKernelInitKeyConfig() != PSP_INIT_KEYCONFIG_POPS && config.forcehighmemory) {
@@ -412,6 +421,7 @@ int OnModuleStart(SceModule2 *mod) {
 }
 
 int module_start(SceSize args, void *argp) {
+	PatchSysmem();
 	PatchLoadCore();
 	PatchInterruptMgr();
 	PatchIoFileMgr();

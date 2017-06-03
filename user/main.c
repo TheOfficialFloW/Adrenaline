@@ -416,7 +416,7 @@ static int InitAdrenaline() {
 		sceKernelStartThread(compat_thid, 0, NULL);
 
 	// Create and start AdrenalineDraw thread
-	SceUID draw_thid = sceKernelCreateThread("AdrenalineDraw", AdrenalineDraw, 0x80, 0x10000, 0, 0, NULL);
+	SceUID draw_thid = sceKernelCreateThread("AdrenalineDraw", AdrenalineDraw, 0xA0, 0x10000, 0, 0, NULL);
 	if (draw_thid >= 0)
 		sceKernelStartThread(draw_thid, 0, NULL);
 

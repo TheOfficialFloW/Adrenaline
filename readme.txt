@@ -22,6 +22,10 @@
   5) Press X/O on any connection name.
   6) Follow the instructions to update Adrenaline.
   
+- Changelog v4.2 -
+  - Added support for ISO sorting using 'Game Categories Lite' plugin.
+  - Fixed compatiblity with 'Kingdom Hearts: Birth by Sleep' english patch.
+  
 - Changelog v4.1 -
   - Fixed bug where holding R trigger while launching Adrenaline didn't open the recovery menu.
   - Fixed msfs truncation bug that caused savedata corruption for Little Big Planet and maybe other games.

@@ -70,12 +70,17 @@ int WriteFile(char *file, void *buf, int size) {
 int main(void) {
 	pspDebugScreenInit();
 
-	if (sctrlSEGetVersion() >= 0x00040001) {
+	if (sctrlSEGetVersion() >= 0x00040002) {
 		ErrorExit(5000, "This update or a higher one was already applied.\n");
 	}
 
-	printf("6.61 Adrenaline-4.1 Installer\n");
+	printf("6.61 Adrenaline-4.2 Installer\n");
 	printf("Changes:\n\n");
+
+	if (sctrlSEGetVersion() <= 0x00040001) {
+		printf("- Added support for ISO sorting using 'Game Categories Lite' plugin.\n");
+		printf("- Fixed compatiblity with 'Kingdom Hearts: Birth by Sleep' english patch.\n");
+	}
 
 	if (sctrlSEGetVersion() <= 0x00040000) {
 		printf("- Fixed bug where holding R trigger while launching Adrenaline didn't open the recovery menu.\n");
@@ -99,6 +104,7 @@ int main(void) {
 	for (i = 0; i < (sizeof(files) / sizeof(File)); i++) {
 		char *p = strrchr(files[i].path, '/');
 		printf("Writing %s (%d)... ", p+1, files[i].size);
+		sceKernelDelayThread(100 * 1000);
 
 		int written = WriteFile(files[i].path, files[i].buf, files[i].size);
 		if (written != files[i].size) {
@@ -106,6 +112,7 @@ int main(void) {
 		}
 
 		printf("OK\n");
+		sceKernelDelayThread(100 * 1000);
 	}
 
 	printf("\nUpdate complete. Press X to reboot your device.\n\n");

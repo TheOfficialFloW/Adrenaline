@@ -28,6 +28,11 @@ PSP_MODULE_INFO("VshControl", 0x1007, 1, 0);
 #define EBOOT_BIN "disc0:/PSP_GAME/SYSDIR/EBOOT.BIN"
 #define EBOOT_OLD "disc0:/PSP_GAME/SYSDIR/EBOOT.OLD"
 
+#define DUMMY_CAT_ISO_EXTENSION "     "
+
+char categorypath[256];
+SceUID categorydfd = -1;
+
 SceUID gamedfd = -1, isodfd = -1, overiso = 0;
 int vpbpinited = 0, isoindex = 0, cachechanged = 0;
 VirtualPbp *cache = NULL;
@@ -157,6 +162,19 @@ SceUID sceIoDopenPatched(const char *dirname) {
 		game = 1;
 	}
 
+	if (strstr(dirname, DUMMY_CAT_ISO_EXTENSION)) {
+		char *p = strrchr(dirname, '/');
+		if (p) {
+			strcpy(categorypath, "ms0:/ISO");
+			strcat(categorypath, p);
+			categorypath[8 + strlen(p) - 5] = '\0';
+
+			categorydfd = sceIoDopen(categorypath);
+			pspSdkSetK1(k1);
+			return categorydfd;
+		}
+	}
+
 	pspSdkSetK1(k1);
 	res = sceIoDopen(dirname);
 	pspSdkSetK1(0);
@@ -164,7 +182,7 @@ SceUID sceIoDopenPatched(const char *dirname) {
 	if (game) {
 		gamedfd = res;
 		overiso = 0;
-	}	
+	}
 
 	pspSdkSetK1(k1);
 	return res;
@@ -269,6 +287,57 @@ int Cache(VirtualPbp *pbp) {
 
 VirtualPbp vpbp;
 
+int AddIsoDirent(char *path, SceUID fd, SceIoDirent *dir) {
+	int res;
+
+NEXT:
+	if ((res = sceIoDread(fd, dir)) > 0) {
+		char fullpath[128];
+		int res2 = -1;
+		int docache;
+
+		if (!FIO_S_ISDIR(dir->d_stat.st_mode)) {
+			strcpy(fullpath, path);
+			strcat(fullpath, "/");
+			strcat(fullpath, dir->d_name);
+
+			if (IsCached(fullpath, &dir->d_stat.st_mtime, &vpbp)) {
+				res2 = virtualpbp_fastadd(&vpbp);
+				docache = 0;
+			} else {
+				res2 = virtualpbp_add(fullpath, &dir->d_stat.st_mtime, &vpbp);
+				docache = 1;
+			}
+			
+			if (res2 >= 0) {
+				ApplyIsoNamePatch(dir);
+
+				// Fake the entry from file to directory
+				dir->d_stat.st_mode = 0x11FF;
+				dir->d_stat.st_attr = 0x0010;
+				dir->d_stat.st_size = 0;	
+				
+				// Change the modifcation time to creation time
+				memcpy(&dir->d_stat.st_mtime, &dir->d_stat.st_ctime, sizeof(ScePspDateTime));
+
+				if (docache) {
+					Cache(&vpbp);
+				}
+			}
+		} else {
+			if (dir->d_name[0] != '.') {
+				strcat(dir->d_name, DUMMY_CAT_ISO_EXTENSION);
+			} else {
+				goto NEXT;
+			}
+		}
+
+		return res;
+	}
+
+	return -1;
+}
+
 int sceIoDreadPatched(SceUID fd, SceIoDirent *dir) {
 	int res;
 	int k1 = pspSdkSetK1(0);
@@ -301,51 +370,20 @@ int sceIoDreadPatched(SceUID fd, SceIoDirent *dir) {
 			}
 
 			if (isodfd >= 0) {
-NEXT:
-				if ((res = sceIoDread(isodfd, dir)) > 0) {
-					char fullpath[128];
-					int res2 = -1;
-					int docache;
-
-					if (!FIO_S_ISDIR(dir->d_stat.st_mode)) {
-						strcpy(fullpath, "ms0:/ISO/");
-						strcat(fullpath, dir->d_name);
-
-						if (IsCached(fullpath, &dir->d_stat.st_mtime, &vpbp)) {
-							res2 = virtualpbp_fastadd(&vpbp);
-							docache = 0;
-						} else {
-							res2 = virtualpbp_add(fullpath, &dir->d_stat.st_mtime, &vpbp);
-							docache = 1;
-						}
-						
-						if (res2 >= 0) {
-							ApplyIsoNamePatch(dir);
-
-							// Fake the entry from file to directory
-							dir->d_stat.st_mode = 0x11FF;
-							dir->d_stat.st_attr = 0x0010;
-							dir->d_stat.st_size = 0;	
-							
-							// Change the modifcation time to creation time
-							memcpy(&dir->d_stat.st_mtime, &dir->d_stat.st_ctime, sizeof(ScePspDateTime));
-
-							if (docache) {
-								Cache(&vpbp);
-							}
-						}
-					} else {
-						goto NEXT;
-					}
-
+				res = AddIsoDirent("ms0:/ISO", isodfd, dir);
+				if (res >= 0) {
 					pspSdkSetK1(k1);
 					return res;
-				} else {
-					sceIoDclose(isodfd);
-					isodfd = -1;
-					overiso = 1;
 				}
-			}			
+			}
+		} else if (fd == categorydfd) {
+			if (categorydfd >= 0) {
+				res = AddIsoDirent(categorypath, categorydfd, dir);
+				if (res >= 0) {
+					pspSdkSetK1(k1);
+					return res;
+				}
+			}
 		}
 	}
 
@@ -371,8 +409,12 @@ int sceIoDclosePatched(SceUID fd) {
 			return res;
 		}
 	}
-
-	if (fd == gamedfd) {
+	
+	if (fd == categorydfd) {
+		categorydfd = -1;
+	} else if (fd == gamedfd) {
+		sceIoDclose(isodfd);
+		isodfd = -1;
 		gamedfd = -1;
 		overiso = 0;
 		SaveCache();
