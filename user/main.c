@@ -282,11 +282,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 				usbdevice_modid = startUsb("ux0:adrenaline/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
 
 				// Response
-				if (usbdevice_modid < 0) {
-					res = usbdevice_modid;
-				} else {
-					res = 0;
-				}
+				res = (usbdevice_modid < 0) ? usbdevice_modid : 0;
 			} else {
 				// error already started
 				res = -1;
@@ -298,6 +294,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 				usbdevice_modid = -1;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_PAUSE_POPS) {
 			ScePspemuPausePops(1);
+			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
 			adrenaline->draw_psp_screen_in_pops = 1;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 			res = 0;
@@ -426,6 +423,9 @@ static int InitAdrenaline() {
 int sceCompatSuspendResumePatched(int unk) {
 	// Lock USB connection and PS button
 	sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION | SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN_2);
+
+	if (!menu_open)
+		ScePspemuPausePops(0);
 
 	return TAI_CONTINUE(int, sceCompatSuspendResumeRef, unk);
 }
@@ -797,15 +797,17 @@ static int sceIoGetstatPatched(const char *file, SceIoStat *stat) {
 extern void *pops_data;
 
 static int sceDisplaySetFrameBufForCompatPatched(int a1, int a2, int a3, int a4, int a5, SceDisplayFrameBuf *pParam) {
-	if (pParam == NULL) {
-		static SceDisplayFrameBuf param;
-		param.size = sizeof(SceDisplayFrameBuf);
-		param.base = pops_data;
-		param.pitch = SCREEN_LINE;
-		param.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
-		param.width = SCREEN_WIDTH;
-		param.height = SCREEN_HEIGHT;
-		pParam = &param;
+	if (config.graphics_filtering != 0) {
+		if (pParam == NULL) {
+			static SceDisplayFrameBuf param;
+			param.size = sizeof(SceDisplayFrameBuf);
+			param.base = pops_data;
+			param.pitch = SCREEN_LINE;
+			param.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
+			param.width = SCREEN_WIDTH;
+			param.height = SCREEN_HEIGHT;
+			pParam = &param;
+		}
 	}
 
 	return TAI_CONTINUE(int, sceDisplaySetFrameBufForCompatRef, a1, a2, a3, a4, a5, pParam);

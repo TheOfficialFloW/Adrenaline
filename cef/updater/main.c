@@ -70,25 +70,36 @@ int WriteFile(char *file, void *buf, int size) {
 int main(void) {
 	pspDebugScreenInit();
 
-	if (sctrlSEGetVersion() >= 0x00040002) {
+	if (sctrlSEGetVersion() >= 0x00050000) {
 		ErrorExit(5000, "This update or a higher one was already applied.\n");
 	}
 
-	printf("6.61 Adrenaline-4.2 Installer\n");
+	printf("6.61 Adrenaline-5 Installer\n");
 	printf("Changes:\n\n");
+
+	if (sctrlSEGetVersion() <= 0x00040002) {
+		printf("- Added 'Hide DLC's in game menu' functionality.\n");
+		printf("- Readded 'Original' graphics filtering, since PS1 games have got framedrops using custom filters.\n");
+		printf("- Fixed corrupted icons bug that was introduced in the previous update.\n");
+		printf("- Fixed bug where the framebuffer was corrupted after loading savestate.\n");
+		printf("- Adrenaline icon is now hidden in game menu.\n");
+		printf("\n");
+	}
 
 	if (sctrlSEGetVersion() <= 0x00040001) {
 		printf("- Added support for ISO sorting using 'Game Categories Lite' plugin.\n");
 		printf("- Fixed compatiblity with 'Kingdom Hearts: Birth by Sleep' english patch.\n");
+		printf("\n");
 	}
 
 	if (sctrlSEGetVersion() <= 0x00040000) {
 		printf("- Fixed bug where holding R trigger while launching Adrenaline didn't open the recovery menu.\n");
 		printf("- Fixed msfs truncation bug that caused savedata corruption for Little Big Planet and maybe other games.\n");
 		printf("- Fixed wrong scale of PS1 games on PS TV.\n");
+		printf("\n");
 	}
 
-	printf("\nPress X to install, R to exit.\n\n");
+	printf("Press X to install, R to exit.\n\n");
 
 	while (1) {
 		SceCtrlData pad;

@@ -275,6 +275,8 @@ void OnSystemStatusIdle() {
 	if (adrenaline->pops_mode) {
 		sceDisplaySetFrameBuf661((void *)0x0A000000, PSP_SCREEN_LINE, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
 		memset(0xAA000000, 0, SCE_PSPEMU_FRAMEBUFFER_SIZE);
+	} else {
+		SendAdrenalineCmd(ADRENALINE_VITA_CMD_RESUME_POPS);
 	}
 }
 

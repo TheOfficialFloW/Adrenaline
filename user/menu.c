@@ -64,7 +64,7 @@ static int EnterStandbyMode();
 static int OpenOfficialSettings();
 static int ExitPspEmuApplication();
 
-static char *graphics_options[] = { "Bilinear", "Sharp bilinear", "Advanced AA", "LCD3x" };
+static char *graphics_options[] = { "Original", "Bilinear", "Sharp bilinear", "Advanced AA", "LCD3x" };
 static char *screen_mode_options[] = { "Original", "Normal", "Zoom", "Full" };
 static char *no_yes_options[] = { "No", "Yes" };
 static char *yes_no_options[] = { "Yes", "No" };
@@ -416,7 +416,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
 
 	while (1) {
 		// Do not draw if dialog is running
-		if (sceCommonDialogIsRunning()) {
+		if (sceCommonDialogIsRunning() || (config.graphics_filtering == 0 && menu_open == 0)) {
 			sceDisplayWaitVblankStart();
 			continue;
 		}
@@ -449,13 +449,13 @@ int AdrenalineDraw(SceSize args, void *argp) {
 		vita2d_clear_screen();
 
 		// Select shader
-		if (config.graphics_filtering == 0)
+		if (config.graphics_filtering == 1)
 			shader = opaque_shader;
-		else if (config.graphics_filtering == 1)
-			shader = sharp_shader;
 		else if (config.graphics_filtering == 2)
-			shader = advanced_aa_shader;
+			shader = sharp_shader;
 		else if (config.graphics_filtering == 3)
+			shader = advanced_aa_shader;
+		else if (config.graphics_filtering == 4)
 			shader = lcd3x_shader;
 		else
 			shader = opaque_shader;
