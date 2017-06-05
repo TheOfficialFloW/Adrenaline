@@ -36,7 +36,6 @@ SceUID categorydfd = -1;
 SceUID gamedfd = -1, isodfd = -1, overiso = 0;
 int vpbpinited = 0, isoindex = 0, cachechanged = 0;
 VirtualPbp *cache = NULL;
-u8 referenced[32];
 
 STMOD_HANDLER previous;
 
@@ -65,6 +64,41 @@ int CorruptIconPatch(char *name) {
 	if (sceIoGetstat(path, &stat) >= 0) {
 		strcpy(name, "__SCE"); // hide icon
 		return 1;
+	}
+
+	return 0;
+}
+
+int HideDlc(char *name) {
+	char path[256];
+	sprintf(path, "ms0:/PSP/GAME/%s/PARAM.PBP", name);
+
+	SceIoStat stat;
+	memset(&stat, 0, sizeof(stat));
+	if (sceIoGetstat(path, &stat) >= 0) {
+		sprintf(path, "ms0:/PSP/GAME/%s/EBOOT.PBP", name);
+
+		memset(&stat, 0, sizeof(stat));
+		if (sceIoGetstat(path, &stat) < 0) {
+			strcpy(name, "__SCE"); // hide icon
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int HideAdrenaline(char *name) {
+	char path[256];
+	sprintf(path, "ms0:/PSP/GAME/%s/EBOOT.PBP", name);
+
+	SceIoStat stat;
+	memset(&stat, 0, sizeof(stat));
+	if (sceIoGetstat(path, &stat) >= 0) {
+		if (strcmp(name, sctrlGetTitleid()) == 0) {
+			strcpy(name, "__SCE"); // hide icon
+			return 1;
+		}
 	}
 
 	return 0;
@@ -203,7 +237,6 @@ int ReadCache() {
 		cache = (VirtualPbp *)oe_malloc(32 * sizeof(VirtualPbp));
 
 	memset(cache, 0, sizeof(VirtualPbp) * 32);
-	memset(referenced, 0, sizeof(referenced));
 
 	for (i = 0; i < 0x10; i++) {
 		fd = sceIoOpen("ms0:/PSP/SYSTEM/isocaches.bin", PSP_O_RDONLY, 0);
@@ -228,9 +261,13 @@ int SaveCache() {
 		return -1;
 
 	for (i = 0; i < 32; i++) {
-		if (cache[i].isofile[0] != 0 && !referenced[i]) {
-			cachechanged = 1;
-			memset(&cache[i], 0, sizeof(VirtualPbp));
+		if (cache[i].isofile[0] != 0) {
+			SceIoStat stat;
+			memset(&stat, 0, sizeof(stat));
+			if (sceIoGetstat(cache[i].isofile, &stat) < 0) {
+				cachechanged = 1;
+				memset(&cache[i], 0, sizeof(VirtualPbp));
+			}
 		}
 	}
 
@@ -238,6 +275,9 @@ int SaveCache() {
 		return 0;
 
 	cachechanged = 0;
+
+	sceIoMkdir("ms0:/PSP", 0777);
+	sceIoMkdir("ms0:/PSP/SYSTEM", 0777);
 
 	for (i = 0; i < 0x10; i++) {
 		fd = sceIoOpen("ms0:/PSP/SYSTEM/isocaches.bin", PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0777);
@@ -261,7 +301,6 @@ int IsCached(char *isofile, ScePspDateTime *mtime, VirtualPbp *res) {
 			if (strcmp(cache[i].isofile, isofile) == 0) {
 				if (memcmp(mtime, &cache[i].mtime, sizeof(ScePspDateTime)) == 0) {
 					memcpy(res, &cache[i], sizeof(VirtualPbp));
-					referenced[i] = 1;
 					return 1;
 				}
 			}
@@ -275,7 +314,6 @@ int Cache(VirtualPbp *pbp) {
 	int i;
 	for (i = 0; i < 32; i++) {
 		if (cache[i].isofile[0] == 0) {
-			referenced[i] = 1;
 			memcpy(&cache[i], pbp, sizeof(VirtualPbp));
 			cachechanged = 1;
 			return 1;
@@ -287,7 +325,7 @@ int Cache(VirtualPbp *pbp) {
 
 VirtualPbp vpbp;
 
-int AddIsoDirent(char *path, SceUID fd, SceIoDirent *dir) {
+int AddIsoDirent(char *path, SceUID fd, SceIoDirent *dir, int readcategories) {
 	int res;
 
 NEXT:
@@ -325,7 +363,7 @@ NEXT:
 				}
 			}
 		} else {
-			if (dir->d_name[0] != '.') {
+			if (readcategories && dir->d_name[0] != '.') {
 				strcat(dir->d_name, DUMMY_CAT_ISO_EXTENSION);
 			} else {
 				goto NEXT;
@@ -370,19 +408,17 @@ int sceIoDreadPatched(SceUID fd, SceIoDirent *dir) {
 			}
 
 			if (isodfd >= 0) {
-				res = AddIsoDirent("ms0:/ISO", isodfd, dir);
-				if (res >= 0) {
+				res = AddIsoDirent("ms0:/ISO", isodfd, dir, 1);
+				if (res > 0) {
 					pspSdkSetK1(k1);
 					return res;
 				}
 			}
 		} else if (fd == categorydfd) {
-			if (categorydfd >= 0) {
-				res = AddIsoDirent(categorypath, categorydfd, dir);
-				if (res >= 0) {
-					pspSdkSetK1(k1);
-					return res;
-				}
+			res = AddIsoDirent(categorypath, categorydfd, dir, 0);
+			if (res > 0) {
+				pspSdkSetK1(k1);
+				return res;
 			}
 		}
 	}
@@ -392,6 +428,11 @@ int sceIoDreadPatched(SceUID fd, SceIoDirent *dir) {
 	if (res > 0) {
 		if (config.hidecorrupt)
 			CorruptIconPatch(dir->d_name);
+		
+		if (config.hidedlcs)
+			HideDlc(dir->d_name);
+		
+		HideAdrenaline(dir->d_name);
 	}
 
 	pspSdkSetK1(k1);

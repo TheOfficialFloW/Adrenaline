@@ -22,6 +22,12 @@
   5) Press X/O on any connection name.
   6) Follow the instructions to update Adrenaline.
   
+- Changelog v4.3 -
+  - Added 'Hide DLC's in game menu' functionality.
+  - Fixed corrupted icons bug that was introduced in the previous update.
+  - Fixed bug where the framebuffer was corrupt after loading savestate.
+  - Adrenaline icon is now hidden in game menu.
+
 - Changelog v4.2 -
   - Added support for ISO sorting using 'Game Categories Lite' plugin.
   - Fixed compatiblity with 'Kingdom Hearts: Birth by Sleep' english patch.

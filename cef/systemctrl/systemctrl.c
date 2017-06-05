@@ -191,3 +191,7 @@ int sctrlStopUsb() {
 int sctrlRebootDevice() {
 	return SendAdrenalineCmd(ADRENALINE_VITA_CMD_POWER_REBOOT);
 }
+
+char *sctrlGetTitleid() {
+	return rebootex_config.titleid;
+}

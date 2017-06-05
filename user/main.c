@@ -460,19 +460,21 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
 	memcpy(m, payloadex, size_payloadex);
 	ScePspemuWritebackCache(m, size_payloadex);
 
-	uint32_t *n = (uint32_t *)ScePspemuConvertAddress(0x88FB0000, SCE_PSPEMU_CACHE_INVALIDATE, 0x100);
+	void *n = (void *)ScePspemuConvertAddress(0x88FB0000, SCE_PSPEMU_CACHE_INVALIDATE, 0x100);
 	memset(n, 0, 0x100);
+
+	strcpy((char *)(n+4), app_titleid);
 
 	SceCtrlData pad;
 	kuCtrlPeekBufferPositive(0, &pad, 1);
 
 	if (pad.buttons & SCE_CTRL_RTRIGGER)
-		n[0] = 4; // Recovery mode
+		((uint32_t *)n)[0] = 4; // Recovery mode
 
 	SceIoStat stat;
 	memset(&stat, 0, sizeof(SceIoStat));
 	if (sceIoGetstat("ux0:adrenaline/flash0", &stat) < 0)
-		n[0] = 4; // Recovery mode
+		((uint32_t *)n)[0] = 4; // Recovery mode
 
 	ScePspemuWritebackCache(n, 0x100);
 

@@ -40,8 +40,9 @@ SceUID adrenaline_semaid = -1;
 
 int (* _scePowerSuspendOperation)();
 
-int (* SceDmacplusSysEvent)(int ev_id, char *ev_name, void *param, int *result);
-int (* SceLcdcSysEvent)(int ev_id, char *ev_name, void *param, int *result);
+int (* SetFlag1)();
+int (* SetFlag2)();
+int (* sceKermitSyncDisplay)();
 
 int (* uiResumePoint)(u32 *data);
 void (* VitaSync)();
@@ -246,20 +247,28 @@ void VitaSyncPatched() {
 	VitaSync();
 }
 
-int SceDmacplusSysEventPatched(int ev_id, char *ev_name, void *param, int *result) {
+int SetFlag1Patched() {
 	if (adrenaline->savestate_mode != SAVESTATE_MODE_NONE) {
 		return 0;
 	}
-
-	return SceDmacplusSysEvent(ev_id, ev_name, param, result);
+	
+	return SetFlag1();
 }
 
-int SceLcdcSysEventPatched(int ev_id, char *ev_name, void *param, int *result) {
+int SetFlag2Patched() {
 	if (adrenaline->savestate_mode != SAVESTATE_MODE_NONE) {
 		return 0;
 	}
+	
+	return SetFlag2();
+}
 
-	return SceLcdcSysEvent(ev_id, ev_name, param, result);
+int sceKermitSyncDisplayPatched() {
+	if (adrenaline->savestate_mode != SAVESTATE_MODE_NONE) {
+		return 0;
+	}
+	
+	return sceKermitSyncDisplay();
 }
 
 void PatchSasCore() {
@@ -272,9 +281,9 @@ void PatchSasCore() {
 }
 
 void PatchLowIODriver2(u32 text_addr) {
-	HIJACK_FUNCTION(text_addr + 0x2CB4, SceDmacplusSysEventPatched, SceDmacplusSysEvent);
-	HIJACK_FUNCTION(text_addr + 0x6450, SceLcdcSysEventPatched, SceLcdcSysEvent);
-
+	HIJACK_FUNCTION(text_addr + 0x880, SetFlag1Patched, SetFlag1);
+	HIJACK_FUNCTION(text_addr + 0xCD8, SetFlag2Patched, SetFlag2);
+	HIJACK_FUNCTION(FindProc("sceKermit_Driver", "sceKermit_driver", 0xD69C50BB), sceKermitSyncDisplayPatched, sceKermitSyncDisplay);
 	ClearCaches();
 }
 
