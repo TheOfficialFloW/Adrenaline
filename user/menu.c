@@ -481,13 +481,23 @@ int AdrenalineDraw(SceSize args, void *argp) {
 			// Draw psp screen
 			float scale = 2.00f;
 			getPspScreenSize(&scale);
-			vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, scale, scale, 0.0, 240.0, 136.0);
+			if (scale != 2.00f){
+				vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, 4.0f, 4.0f, 0.0, 240.0, 136.0);
+				vita2d_draw_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_ALPHA(GRAY, 0xAF));
+				vita2d_draw_texture_part_scale(psp_tex, ALIGN_CENTER(SCREEN_WIDTH, PSP_SCREEN_WIDTH*scale), ALIGN_CENTER(SCREEN_HEIGHT, PSP_SCREEN_HEIGHT*scale), 0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, scale, scale);
+			} else{
+				vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, scale, scale, 0.0, 240.0, 136.0);
+			}
+			
+			
 		} else {
 			// Draw pops screen
 			float scale_x = 1.0f;
 			float scale_y = 1.0f;
 			getPopsScreenSize(&scale_x, &scale_y);
-			vita2d_draw_texture_scale_rotate_hotspot(pops_tex, 480.0f, 272.0f, scale_x, scale_y, 0.0, 480.0, 272.0);
+			vita2d_draw_texture_scale_rotate_hotspot(pops_tex, 480.0f, 272.0f, 2.0f, 2.0f, 0.0, 480.0, 272.0);
+			vita2d_draw_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_ALPHA(GRAY, 0xAF));
+			vita2d_draw_texture_part(pops_tex, ALIGN_CENTER(SCREEN_WIDTH, 640), ALIGN_CENTER(SCREEN_HEIGHT, 480), ALIGN_CENTER(SCREEN_WIDTH, 640), ALIGN_CENTER(SCREEN_HEIGHT, 480), 640, 480);
 		}
 
 		vita2d_end_drawing();
