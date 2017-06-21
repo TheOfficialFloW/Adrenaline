@@ -70,7 +70,7 @@ int WriteFile(char *file, void *buf, int size) {
 int main(void) {
 	pspDebugScreenInit();
 
-	if (sctrlSEGetVersion() >= 0x00050000) {
+	if (sctrlSEGetVersion() >= 0x00050001) {
 		ErrorExit(5000, "This update or a higher one was already applied.\n");
 	}
 
