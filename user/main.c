@@ -390,9 +390,6 @@ static int AdrenalinePowerTick(SceSize args, void *argp) {
 }
 
 static int InitAdrenaline() {
-	// Set ARM frequency to highest
-	scePowerSetArmClockFrequency(444);
-
 	// Set GPU frequency to highest
 	scePowerSetGpuClockFrequency(222);
 
@@ -651,10 +648,14 @@ static int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid
 static int ScePspemuGetStartupPngPatched(int num, void *png_buf, int *png_size, int *unk) {
 	int num_startup_png = TAI_CONTINUE(int, ScePspemuGetStartupPngRef, num, png_buf, png_size, unk);
 
-	// Insert custom startdat.png
-	memcpy(png_buf, startdat, size_startdat);
-	*png_size = size_startdat;
-	num_startup_png = 1;
+	if (config.skip_logo) {
+		num_startup_png = 0;
+	} else {
+		// Insert custom startdat.png
+		memcpy(png_buf, startdat, size_startdat);
+		*png_size = size_startdat;
+		num_startup_png = 1;
+	}
 
 	return num_startup_png;
 }

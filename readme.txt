@@ -14,14 +14,21 @@
   For 6.61 Adrenaline-2 or higher, you must put Adrenaline files to 'ux0:adrenaline' instead of 'ux0:pspemu/adrenaline'.
   
 - Network update -
-  For 6.61 Adrenaline-4 or higher, you can use the 'Network update' in the XMB to update Adrenaline to the latest version.
-  1) Choose 'Network update' in XMB, then click 'Update via Internet'.
+  For 6.61 Adrenaline-4 or higher, you can use the 'System Update' in the XMB to update Adrenaline to the latest version.
+  1) Choose 'System Update' in XMB, then click 'Update via Internet'.
   2) If a connection name does already exist, skip to 5).
   3) Otherwise select '[New Connection]', then 'Enter Manually', press RIGHT three times until you need to enter a connection name.
   4) Type any connection name and press RIGHT two times. You'll now see the message 'Press the X/O button to save settings'.
   5) Press X/O on any connection name.
   6) Follow the instructions to update Adrenaline.
   
+- Changelog v5.1 -
+  - Added ability to skip adrenaline boot logo.
+  - Added message for original filter.
+  - Fixed bug where payloadex was not updated and caused some bugs.
+  - Fixed '20000006' bug on PS TV. Network update will work on PS TV in the future.
+  - Changed CPU clock back to 333 MHz.
+
 - Changelog v5 -
   - Added 'Hide DLC's in game menu' functionality.
   - Readded 'Original' graphics filtering, since PS1 games have got framedrops using custom filters.

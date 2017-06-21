@@ -187,13 +187,20 @@ void PatchLoadExec(u32 text_addr) {
 int sceChkregGetPsCodePatched(u8 *pscode) {
 	int res = _sceChkregGetPsCode(pscode);
 
+	pscode[0] = 0x01;
+	pscode[1] = 0x00;
+
 	if (config.fakeregion) {
-		pscode[2] = (config.fakeregion < 12) ? (config.fakeregion + 2) : (config.fakeregion - 11);
+		pscode[2] = config.fakeregion < 12 ? config.fakeregion + 2 : config.fakeregion - 11;
+		if (pscode[2] == 2)
+			pscode[2] = 3;
 	}
 
-	// Fix pscode
-	pscode[3] = 0;
-	pscode[4] = 1;
+	pscode[3] = 0x00;
+	pscode[4] = 0x01;
+	pscode[5] = 0x00;
+	pscode[6] = 0x01;
+	pscode[7] = 0x00;
 
 	return res;
 }

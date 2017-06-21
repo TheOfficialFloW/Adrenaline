@@ -74,8 +74,17 @@ int main(void) {
 		ErrorExit(5000, "This update or a higher one was already applied.\n");
 	}
 
-	printf("6.61 Adrenaline-5 Installer\n");
+	printf("6.61 Adrenaline-5.1 Installer\n");
 	printf("Changes:\n\n");
+
+	if (sctrlSEGetVersion() <= 0x00050000) {
+		printf("- Added ability to skip adrenaline boot logo.\n");
+		printf("- Added message for original filter.\n");
+		printf("- Fixed bug where payloadex was not updated and caused some bugs.\n");
+		printf("- Fixed '20000006' bug on PS TV. Network update will work on PS TV in the future.\n");
+		printf("- Changed CPU clock back to 333 MHz.\n");
+		printf("\n");
+	}
 
 	if (sctrlSEGetVersion() <= 0x00040002) {
 		printf("- Added 'Hide DLC's in game menu' functionality.\n");

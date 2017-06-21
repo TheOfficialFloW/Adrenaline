@@ -70,7 +70,8 @@ typedef struct {
 	int ms_location;
 	int use_ds3_ds4;
 	int screen_mode;
-	int reserved[2];
+	int skip_logo;
+	int reserved;
 } AdrenalineConfig;
 
 extern AdrenalineConfig config;

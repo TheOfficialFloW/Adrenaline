@@ -85,6 +85,7 @@ static MenuEntry settings_entries[] = {
 	{ "Screen Mode (PS1)", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.screen_mode, screen_mode_options, sizeof(screen_mode_options) / sizeof(char **) },
 	{ "Memory Stick Location", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.ms_location, ms_location_options, sizeof(ms_location_options) / sizeof(char **) },
 	{ "Use DS3/DS4 controller", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.use_ds3_ds4, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
+	{ "Skip Adrenaline Boot Logo", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.skip_logo, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
 };
 
 static MenuEntry about_entries[] = {
@@ -236,6 +237,12 @@ void drawMenu() {
 				pgf_draw_text((SCREEN_WIDTH / 2.0f) + 10.0f, y, GREEN, FONT_SIZE, menu_entries[i].options[value]);
 			}
 		}
+		
+		// Info about Original filter
+		if (tab_sel == 2 && menu_sel == 0 && config.graphics_filtering == 0) {
+			char *title = "All graphics related options are not taking effect with the Original rendering mode.";
+			pgf_draw_textf(WINDOW_X + ALIGN_CENTER(WINDOW_WIDTH, vita2d_pgf_text_width(font, FONT_SIZE, title)), FONT_Y_LINE(17), WHITE, FONT_SIZE, title);
+		}
 	} else {
 		drawStates();
 	}
@@ -385,10 +392,6 @@ int AdrenalineDraw(SceSize args, void *argp) {
 	vita2d_init();
 	font = vita2d_load_default_pgf();
 
-	vita2d_texture *fbo = vita2d_create_empty_texture(SCREEN_WIDTH, SCREEN_HEIGHT);
-	if (!fbo)
-		return -1;
-
 	vita2d_texture *psp_tex = vita2d_create_empty_texture(PSP_SCREEN_LINE, PSP_SCREEN_HEIGHT);
 	if (!psp_tex)
 		return -1;
@@ -414,20 +417,15 @@ int AdrenalineDraw(SceSize args, void *argp) {
 
 	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
 
-	while (1) {
-		// Do not draw if dialog is running
-		if (sceCommonDialogIsRunning() || (config.graphics_filtering == 0 && menu_open == 0)) {
-			sceDisplayWaitVblankStart();
-			continue;
-		}
+	// FPS counting
+	SceUInt64 cur_micros = 0, delta_micros = 0, last_micros = 0;
+	uint32_t frames = 0;
+	float fps = 0.0f;
 
+	while (1) {
 		// Draw savestate screen
 		if (adrenaline->savestate_mode != SAVESTATE_MODE_NONE) {
-			vita2d_start_drawing_advanced(fbo, VITA_2D_RESET_POOL | VITA_2D_SCENE_FRAGMENT_SET_DEPENDENCY);
-			vita2d_clear_screen();
-			vita2d_end_drawing();
-
-			vita2d_start_drawing_advanced(NULL, VITA_2D_SCENE_VERTEX_WAIT_FOR_DEPENDENCY);
+			vita2d_start_drawing();
 			vita2d_clear_screen();
 
 			char *title = "Please wait...";
@@ -444,8 +442,14 @@ int AdrenalineDraw(SceSize args, void *argp) {
 			continue;
 		}
 
+		// Do not draw if dialog is running
+		if (sceCommonDialogIsRunning() || (config.graphics_filtering == 0 && menu_open == 0)) {
+			sceDisplayWaitVblankStart();
+			continue;
+		}
+
 		// Draw display
-		vita2d_start_drawing_advanced(fbo, VITA_2D_RESET_POOL | VITA_2D_SCENE_FRAGMENT_SET_DEPENDENCY);
+		vita2d_start_drawing();
 		vita2d_clear_screen();
 
 		// Select shader
@@ -480,34 +484,38 @@ int AdrenalineDraw(SceSize args, void *argp) {
 
 			// Draw psp screen
 			float scale = 2.00f;
-			getPspScreenSize(&scale);
+			if (config.no_smooth_graphics != 0)
+				getPspScreenSize(&scale);
 			vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, scale, scale, 0.0, 240.0, 136.0);
 		} else {
 			// Draw pops screen
 			float scale_x = 1.0f;
 			float scale_y = 1.0f;
-			getPopsScreenSize(&scale_x, &scale_y);
+			if (config.no_smooth_graphics != 0)
+				getPopsScreenSize(&scale_x, &scale_y);
 			vita2d_draw_texture_scale_rotate_hotspot(pops_tex, 480.0f, 272.0f, scale_x, scale_y, 0.0, 480.0, 272.0);
 		}
-
-		vita2d_end_drawing();
-
-		// Start drawing fbo
-		vita2d_start_drawing_advanced(NULL, VITA_2D_SCENE_VERTEX_WAIT_FOR_DEPENDENCY);
-		vita2d_clear_screen();
-		vita2d_texture_set_program(opaque_shader->vertexProgram, opaque_shader->fragmentProgram);
-		vita2d_texture_set_wvp(opaque_shader->wvpParam);
-		vita2d_texture_set_vertexInput(&opaque_shader->vertexInput);
-		vita2d_texture_set_fragmentInput(&opaque_shader->fragmentInput);
-		vita2d_draw_texture(fbo, 0, 0);
 
 		// Draw Menu
 		if (menu_open)
 			drawMenu();
 
+		// Show FPS
+		// pgf_draw_textf(0.0f, 0.0f, WHITE, FONT_SIZE, "FPS: %.2f", fps);
+
+		// Calculate FPS
+		cur_micros = sceKernelGetProcessTimeWide();
+		if (cur_micros >= (last_micros + 1000000)) {
+			delta_micros = cur_micros - last_micros;
+			last_micros = cur_micros;
+			fps = (frames/(double)delta_micros)*1000000.0f;
+			frames = 0;
+		}
+
 		// End drawing
 		vita2d_end_drawing();
 		vita2d_swap_buffers();
+		frames++;
 
 		// Sync
 		if (!adrenaline->pops_mode || adrenaline->draw_psp_screen_in_pops)
