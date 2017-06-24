@@ -294,6 +294,8 @@ int AdrenalineCompat(SceSize args, void *argp) {
 				usbdevice_modid = -1;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_PAUSE_POPS) {
 			ScePspemuPausePops(1);
+			sceDisplayWaitVblankStart();
+ +			sceDisplayWaitVblankStart();
 			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
 			adrenaline->draw_psp_screen_in_pops = 1;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
@@ -301,6 +303,8 @@ int AdrenalineCompat(SceSize args, void *argp) {
 		} else if (request->cmd == ADRENALINE_VITA_CMD_RESUME_POPS) {
 			if (!menu_open)
 				ScePspemuPausePops(0);
+			sceDisplayWaitVblankStart();
+ +			sceDisplayWaitVblankStart();
 			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
 			adrenaline->draw_psp_screen_in_pops = 0;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
