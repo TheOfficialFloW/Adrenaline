@@ -484,14 +484,14 @@ int AdrenalineDraw(SceSize args, void *argp) {
 
 			// Draw psp screen
 			float scale = 2.00f;
-			if (config.no_smooth_graphics != 0)
+			if (config.graphics_filtering != 0)
 				getPspScreenSize(&scale);
 			vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, scale, scale, 0.0, 240.0, 136.0);
 		} else {
 			// Draw pops screen
 			float scale_x = 1.0f;
 			float scale_y = 1.0f;
-			if (config.no_smooth_graphics != 0)
+			if (config.graphics_filtering != 0)
 				getPopsScreenSize(&scale_x, &scale_y);
 			vita2d_draw_texture_scale_rotate_hotspot(pops_tex, 480.0f, 272.0f, scale_x, scale_y, 0.0, 480.0, 272.0);
 		}
