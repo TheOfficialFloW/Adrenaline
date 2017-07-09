@@ -1,4 +1,4 @@
-all: _payloadex _rebootex _binary _systemctrl _popcorn _vshctrl _satelite _recovery bin2h
+all: _payloadex _rebootex _binary _systemctrl _popcorn _vshctrl _inferno _satelite _recovery bin2h
 
 _payloadex:
 	make -C payloadex clean
@@ -42,6 +42,14 @@ _vshctrl:
 	cp "vshctrl/vshctrl.prx" "flash0/kd/vshctrl.prx"
 	make -C vshctrl clean
 	bin2c flash0/kd/vshctrl.prx ../user/files/vshctrl.h vshctrl
+
+_inferno:
+	make -C inferno clean
+	make -C inferno
+	psp-packer inferno/inferno.prx
+	cp "inferno/inferno.prx" "flash0/kd/inferno.prx"
+	make -C inferno clean
+	bin2c flash0/kd/inferno.prx ../user/files/inferno.h inferno
 
 _satelite:
 	make -C satelite clean
