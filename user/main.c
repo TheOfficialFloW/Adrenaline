@@ -68,11 +68,6 @@ int (* ScePspemuConvertStatTimeToLocaltime)(SceIoStat *stat);
 int (* ScePspemuSettingsHandler)(int a1, int a2, int a3, int a4);
 int (* ScePspemuPausePops)(int pause);
 
-int (* sceCompatGetDevInf)(SceIoDevInfo *info);
-int (* sceCompatCache)(int mode, uint32_t addr, uint32_t size);
-int (* sceCompatLCDCSync)();
-int (* sceCompatInterrupt)(int num);
-
 static SceUID hooks[16];
 static SceUID uids[64];
 static int n_hooks = 0;
@@ -119,11 +114,6 @@ void GetFunctions() {
 	ScePspemuConvertStatTimeToUtc = (void *)text_addr + 0x8664 + 0x1;
 	ScePspemuConvertStatTimeToLocaltime = (void *)text_addr + 0x8680 + 0x1;
 	ScePspemuPausePops = (void *)text_addr + 0x300C0 + 0x1;
-
-	sceCompatGetDevInf = (void *)text_addr + 0x6ECC;
-	sceCompatCache = (void *)text_addr + 0x6F3C;
-	sceCompatLCDCSync = (void *)text_addr + 0x700C;
-	sceCompatInterrupt = (void *)text_addr + 0x705C;
 }
 
 void SendAdrenalineRequest(int cmd) {
@@ -295,7 +285,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 		} else if (request->cmd == ADRENALINE_VITA_CMD_PAUSE_POPS) {
 			ScePspemuPausePops(1);
 			sceDisplayWaitVblankStart();
- +			sceDisplayWaitVblankStart();
+ 			sceDisplayWaitVblankStart();
 			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
 			adrenaline->draw_psp_screen_in_pops = 1;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
@@ -304,7 +294,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 			if (!menu_open)
 				ScePspemuPausePops(0);
 			sceDisplayWaitVblankStart();
- +			sceDisplayWaitVblankStart();
+ 			sceDisplayWaitVblankStart();
 			SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
 			adrenaline->draw_psp_screen_in_pops = 0;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
@@ -489,7 +479,7 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
 
 	// Clear 0x8A000000 memory
 	sceDmacMemset((void *)0x63000000, 0, 16 * 1024 * 1024);
-	sceCompatCache(2, 0x63000000, 16 * 1024 * 1024);
+	sceCompatCache(2, (void *)0x63000000, 16 * 1024 * 1024);
 
 	return TAI_CONTINUE(int, sceCompatWaitSpecialRequestRef, mode);
 }

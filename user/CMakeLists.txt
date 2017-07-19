@@ -35,8 +35,9 @@ target_link_libraries(adrenaline
   SceAppMgr_stub
   SceAppUtil_stub
   SceAudio_stub
-  SceCtrl_stub
   SceCommonDialog_stub
+  SceCompat_stub
+  SceCtrl_stub
   SceDisplay_stub
   SceKernelDmacMgr_stub
   SceGxm_stub

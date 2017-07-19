@@ -102,16 +102,6 @@ typedef struct {
 	int32_t unk_4; //0x4
 } SceKermitInterrupt; //0x8
 
-typedef struct SceCtrlDataPsp {
-	unsigned int TimeStamp; // 0x00
-	unsigned int Buttons; // 0x04
-	unsigned char Lx; // 0x05
-	unsigned char Ly; // 0x06
-	unsigned char Rx; // 0x07
-	unsigned char Ry; // 0x08
-	unsigned char Rsrv[4]; // 0x9
-} SceCtrlDataPsp;
-
 enum SaveStateModes {
 	SAVESTATE_MODE_NONE,
 	SAVESTATE_MODE_SAVE,
