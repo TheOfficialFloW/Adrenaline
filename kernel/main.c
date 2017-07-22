@@ -98,26 +98,26 @@ static int sm_stuff_patched() {
 	return TAI_CONTINUE(int, sm_stuff_ref);
 }
 
-static SceCtrlData pad;
-
 int kuCtrlPeekBufferPositive(int port, SceCtrlData *pad_data, int count) {
 	uint32_t state;
 	ENTER_SYSCALL(state);
 
-	ksceKernelMemcpyKernelToUser((uint32_t)pad_data, &pad, sizeof(SceCtrlData));
+	SceCtrlData pad;
+	uint32_t off;
+
+	// set cpu offset to zero
+	asm volatile ("mrc p15, 0, %0, c13, c0, 4" : "=r" (off));
+	asm volatile ("mcr p15, 0, %0, c13, c0, 4" :: "r" (0));
+
+	int res = ksceCtrlPeekBufferPositive(port, &pad, count);
+
+	// restore cpu offset
+	asm volatile ("mcr p15, 0, %0, c13, c0, 4" :: "r" (off));
+
+	ksceKernelMemcpyKernelToUser((uintptr_t)pad_data, &pad, sizeof(SceCtrlData));
 
 	EXIT_SYSCALL(state);
-
-	return 0;
-}
-
-static int AdrenalineCtrl(SceSize args, void *argp) {
-	while (1) {
-		ksceCtrlPeekBufferPositive(0, &pad, 1);
-		ksceKernelDelayThread(1000);
-	}
-
-	return ksceKernelExitDeleteThread(0);
+	return res;
 }
 
 void _start() __attribute__ ((weak, alias("module_start")));
@@ -141,11 +141,6 @@ int module_start(SceSize args, void *argp) {
 
 	// SceGrabForDriver
 	hooks[n_hooks++] = taiHookFunctionImportForKernel(KERNEL_PID, &SceGrabForDriver_E9C25A28_ref, "SceCompat", 0x81C54BED, 0xE9C25A28, SceGrabForDriver_E9C25A28_patched);
-
-	// Create and start AdrenalineCtrl thread
-	SceUID thid = ksceKernelCreateThread("AdrenalineCtrl", AdrenalineCtrl, 0x10000100, 0x1000, 0, 0, NULL);
-	if (thid >= 0)
-		ksceKernelStartThread(thid, 0, NULL);
 
 	return SCE_KERNEL_START_SUCCESS;
 }

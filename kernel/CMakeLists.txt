@@ -40,7 +40,7 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/stubs/
 )
 
 add_custom_target(copy
-  COMMAND cp adrenaline.skprx G:/adrenaline/adrenaline.skprx
+  COMMAND cp adrenaline.skprx F:/adrenaline/adrenaline.skprx
   DEPENDS adrenaline.skprx
 )
 
