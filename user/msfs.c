@@ -603,8 +603,8 @@ static int ScePspemuMsfsDevctl(const char *dev, unsigned int cmd, void *indata, 
 		if (res < 0)
 			return res;
 
-		uint32_t max_clusters = ScePspemuDevide(devinfo.max_size, devinfo.cluster_size);
-		uint32_t free_clusters = ScePspemuDevide(devinfo.free_size, devinfo.cluster_size);
+		uint32_t max_clusters = ScePspemuDivide(devinfo.max_size, devinfo.cluster_size);
+		uint32_t free_clusters = ScePspemuDivide(devinfo.free_size, devinfo.cluster_size);
 
 		ScePspemuIoDevInfo *pspemu_devinfo = (ScePspemuIoDevInfo *)outdata;
 		pspemu_devinfo->max_clusters = max_clusters;

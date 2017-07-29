@@ -66,7 +66,7 @@ typedef struct {
 extern AdrenalineConfig config;
 extern SceUID usbdevice_modid;
 
-extern int (* ScePspemuDevide)(uint64_t x, uint64_t y);
+extern int (* ScePspemuDivide)(uint64_t x, uint64_t y);
 extern int (* ScePspemuErrorExit)(int error);
 extern int (* ScePspemuConvertAddress)(uint32_t addr, int mode, uint32_t cache_size);
 extern int (* ScePspemuWritebackCache)(void *addr, int size);

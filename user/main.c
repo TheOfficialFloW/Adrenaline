@@ -57,7 +57,7 @@
 
 int _newlib_heap_size_user = 8 * 1024 * 1024;
 
-int (* ScePspemuDevide)(uint64_t x, uint64_t y);
+int (* ScePspemuDivide)(uint64_t x, uint64_t y);
 int (* ScePspemuErrorExit)(int error);
 int (* ScePspemuConvertAddress)(uint32_t addr, int mode, uint32_t cache_size);
 int (* ScePspemuWritebackCache)(void *addr, int size);
@@ -106,7 +106,7 @@ AdrenalineConfig config;
 extern int menu_open;
 
 void GetFunctions() {
-	ScePspemuDevide						= (void *)(text_addr + 0x39F0 + 0x1);
+	ScePspemuDivide						= (void *)(text_addr + 0x39F0 + 0x1);
 	ScePspemuErrorExit					= (void *)(text_addr + 0x4104 + 0x1);
 	ScePspemuConvertAddress				= (void *)(text_addr + 0x6364 + 0x1);
 	ScePspemuWritebackCache				= (void *)(text_addr + 0x6490 + 0x1);
