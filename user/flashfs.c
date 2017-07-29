@@ -141,7 +141,7 @@ int ScePspemuBuildFlash0() {
 	memcpy(flash0_package, flash0_data, SCE_PSPEMU_FLASH0_PACKAGE_SIZE);
 
 	// Copy to 0x8B000000
-	void *flash0_package_psp = (void *)ScePspemuConvertAddress(SCE_PSPEMU_EXTRA_MEMORY, SCE_PSPEMU_CACHE_INVALIDATE, SCE_PSPEMU_FLASH0_PACKAGE_SIZE);
+	void *flash0_package_psp = (void *)ScePspemuConvertAddress(SCE_PSPEMU_EXTRA_MEMORY, SCE_COMPAT_CACHE_INVALIDATE, SCE_PSPEMU_FLASH0_PACKAGE_SIZE);
 	memcpy(flash0_package_psp, flash0_data, SCE_PSPEMU_FLASH0_PACKAGE_SIZE);
 	ScePspemuWritebackCache(flash0_package_psp, SCE_PSPEMU_FLASH0_PACKAGE_SIZE);
 

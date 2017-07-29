@@ -104,8 +104,8 @@ void readPad() {
 	SceCtrlData home;
 	kuCtrlPeekBufferPositive(0, &home, 1);
 
-	pad.buttons &= ~SCE_CTRL_PS_BTN;
-	pad.buttons |= (home.buttons & SCE_CTRL_PS_BTN);
+	pad.buttons &= ~SCE_CTRL_PSBUTTON;
+	pad.buttons |= (home.buttons & SCE_CTRL_PSBUTTON);
 
 	old_buttons = current_buttons;
 	current_buttons = pad.buttons;

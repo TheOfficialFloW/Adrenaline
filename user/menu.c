@@ -147,7 +147,7 @@ static int EnterAdrenalineMenu() {
 	menu_open = 1;
 	open_official_settings = 0;
 
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 	if (adrenaline->pops_mode)
 		ScePspemuPausePops(1);
 
@@ -170,7 +170,7 @@ int ExitAdrenalineMenu() {
 		WriteFile("ux0:adrenaline/adrenaline.bin", &config, sizeof(AdrenalineConfig));
 	}
 
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 	if (adrenaline->pops_mode)
 		ScePspemuPausePops(0);
 
@@ -251,7 +251,7 @@ void drawMenu() {
 void ctrlMenu() {
 	readPad();
 
-	if (released_buttons & SCE_CTRL_PS_BTN) {
+	if (released_buttons & SCE_CTRL_PSBUTTON) {
 		ExitAdrenalineMenu();
 	}
 
@@ -415,7 +415,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
 	if (settings_semaid < 0)
 		return settings_semaid;
 
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 
 	// FPS counting
 	SceUInt64 cur_micros = 0, delta_micros = 0, last_micros = 0;
@@ -536,7 +536,6 @@ int ScePspemuCustomSettingsHandler(int a1, int a2, int a3, int a4) {
 		sceKernelWaitSema(settings_semaid, 1, NULL);
 
 		if (!open_official_settings) {
-			int (* ScePspemuSetDisplayConfig)() = (void *)text_addr + 0x20E50 + 0x1;
 			ScePspemuSetDisplayConfig();
 			return 0;
 		}

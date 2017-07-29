@@ -87,7 +87,7 @@ int saveFrameBuffer(SceUID fd) {
 
 	int i = 0;
 
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 
 	if (adrenaline->pops_mode) {
 		int y;
@@ -134,7 +134,7 @@ void saveState(int num) {
 		sceIoClose(fd);
 	}
 	
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE | SCE_PSPEMU_CACHE_INVALIDATE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE | SCE_COMPAT_CACHE_INVALIDATE, ADRENALINE_SIZE);
 	adrenaline->num = num;
 	ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 
@@ -143,7 +143,7 @@ void saveState(int num) {
 }
 
 void loadState(int num) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE | SCE_PSPEMU_CACHE_INVALIDATE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE | SCE_COMPAT_CACHE_INVALIDATE, ADRENALINE_SIZE);
 	adrenaline->num = num;
 	ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 
@@ -386,10 +386,8 @@ void ctrlStates() {
 		if (hold_buttons & SCE_CTRL_UP) {
 			if (rel_pos > 0) {
 				rel_pos--;
-			} else {
-				if (base_pos > 0) {
-					base_pos--;
-				}
+			} else if (base_pos > 0) {
+				base_pos--;
 			}
 		}
 	
@@ -397,10 +395,8 @@ void ctrlStates() {
 			if (rel_pos < MAX_STATES-1) {
 				if (rel_pos < MAX_POSITION-1) {
 					rel_pos++;
-				} else {
-					if (base_pos+rel_pos < MAX_STATES-1) {
-						base_pos++;
-					}
+				} else if (base_pos+rel_pos < MAX_STATES-1) {
+					base_pos++;
 				}
 			}
 		}

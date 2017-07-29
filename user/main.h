@@ -29,11 +29,6 @@
 #define MAX_PATH_LENGTH 1024
 #define MAX_NAME_LENGTH 256
 
-#define SCE_PSPEMU_CACHE_NONE 0x1
-#define SCE_PSPEMU_CACHE_INVALIDATE 0x2
-
-#define SCE_CTRL_PS_BTN 0x00010000
-
 #define ADRENALINE_CFG_MAGIC_1 0x31483943
 #define ADRENALINE_CFG_MAGIC_2 0x334F4E33
 
@@ -80,6 +75,7 @@ extern int (* ScePspemuKermitSendResponse)(int mode, SceKermitRequest *request, 
 extern int (* ScePspemuConvertStatTimeToUtc)(SceIoStat *stat);
 extern int (* ScePspemuConvertStatTimeToLocaltime)(SceIoStat *stat);
 extern int (* ScePspemuSettingsHandler)(int a1, int a2, int a3, int a4);
+extern int (* ScePspemuSetDisplayConfig)();
 extern int (* ScePspemuPausePops)(int pause);
 
 extern uint32_t text_addr, text_size, data_addr, data_size;

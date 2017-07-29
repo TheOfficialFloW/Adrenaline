@@ -66,6 +66,7 @@ int (* ScePspemuKermitSendResponse)(int mode, SceKermitRequest *request, uint64_
 int (* ScePspemuConvertStatTimeToUtc)(SceIoStat *stat);
 int (* ScePspemuConvertStatTimeToLocaltime)(SceIoStat *stat);
 int (* ScePspemuSettingsHandler)(int a1, int a2, int a3, int a4);
+int (* ScePspemuSetDisplayConfig)();
 int (* ScePspemuPausePops)(int pause);
 
 static SceUID hooks[16];
@@ -105,19 +106,20 @@ AdrenalineConfig config;
 extern int menu_open;
 
 void GetFunctions() {
-	ScePspemuDevide = (void *)text_addr + 0x39F0 + 0x1;
-	ScePspemuErrorExit = (void *)text_addr + 0x4104 + 0x1;
-	ScePspemuConvertAddress = (void *)text_addr + 0x6364 + 0x1;
-	ScePspemuWritebackCache = (void *)text_addr + 0x6490 + 0x1;
-	ScePspemuKermitWaitAndGetRequest = (void *)text_addr + 0x64D0 + 0x1;
-	ScePspemuKermitSendResponse = (void *)text_addr + 0x6560 + 0x1;
-	ScePspemuConvertStatTimeToUtc = (void *)text_addr + 0x8664 + 0x1;
-	ScePspemuConvertStatTimeToLocaltime = (void *)text_addr + 0x8680 + 0x1;
-	ScePspemuPausePops = (void *)text_addr + 0x300C0 + 0x1;
+	ScePspemuDevide						= (void *)(text_addr + 0x39F0 + 0x1);
+	ScePspemuErrorExit					= (void *)(text_addr + 0x4104 + 0x1);
+	ScePspemuConvertAddress				= (void *)(text_addr + 0x6364 + 0x1);
+	ScePspemuWritebackCache				= (void *)(text_addr + 0x6490 + 0x1);
+	ScePspemuKermitWaitAndGetRequest	= (void *)(text_addr + 0x64D0 + 0x1);
+	ScePspemuKermitSendResponse			= (void *)(text_addr + 0x6560 + 0x1);
+	ScePspemuConvertStatTimeToUtc		= (void *)(text_addr + 0x8664 + 0x1);
+	ScePspemuConvertStatTimeToLocaltime	= (void *)(text_addr + 0x8680 + 0x1);
+	ScePspemuSetDisplayConfig			= (void *)(text_addr + 0x20E50 + 0x1);
+	ScePspemuPausePops					= (void *)(text_addr + 0x300C0 + 0x1);
 }
 
 void SendAdrenalineRequest(int cmd) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE | SCE_PSPEMU_CACHE_INVALIDATE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE | SCE_COMPAT_CACHE_INVALIDATE, ADRENALINE_SIZE);
 	adrenaline->psp_cmd = cmd;
 	ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 
@@ -143,12 +145,12 @@ int AdrenalineCompat(SceSize args, void *argp) {
 		SceKermitRequest *request;
 		ScePspemuKermitWaitAndGetRequest(KERMIT_MODE_EXTRA_2, &request);
 
-		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE | SCE_PSPEMU_CACHE_INVALIDATE, ADRENALINE_SIZE);
+		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE | SCE_COMPAT_CACHE_INVALIDATE, ADRENALINE_SIZE);
 
 		int res = -1;
 		
 		if (request->cmd == ADRENALINE_VITA_CMD_SAVESTATE) {
-			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_PSPEMU_CACHE_NONE, PSP_RAM_SIZE);
+			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_COMPAT_CACHE_NONE, PSP_RAM_SIZE);
 
 			char path[128];
 			makeSaveStatePath(path, adrenaline->num);
@@ -200,7 +202,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 			continue;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_LOADSTATE) {
-			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_PSPEMU_CACHE_INVALIDATE, PSP_RAM_SIZE);
+			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_COMPAT_CACHE_INVALIDATE, PSP_RAM_SIZE);
 
 			char path[128];
 			makeSaveStatePath(path, adrenaline->num);
@@ -349,7 +351,7 @@ static int AdrenalineExit(SceSize args, void *argp) {
 	while (1) {
 		// Double click detection
 		if (menu_open == 0) {
-			if (doubleClick(SCE_CTRL_PS_BTN, 300 * 1000)) {
+			if (doubleClick(SCE_CTRL_PSBUTTON, 300 * 1000)) {
 				stopUsb(usbdevice_modid);
 
 				if (sceAppMgrLaunchAppByName2(app_titleid, NULL, NULL) < 0)
@@ -430,11 +432,11 @@ static int sceCompatWriteSharedCtrlPatched(SceCtrlDataPsp *pad_data) {
 
 	kuCtrlPeekBufferPositive(0, &pad, 1);
 
-	pad_data->Buttons &= ~SCE_CTRL_PS_BTN;
-	pad_data->Buttons |= (pad.buttons & SCE_CTRL_PS_BTN);
+	pad_data->Buttons &= ~SCE_CTRL_PSBUTTON;
+	pad_data->Buttons |= (pad.buttons & SCE_CTRL_PSBUTTON);
 
 	if (menu_open) {
-		pad_data->Buttons = SCE_CTRL_PS_BTN;
+		pad_data->Buttons = SCE_CTRL_PSBUTTON;
 		pad_data->Lx = 128;
 		pad_data->Ly = 128;
 		pad_data->Rx = 128;
@@ -447,11 +449,11 @@ static int sceCompatWriteSharedCtrlPatched(SceCtrlDataPsp *pad_data) {
 static int sceCompatWaitSpecialRequestPatched(int mode) {
 	ScePspemuBuildFlash0();
 
-	uint32_t *m = (uint32_t *)ScePspemuConvertAddress(0x88FC0000, SCE_PSPEMU_CACHE_INVALIDATE, size_payloadex);
+	uint32_t *m = (uint32_t *)ScePspemuConvertAddress(0x88FC0000, SCE_COMPAT_CACHE_INVALIDATE, size_payloadex);
 	memcpy(m, payloadex, size_payloadex);
 	ScePspemuWritebackCache(m, size_payloadex);
 
-	void *n = (void *)ScePspemuConvertAddress(0x88FB0000, SCE_PSPEMU_CACHE_INVALIDATE, 0x100);
+	void *n = (void *)ScePspemuConvertAddress(0x88FB0000, SCE_COMPAT_CACHE_INVALIDATE, 0x100);
 	memset(n, 0, 0x100);
 
 	strcpy((char *)(n+4), app_titleid);
@@ -500,8 +502,6 @@ static SceUID sceKernelCreateThreadPatched(const char *name, SceKernelThreadEntr
 
 	return TAI_CONTINUE(SceUID, sceKernelCreateThreadRef, name, entry, initPriority, stackSize, attr, cpuAffinityMask, option);
 }
-
-// data_addr: 83200200
 
 static int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
 	int res = 0;
@@ -657,8 +657,8 @@ static int ScePspemuGetStartupPngPatched(int num, void *png_buf, int *png_size, 
 static int ScePspemuInitAudioOutPatched() {
 	int res = TAI_CONTINUE(int, ScePspemuInitAudioOutRef);
 
-	int (* ScePspemuInitPops)() = (void *)text_addr + 0x30678 + 0x1;
-	int (* ScePspemuInitPocs)() = (void *)text_addr + 0x227C4 + 0x1;
+	int (* ScePspemuInitPops)() = (void *)(text_addr + 0x30678 + 0x1);
+	int (* ScePspemuInitPocs)() = (void *)(text_addr + 0x227C4 + 0x1);
 
 	res = ScePspemuInitPops();
 	if (res < 0)
@@ -670,7 +670,7 @@ static int ScePspemuInitAudioOutPatched() {
 
 	sceKernelGetMemBlockBase(blockid, (void *)(data_addr + 0x10100));
 
-	int (* sub_811B2390)() = (void *)text_addr + 0x31F90 + 0x1;
+	int (* sub_811B2390)() = (void *)(text_addr + 0x31F90 + 0x1);
 	sub_811B2390(*(uint32_t *)(data_addr + 0x10100), 0x1E000);
 
 	res = ScePspemuInitPocs();
@@ -732,7 +732,7 @@ static int sceCtrlPeekBufferNegative2Patched(int port, SceCtrlData *pad_data, in
 }
 
 static char *ScePspemuGetTitleidPatched() {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 	return adrenaline->titleid;
 }
 
@@ -749,7 +749,7 @@ static SceUID sceIoOpenPatched(const char *file, int flags, SceMode mode) {
 	if (p) {
 		static char new_file[256];
 
-		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 
 		if (strcmp(p+1, "__sce_menuinfo") == 0) {			
 			char *filename = adrenaline->filename;			
@@ -764,7 +764,9 @@ static SceUID sceIoOpenPatched(const char *file, int flags, SceMode mode) {
 					file = new_file;
 				}
 			}
-		} else if (strcmp(p+1, "PARAM.SFO") == 0 || strcmp(p+1, "SCEVMC0.VMP") == 0 || strcmp(p+1, "SCEVMC1.VMP") == 0) {
+		} else if (strcmp(p+1, "PARAM.SFO") == 0 ||
+				   strcmp(p+1, "SCEVMC0.VMP") == 0 ||
+				   strcmp(p+1, "SCEVMC1.VMP") == 0) {
 			snprintf(new_file, sizeof(new_file), "%s/PSP/SAVEDATA/%s/%s", getPspemuMemoryStickLocation(), adrenaline->titleid, p+1);
 			file = new_file;
 		}
@@ -778,9 +780,11 @@ static int sceIoGetstatPatched(const char *file, SceIoStat *stat) {
 	if (p) {
 		static char new_file[256];
 
-		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_PSPEMU_CACHE_NONE, ADRENALINE_SIZE);
+		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 
-		if (strcmp(p+1, "PARAM.SFO") == 0 || strcmp(p+1, "SCEVMC0.VMP") == 0 || strcmp(p+1, "SCEVMC1.VMP") == 0) {
+		if (strcmp(p+1, "PARAM.SFO") == 0 ||
+			strcmp(p+1, "SCEVMC0.VMP") == 0 ||
+			strcmp(p+1, "SCEVMC1.VMP") == 0) {
 			snprintf(new_file, sizeof(new_file), "%s/PSP/SAVEDATA/%s/%s", getPspemuMemoryStickLocation(), adrenaline->titleid, p+1);
 			file = new_file;
 		}
@@ -807,6 +811,8 @@ static int sceDisplaySetFrameBufForCompatPatched(int a1, int a2, int a3, int a4,
 
 	return TAI_CONTINUE(int, sceDisplaySetFrameBufForCompatRef, a1, a2, a3, a4, a5, pParam);
 }
+
+#define PSPEMU_BASE 0x81180400
 
 void _start() __attribute__ ((weak, alias("module_start")));
 int module_start(SceSize args, void *argp) {
@@ -895,7 +901,7 @@ int module_start(SceSize args, void *argp) {
 
 	// Use different mode for ScePspemuRemotePocs
 	uint16_t movs_a1_E = 0x200E;
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A2B34 - 0x81180400, &movs_a1_E, sizeof(movs_a1_E));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A2B34 - PSPEMU_BASE, &movs_a1_E, sizeof(movs_a1_E));
 
 	// g_is_pops patches
 
@@ -904,22 +910,22 @@ int module_start(SceSize args, void *argp) {
 	uint32_t movs_a1_1_nop_opcode = 0xBF002001;
 
 	// Resume stuff. PROBABLY SHOULD DO POPS AND PSP MODE STUFF
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811846F0 - 0x81180400, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811846F0 - PSPEMU_BASE, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
 
 	// Unknown. Mode 4, 5
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81185B2E - 0x81180400, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81185B2E - PSPEMU_BASE, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
 
 	// Set cache address for pops stuff
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81185BC0 - 0x81180400, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81185BC0 - PSPEMU_BASE, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
 
 	// Read savedata and menu info. Should be enabled, otherwise an error will occur
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81185FBA - 0x81180400, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81185FBA - PSPEMU_BASE, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
 
 	// Get app state for pops
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81186052 - 0x81180400, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81186052 - PSPEMU_BASE, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
 
 	// Unknown
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x8118624A - 0x81180400, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x8118624A - PSPEMU_BASE, &movs_a4_1_nop_opcode, sizeof(movs_a4_1_nop_opcode));
 
 	///////////////////////////
 
@@ -928,53 +934,53 @@ int module_start(SceSize args, void *argp) {
 	// Peripheral
 
 	// Use vibration
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81196DF6 - 0x81180400, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81196DF6 - PSPEMU_BASE, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
 
 	// Unknown check for POPS mode
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81196EEC - 0x81180400, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81196EEC - PSPEMU_BASE, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
 
 	// Unknown check for PSP mode. If false return 0x80010089
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81196F6C - 0x81180400, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81196F6C - PSPEMU_BASE, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
 
 	// Unknown check for PSP mode. If false return 0
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81196F86 - 0x81180400, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81196F86 - PSPEMU_BASE, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
 
 	// Unknown check for PSP mode. If false return 0
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x8119703E - 0x81180400, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x8119703E - PSPEMU_BASE, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
 
 	////////////////////
 
 	// Init ScePspemuMenuWork
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x8119865E - 0x81180400, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x8119865E - PSPEMU_BASE, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
 
 	// Read savedata and menu info
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A161E - 0x81180400, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A161E - PSPEMU_BASE, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
 
 	// POPS Settings menu function
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81197F32 - 0x81180400, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81197F32 - PSPEMU_BASE, &movs_a1_1_nop_opcode, sizeof(movs_a1_1_nop_opcode));
 
 	/////////////////////
 
 	// Settings related. Screenshot is enabled/disabled here. Responsible for __sce_menuinfo saving
-	uint32_t bl_is_pops_patched_opcode_1 = encode_bl(text_addr + 0x811A1422 - 0x81180400, text_addr + 0x811A0784 - 0x81180400);
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A1422 - 0x81180400, &bl_is_pops_patched_opcode_1, sizeof(bl_is_pops_patched_opcode_1));
+	uint32_t bl_is_pops_patched_opcode_1 = encode_bl(text_addr + 0x811A1422 - PSPEMU_BASE, text_addr + 0x811A0784 - PSPEMU_BASE);
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A1422 - PSPEMU_BASE, &bl_is_pops_patched_opcode_1, sizeof(bl_is_pops_patched_opcode_1));
 
-	uint32_t bl_is_pops_patched_opcode_2 = encode_bl(text_addr + 0x811A144C - 0x81180400, text_addr + 0x811A0784 - 0x81180400);
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A144C - 0x81180400, &bl_is_pops_patched_opcode_2, sizeof(bl_is_pops_patched_opcode_2));
+	uint32_t bl_is_pops_patched_opcode_2 = encode_bl(text_addr + 0x811A144C - PSPEMU_BASE, text_addr + 0x811A0784 - PSPEMU_BASE);
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A144C - PSPEMU_BASE, &bl_is_pops_patched_opcode_2, sizeof(bl_is_pops_patched_opcode_2));
 
 	// Switch between PSP mode settings and POPS mode settings
-	uint32_t bl_is_pops_patched_opcode_3 = encode_bl(text_addr + 0x81197FEA - 0x81180400, text_addr + 0x811A0784 - 0x81180400);
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81197FEA - 0x81180400, &bl_is_pops_patched_opcode_3, sizeof(bl_is_pops_patched_opcode_3));
+	uint32_t bl_is_pops_patched_opcode_3 = encode_bl(text_addr + 0x81197FEA - PSPEMU_BASE, text_addr + 0x811A0784 - PSPEMU_BASE);
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x81197FEA - PSPEMU_BASE, &bl_is_pops_patched_opcode_3, sizeof(bl_is_pops_patched_opcode_3));
 
 	// Draw dialog on PSP screen or POPS screen
-	uint32_t bl_is_pops_patched_opcode_4 = encode_bl(text_addr + 0x811987A4 - 0x81180400, text_addr + 0x811A0784 - 0x81180400);
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811987A4 - 0x81180400, &bl_is_pops_patched_opcode_4, sizeof(bl_is_pops_patched_opcode_4));
+	uint32_t bl_is_pops_patched_opcode_4 = encode_bl(text_addr + 0x811987A4 - PSPEMU_BASE, text_addr + 0x811A0784 - PSPEMU_BASE);
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811987A4 - PSPEMU_BASE, &bl_is_pops_patched_opcode_4, sizeof(bl_is_pops_patched_opcode_4));
 
 	// ctrlEmulation. If not patched, buttons assignment in ps1emu don't work
-	uint32_t bl_is_pops_patched_opcode_5 = encode_bl(text_addr + 0x811A0B10 - 0x81180400, text_addr + 0x811A0784 - 0x81180400);
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0B10 - 0x81180400, &bl_is_pops_patched_opcode_5, sizeof(bl_is_pops_patched_opcode_5));
+	uint32_t bl_is_pops_patched_opcode_5 = encode_bl(text_addr + 0x811A0B10 - PSPEMU_BASE, text_addr + 0x811A0784 - PSPEMU_BASE);
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0B10 - PSPEMU_BASE, &bl_is_pops_patched_opcode_5, sizeof(bl_is_pops_patched_opcode_5));
 
-	// Use available code memory at text_addr + 0x811A0784 - 0x81180400 (ScePspemuInitTitleSpecificInfo)
+	// Use available code memory at text_addr + 0x811A0784 - PSPEMU_BASE (ScePspemuInitTitleSpecificInfo)
 	// For custom function: isPopsPatched
 	uint32_t isPopsPatched[4];
 	uint32_t pops_mode_offset = CONVERT_ADDRESS(ADRENALINE_ADDRESS) + offsetof(SceAdrenaline, pops_mode);
@@ -982,16 +988,16 @@ int module_start(SceSize args, void *argp) {
 	isPopsPatched[1] = encode_movt(0, pops_mode_offset >> 0x10);
 	isPopsPatched[2] = 0xBF006800; // ldr a1, [a1]
 	isPopsPatched[3] = 0xBF004770; // bx lr
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0784 - 0x81180400, isPopsPatched, sizeof(isPopsPatched));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0784 - PSPEMU_BASE, isPopsPatched, sizeof(isPopsPatched));
 
 	if (!sceKernelIsPSVitaTV()) {
 		// Fake isVitaTV for pops ctrl
-		uint32_t bl_is_vita_tv_patched_opcode_1 = encode_bl(text_addr + 0x811AF9BC - 0x81180400, text_addr + 0x811A0794 - 0x81180400);
-		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811AF9BC - 0x81180400, &bl_is_vita_tv_patched_opcode_1, sizeof(bl_is_vita_tv_patched_opcode_1));
-		uint32_t bl_is_vita_tv_patched_opcode_2 = encode_bl(text_addr + 0x811AFB4E - 0x81180400, text_addr + 0x811A0794 - 0x81180400);
-		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811AFB4E - 0x81180400, &bl_is_vita_tv_patched_opcode_2, sizeof(bl_is_vita_tv_patched_opcode_2));
+		uint32_t bl_is_vita_tv_patched_opcode_1 = encode_bl(text_addr + 0x811AF9BC - PSPEMU_BASE, text_addr + 0x811A0794 - PSPEMU_BASE);
+		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811AF9BC - PSPEMU_BASE, &bl_is_vita_tv_patched_opcode_1, sizeof(bl_is_vita_tv_patched_opcode_1));
+		uint32_t bl_is_vita_tv_patched_opcode_2 = encode_bl(text_addr + 0x811AFB4E - PSPEMU_BASE, text_addr + 0x811A0794 - PSPEMU_BASE);
+		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811AFB4E - PSPEMU_BASE, &bl_is_vita_tv_patched_opcode_2, sizeof(bl_is_vita_tv_patched_opcode_2));
 
-		// Use available code memory at text_addr + 0x811A0794 - 0x81180400 (ScePspemuInitTitleSpecificInfo)
+		// Use available code memory at text_addr + 0x811A0794 - PSPEMU_BASE (ScePspemuInitTitleSpecificInfo)
 		// For custom function: isVitaTVPatched
 		uint32_t isVitaTVPatched[4];
 		uint32_t use_ds3_ds4_offset = (uint32_t)&config.use_ds3_ds4;
@@ -999,13 +1005,13 @@ int module_start(SceSize args, void *argp) {
 		isVitaTVPatched[1] = encode_movt(0, use_ds3_ds4_offset >> 0x10);
 		isVitaTVPatched[2] = 0xBF006800; // ldr a1, [a1]
 		isVitaTVPatched[3] = 0xBF004770; // bx lr
-		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0794 - 0x81180400, isVitaTVPatched, sizeof(isVitaTVPatched));
+		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0794 - PSPEMU_BASE, isVitaTVPatched, sizeof(isVitaTVPatched));
 	}
 
 	// Fake vita mode for ctrlEmulation
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0B3C - 0x81180400, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0C4E - 0x81180400, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
-	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811B05DC - 0x81180400, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0B3C - PSPEMU_BASE, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811A0C4E - PSPEMU_BASE, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
+	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x811B05DC - PSPEMU_BASE, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
 
 	return SCE_KERNEL_START_SUCCESS;
 }
