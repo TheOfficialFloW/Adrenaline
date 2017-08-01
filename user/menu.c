@@ -167,7 +167,10 @@ int ExitAdrenalineMenu() {
 	if (changed) {
 		config.magic[0] = ADRENALINE_CFG_MAGIC_1;
 		config.magic[1] = ADRENALINE_CFG_MAGIC_2;
-		WriteFile("ux0:adrenaline/adrenaline.bin", &config, sizeof(AdrenalineConfig));
+
+		char config_loc[MAX_PATH_LENGTH];
+		snprintf(config_loc,sizeof(config_loc),"%s/%s",getAdrenalineLocation(),"adrenaline.bin");
+		WriteFile(config_loc, &config, sizeof(AdrenalineConfig));
 	}
 
 	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);

@@ -141,7 +141,8 @@ void Installer() {
 	// Open file
 	SceUID fd = sceIoOpen("ms0:/__ADRENALINE__/661.PBP", PSP_O_RDONLY, 0);
 	if (fd < 0) {
-		printf("Cannot find ux0:adrenaline/661.PBP.\n");
+		printf("Cannot find ux0:adrenaline/661.PBP.\n"
+				"Cannot find ur0:adrenaline/661.PBP.\n");
 		goto EXIT;
 	}
 

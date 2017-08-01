@@ -39,6 +39,7 @@ void getDateString(char string[24], int date_format, SceDateTime *time);
 void SetPspemuFrameBuffer(void *base);
 
 char *getPspemuMemoryStickLocation();
+char *getAdrenalineLocation();
 
 uint32_t encode_movw(uint8_t rd, uint16_t imm16);
 uint32_t encode_movt(uint8_t rd, uint16_t imm16);

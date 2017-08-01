@@ -36,6 +36,10 @@
 #define MEMORY_STICK_LOCATION_UR0 1
 #define MEMORY_STICK_LOCATION_IMC0 2
 
+#define ADRENALINE_LOCATION_UX0 "ux0:adrenaline"
+#define ADRENALINE_LOCATION_UR0 "ur0:adrenaline"
+#define ADRENALINE_LOCATION_UMA0 "uma0:adrenaline"
+
 enum AdrenalineScreenSizes {
 	SCREEN_SIZE_2_00,
 	SCREEN_SIZE_1_75,
