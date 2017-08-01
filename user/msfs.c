@@ -37,7 +37,7 @@ static void buildPspemuMsfsPath(char *out_path, const char *in_path) {
 		in_path++;
 
 	if (strncmp(in_path, "__ADRENALINE__", 14) == 0) {
-		snprintf(out_path, MAX_PATH_LENGTH, "ux0:adrenaline%s", in_path+14);
+		snprintf(out_path, MAX_PATH_LENGTH, "%s%s", getAdrenalineLocation(), in_path+14);
 	} else {
 		snprintf(out_path, MAX_PATH_LENGTH, "%s/%s", getPspemuMemoryStickLocation(), in_path);
 	}

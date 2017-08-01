@@ -211,6 +211,18 @@ char *getPspemuMemoryStickLocation() {
 	}
 }
 
+char *getAdrenalineLocation() {
+	SceIoStat stat;
+	memset(&stat, 0, sizeof(SceIoStat));
+	if (!sceIoGetstat(ADRENALINE_LOCATION_UX0"/adrenaline.skprx", &stat) && !sceIoGetstat(ADRENALINE_LOCATION_UX0"/adrenaline.suprx", &stat))
+		return ADRENALINE_LOCATION_UX0;
+	memset(&stat, 0, sizeof(SceIoStat));
+	if (!sceIoGetstat(ADRENALINE_LOCATION_UR0"/adrenaline.suprx", &stat) && !sceIoGetstat(ADRENALINE_LOCATION_UR0"/adrenaline.suprx", &stat))
+		return ADRENALINE_LOCATION_UR0;
+
+	return ADRENALINE_LOCATION_UMA0;
+}
+
 #define THUMB_SHUFFLE(x) ((((x) & 0xFFFF0000) >> 16) | (((x) & 0xFFFF) << 16))
 
 uint32_t encode_movw(uint8_t rd, uint16_t imm16) {

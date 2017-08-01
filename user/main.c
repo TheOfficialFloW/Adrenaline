@@ -271,7 +271,11 @@ int AdrenalineCompat(SceSize args, void *argp) {
 						sceIoClose(fd);
 				}
 
-				usbdevice_modid = startUsb("ux0:adrenaline/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
+				// Get adrenaline usbdevice location
+				char usbdevice_loc[MAX_PATH_LENGTH];
+				snprintf(usbdevice_loc,sizeof(usbdevice_loc),"%s/%s",getAdrenalineLocation(),"usbdevice.skprx");
+
+				usbdevice_modid = startUsb(usbdevice_loc, path, SCE_USBSTOR_VSTOR_TYPE_FAT);
 
 				// Response
 				res = (usbdevice_modid < 0) ? usbdevice_modid : 0;
@@ -464,9 +468,13 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
 	if (pad.buttons & SCE_CTRL_RTRIGGER)
 		((uint32_t *)n)[0] = 4; // Recovery mode
 
+
+	char flash0_loc[MAX_PATH_LENGTH];
+	snprintf(flash0_loc,sizeof(flash0_loc),"%s/%s",getAdrenalineLocation(),"flash0");
+
 	SceIoStat stat;
 	memset(&stat, 0, sizeof(SceIoStat));
-	if (sceIoGetstat("ux0:adrenaline/flash0", &stat) < 0)
+	if (sceIoGetstat(flash0_loc, &stat) < 0)
 		((uint32_t *)n)[0] = 4; // Recovery mode
 
 	ScePspemuWritebackCache(n, 0x100);
@@ -824,9 +832,13 @@ int module_start(SceSize args, void *argp) {
 	// Init vita newlib
 	_init_vita_newlib();
 
+	// Get adrenaline config location
+	char config_loc[MAX_PATH_LENGTH];
+	snprintf(config_loc,sizeof(config_loc),"%s/%s",getAdrenalineLocation(),"adrenaline.bin");
+
 	// Read config
 	memset(&config, 0, sizeof(AdrenalineConfig));
-	ReadFile("ux0:adrenaline/adrenaline.bin", &config, sizeof(AdrenalineConfig));
+	ReadFile(config_loc, &config, sizeof(AdrenalineConfig));
 
 	// Use ux0 if imc0 is unavailable
 	if (config.ms_location == MEMORY_STICK_LOCATION_IMC0 && !hasImc0())
