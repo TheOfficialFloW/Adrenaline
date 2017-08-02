@@ -167,9 +167,6 @@ int AdrenalineCompat(SceSize args, void *argp) {
 				header.descriptors_offset = header.screenshot_offset + header.screenshot_size;
 				header.descriptors_size = MAX_DESCRIPTORS * sizeof(ScePspemuMsfsDescriptor);
 				header.ram_part1_offset = header.descriptors_offset + header.descriptors_size;
-				// header.ram_part2_offset = header.ram_part1_offset + ram_part1_size;
-				// header.ram_part1_size = compressed_size_part1;
-				// header.ram_part1_siz2 = compressed_size_part2;
 				header.sp = adrenaline->sp;
 				header.ra = adrenaline->ra;
 				strcpy(header.title, adrenaline->title);
@@ -260,6 +257,8 @@ int AdrenalineCompat(SceSize args, void *argp) {
 					path = "sdstor0:int-lp-ign-user";
 				} else if (config.ms_location == MEMORY_STICK_LOCATION_IMC0) {
 					path = "sdstor0:int-lp-ign-userext";
+				} else if (config.ms_location == MEMORY_STICK_LOCATION_UMA0) {
+					path = "sdstor0:uma-pp-act-a";
 				} else {
 					path = "sdstor0:xmc-lp-ign-userext";
 
@@ -827,10 +826,6 @@ int module_start(SceSize args, void *argp) {
 	// Read config
 	memset(&config, 0, sizeof(AdrenalineConfig));
 	ReadFile("ur0:adrenaline/adrenaline.bin", &config, sizeof(AdrenalineConfig));
-
-	// Use ux0 if imc0 is unavailable
-	if (config.ms_location == MEMORY_STICK_LOCATION_IMC0 && !hasImc0())
-		config.ms_location = MEMORY_STICK_LOCATION_UX0;
 
 	// Tai module info
 	tai_module_info_t tai_info;

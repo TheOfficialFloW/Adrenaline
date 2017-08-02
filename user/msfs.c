@@ -595,10 +595,14 @@ static int ScePspemuMsfsDevctl(const char *dev, unsigned int cmd, void *indata, 
 			case MEMORY_STICK_LOCATION_UR0:
 				path = "ur0:";
 				break;
-			default:
+			case MEMORY_STICK_LOCATION_IMC0:
 				path = "imc0:";
 				break;
+			case MEMORY_STICK_LOCATION_UMA0:
+				path = "uma0:";
+				break;
 		}
+
 		int res = sceIoDevctl(path, 0x3001, NULL, 0, &devinfo, sizeof(SceIoDevInfo));
 		if (res < 0)
 			return res;

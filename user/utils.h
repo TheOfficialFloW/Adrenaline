@@ -28,8 +28,6 @@ int debugPrintf(char *text, ...);
 int ReadFile(char *file, void *buf, int size);
 int WriteFile(char *file, void *buf, int size);
 
-int hasImc0();
-
 void readPad();
 
 void getSizeString(char string[16], uint64_t size);

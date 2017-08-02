@@ -89,12 +89,6 @@ int WriteFile(char *file, void *buf, int size) {
 	return written;
 }
 
-int hasImc0() {
-	SceIoStat stat;
-	memset(&stat, 0, sizeof(SceIoStat));
-	return sceIoGetstat("imc0:", &stat) >= 0;
-}
-
 void readPad() {
 	static int hold_n = 0, hold2_n = 0;
 
@@ -139,8 +133,8 @@ void getSizeString(char string[16], uint64_t size) {
 
 	int i = 0;
 	static char *units[] = { "B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
-	while (double_size >= 1024.0f) {
-		double_size /= 1024.0f;
+	while (double_size >= 1024.0) {
+		double_size /= 1024.0;
 		i++;
 	}
 
