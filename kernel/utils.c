@@ -24,7 +24,7 @@
 #include <string.h>
 
 void debug_printf(char *msg) {
-	SceUID fd = ksceIoOpen("ux0:adrenaline_kernel_log.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0777);
+	SceUID fd = ksceIoOpen("ur0:adrenaline/kernel_log.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0777);
 	if (fd >= 0) {
 		ksceIoWrite(fd, msg, strlen(msg));
 		ksceIoClose(fd);

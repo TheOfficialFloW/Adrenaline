@@ -58,7 +58,7 @@ int debugPrintf(char *text, ...) {
 	vsprintf(string, text, list);
 	va_end(list);
 
-	SceUID fd = sceIoOpen("ux0:adrenaline_log.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0777);
+	SceUID fd = sceIoOpen("ur0:adrenaline/user_log.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0777);
 	if (fd >= 0) {
 		sceIoWrite(fd, string, strlen(string));
 		sceIoClose(fd);
@@ -202,12 +202,14 @@ void SetPspemuFrameBuffer(void *base) {
 
 char *getPspemuMemoryStickLocation() {
 	switch (config.ms_location) {
-		case MEMORY_STICK_LOCATION_UX0:
-			return "ux0:pspemu";
 		case MEMORY_STICK_LOCATION_UR0:
 			return "ur0:pspemu";
-		default:
+		case MEMORY_STICK_LOCATION_IMC0:
 			return "imc0:pspemu";
+		case MEMORY_STICK_LOCATION_UMA0:
+			return "uma0:pspemu";
+		default:
+			return "ux0:pspemu";
 	}
 }
 

@@ -106,16 +106,16 @@ AdrenalineConfig config;
 extern int menu_open;
 
 void GetFunctions() {
-	ScePspemuDivide						= (void *)(text_addr + 0x39F0 + 0x1);
-	ScePspemuErrorExit					= (void *)(text_addr + 0x4104 + 0x1);
-	ScePspemuConvertAddress				= (void *)(text_addr + 0x6364 + 0x1);
-	ScePspemuWritebackCache				= (void *)(text_addr + 0x6490 + 0x1);
-	ScePspemuKermitWaitAndGetRequest	= (void *)(text_addr + 0x64D0 + 0x1);
-	ScePspemuKermitSendResponse			= (void *)(text_addr + 0x6560 + 0x1);
-	ScePspemuConvertStatTimeToUtc		= (void *)(text_addr + 0x8664 + 0x1);
-	ScePspemuConvertStatTimeToLocaltime	= (void *)(text_addr + 0x8680 + 0x1);
-	ScePspemuSetDisplayConfig			= (void *)(text_addr + 0x20E50 + 0x1);
-	ScePspemuPausePops					= (void *)(text_addr + 0x300C0 + 0x1);
+	ScePspemuDivide                     = (void *)(text_addr + 0x39F0 + 0x1);
+	ScePspemuErrorExit                  = (void *)(text_addr + 0x4104 + 0x1);
+	ScePspemuConvertAddress             = (void *)(text_addr + 0x6364 + 0x1);
+	ScePspemuWritebackCache             = (void *)(text_addr + 0x6490 + 0x1);
+	ScePspemuKermitWaitAndGetRequest    = (void *)(text_addr + 0x64D0 + 0x1);
+	ScePspemuKermitSendResponse         = (void *)(text_addr + 0x6560 + 0x1);
+	ScePspemuConvertStatTimeToUtc       = (void *)(text_addr + 0x8664 + 0x1);
+	ScePspemuConvertStatTimeToLocaltime = (void *)(text_addr + 0x8680 + 0x1);
+	ScePspemuSetDisplayConfig           = (void *)(text_addr + 0x20E50 + 0x1);
+	ScePspemuPausePops                  = (void *)(text_addr + 0x300C0 + 0x1);
 }
 
 void SendAdrenalineRequest(int cmd) {
@@ -271,7 +271,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 						sceIoClose(fd);
 				}
 
-				usbdevice_modid = startUsb("ux0:adrenaline/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
+				usbdevice_modid = startUsb("ur0:adrenaline/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
 
 				// Response
 				res = (usbdevice_modid < 0) ? usbdevice_modid : 0;
@@ -466,7 +466,7 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
 
 	SceIoStat stat;
 	memset(&stat, 0, sizeof(SceIoStat));
-	if (sceIoGetstat("ux0:adrenaline/flash0", &stat) < 0)
+	if (sceIoGetstat("ur0:adrenaline/flash0", &stat) < 0)
 		((uint32_t *)n)[0] = 4; // Recovery mode
 
 	ScePspemuWritebackCache(n, 0x100);
@@ -826,7 +826,7 @@ int module_start(SceSize args, void *argp) {
 
 	// Read config
 	memset(&config, 0, sizeof(AdrenalineConfig));
-	ReadFile("ux0:adrenaline/adrenaline.bin", &config, sizeof(AdrenalineConfig));
+	ReadFile("ur0:adrenaline/adrenaline.bin", &config, sizeof(AdrenalineConfig));
 
 	// Use ux0 if imc0 is unavailable
 	if (config.ms_location == MEMORY_STICK_LOCATION_IMC0 && !hasImc0())

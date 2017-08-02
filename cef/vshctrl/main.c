@@ -30,7 +30,7 @@ PSP_MODULE_INFO("VshControl", 0x1007, 1, 0);
 
 #define DUMMY_CAT_ISO_EXTENSION "     "
 
-char categorypath[256];
+char categorypath[512];
 SceUID categorydfd = -1;
 
 SceUID gamedfd = -1, isodfd = -1, overiso = 0;
@@ -56,7 +56,7 @@ void KXploitString(char *str) {
 }
 
 int CorruptIconPatch(char *name) {
-	char path[256];
+	char path[512];
 	sprintf(path, "ms0:/PSP/GAME/%s%%/EBOOT.PBP", name);
 
 	SceIoStat stat;
@@ -70,7 +70,7 @@ int CorruptIconPatch(char *name) {
 }
 
 int HideDlc(char *name) {
-	char path[256];
+	char path[512];
 	sprintf(path, "ms0:/PSP/GAME/%s/PARAM.PBP", name);
 
 	SceIoStat stat;
@@ -89,7 +89,7 @@ int HideDlc(char *name) {
 }
 
 int HideAdrenaline(char *name) {
-	char path[256];
+	char path[512];
 	sprintf(path, "ms0:/PSP/GAME/%s/EBOOT.PBP", name);
 
 	SceIoStat stat;
@@ -234,9 +234,9 @@ int ReadCache() {
 	int i;
 
 	if (!cache)
-		cache = (VirtualPbp *)oe_malloc(32 * sizeof(VirtualPbp));
+		cache = (VirtualPbp *)oe_malloc(128 * sizeof(VirtualPbp));
 
-	memset(cache, 0, sizeof(VirtualPbp) * 32);
+	memset(cache, 0, sizeof(VirtualPbp) * 128);
 
 	for (i = 0; i < 0x10; i++) {
 		fd = sceIoOpen("ms0:/PSP/SYSTEM/isocaches.bin", PSP_O_RDONLY, 0);
@@ -247,7 +247,7 @@ int ReadCache() {
 	if (i == 0x10)
 		return -1;
 
-	sceIoRead(fd, cache, sizeof(VirtualPbp) * 32);
+	sceIoRead(fd, cache, sizeof(VirtualPbp) * 128);
 	sceIoClose(fd);
 
 	return 0;
@@ -260,7 +260,7 @@ int SaveCache() {
 	if (!cache)
 		return -1;
 
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < 128; i++) {
 		if (cache[i].isofile[0] != 0) {
 			SceIoStat stat;
 			memset(&stat, 0, sizeof(stat));
@@ -288,7 +288,7 @@ int SaveCache() {
 	if (i == 0x10)
 		return -1;
 
-	sceIoWrite(fd, cache, sizeof(VirtualPbp) * 32);
+	sceIoWrite(fd, cache, sizeof(VirtualPbp) * 128);
 	sceIoClose(fd);
 
 	return 0;
@@ -296,7 +296,7 @@ int SaveCache() {
 
 int IsCached(char *isofile, ScePspDateTime *mtime, VirtualPbp *res) {
 	int i;
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < 128; i++) {
 		if (cache[i].isofile[0] != 0) {
 			if (strcmp(cache[i].isofile, isofile) == 0) {
 				if (memcmp(mtime, &cache[i].mtime, sizeof(ScePspDateTime)) == 0) {
@@ -312,7 +312,7 @@ int IsCached(char *isofile, ScePspDateTime *mtime, VirtualPbp *res) {
 
 int Cache(VirtualPbp *pbp) {
 	int i;
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < 128; i++) {
 		if (cache[i].isofile[0] == 0) {
 			memcpy(&cache[i], pbp, sizeof(VirtualPbp));
 			cachechanged = 1;
@@ -330,7 +330,7 @@ int AddIsoDirent(char *path, SceUID fd, SceIoDirent *dir, int readcategories) {
 
 NEXT:
 	if ((res = sceIoDread(fd, dir)) > 0) {
-		char fullpath[128];
+		char fullpath[512];
 		int res2 = -1;
 		int docache;
 
@@ -363,7 +363,7 @@ NEXT:
 				}
 			}
 		} else {
-			if (readcategories && dir->d_name[0] != '.') {
+			if (readcategories && dir->d_name[0] != '.' && strcmp(dir->d_name, "VIDEO") != 0) {
 				strcat(dir->d_name, DUMMY_CAT_ISO_EXTENSION);
 			} else {
 				goto NEXT;
