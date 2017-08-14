@@ -102,6 +102,7 @@ extern int language, enter_button, date_format, time_format;
 
 int ExitAdrenalineMenu();
 
+int getCpuSpeed(int speed);
 int AdrenalineDraw(SceSize args, void *argp);
 int ScePspemuCustomSettingsHandler(int a1, int a2, int a3, int a4);
 

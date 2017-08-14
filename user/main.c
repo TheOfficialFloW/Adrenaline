@@ -385,6 +385,9 @@ static int AdrenalinePowerTick(SceSize args, void *argp) {
 }
 
 static int InitAdrenaline() {
+	// Set CPU frequency
+	scePowerSetArmClockFrequency( getCpuSpeed(config.cpu_speed) );
+
 	// Set GPU frequency to highest
 	scePowerSetGpuClockFrequency(222);
 

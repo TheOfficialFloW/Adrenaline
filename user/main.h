@@ -32,6 +32,13 @@
 #define ADRENALINE_CFG_MAGIC_1 0x31483943
 #define ADRENALINE_CFG_MAGIC_2 0x334F4E33
 
+enum cpuSpeed {
+	VITA_CPU_SPEED_333,
+	VITA_CPU_SPEED_444,
+	VITA_CPU_SPEED_111,
+	VITA_CPU_SPEED_222,
+};
+
 enum MemoryStickLocations {
 	MEMORY_STICK_LOCATION_UX0,
 	MEMORY_STICK_LOCATION_UR0,
@@ -59,6 +66,7 @@ typedef struct {
 	int graphics_filtering;
 	int no_smooth_graphics;
 	int screen_size;
+	int cpu_speed;
 	int ms_location;
 	int use_ds3_ds4;
 	int screen_mode;
