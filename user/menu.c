@@ -70,6 +70,7 @@ static char *no_yes_options[] = { "No", "Yes" };
 static char *yes_no_options[] = { "Yes", "No" };
 static char *screen_size_options[] = { "2.0x", "1.75x", "1.5x", "1.25x", "1.0x" };
 static char *ms_location_options[] = { "ux0:pspemu", "ur0:pspemu", "imc0:pspemu", "uma0:pspemu" };
+static char *cpu_speed_options[] = { "333 Mhz", "444 Mhz", "111 Mhz", "222 Mhz" };
 
 static MenuEntry main_entries[] = {
 	{ "Enter Standby Mode", MENU_ENTRY_TYPE_CALLBACK, 0, EnterStandbyMode, NULL, NULL, 0 },
@@ -83,6 +84,7 @@ static MenuEntry settings_entries[] = {
 	{ "Smooth Graphics", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.no_smooth_graphics, yes_no_options, sizeof(yes_no_options) / sizeof(char **) },
 	{ "Screen Size (PSP)", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.screen_size, screen_size_options, sizeof(screen_size_options) / sizeof(char **) },
 	{ "Screen Mode (PS1)", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.screen_mode, screen_mode_options, sizeof(screen_mode_options) / sizeof(char **) },
+	{ "CPU Speed", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.cpu_speed, cpu_speed_options, sizeof(cpu_speed_options) / sizeof(char **) },
 	{ "Memory Stick Location", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.ms_location, ms_location_options, sizeof(ms_location_options) / sizeof(char **) },
 	{ "Use DS3/DS4 controller", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.use_ds3_ds4, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
 	{ "Skip Adrenaline Boot Logo", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.skip_logo, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
@@ -174,6 +176,9 @@ int ExitAdrenalineMenu() {
 	if (old_config.ms_location != config.ms_location)
 		SendAdrenalineRequest(ADRENALINE_PSP_CMD_REINSERT_MS);
 
+	if (old_config.cpu_speed != config.cpu_speed)
+		scePowerSetArmClockFrequency( getCpuSpeed(config.cpu_speed) );
+
 	SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
 	sceDisplayWaitVblankStart();
 
@@ -197,7 +202,7 @@ void drawMenu() {
 	int i;
 	for (i = 0; i < N_TABS; i++) {
 		vita2d_draw_rectangle(WINDOW_X + (i * TAB_SIZE), FONT_Y_LINE(19) - 5.0f, TAB_SIZE, 38.0f, tab_sel == i ? 0xFF7F3F00 : COLOR_ALPHA(GRAY, 0x8F));
-		
+
 		if (i != 0)
 			vita2d_draw_rectangle(WINDOW_X + (i * TAB_SIZE) - 2.0f, FONT_Y_LINE(19) - 5.0f, 4.0f, 38.0f, COLOR_ALPHA(BLACK, 0x8F));
 
@@ -232,7 +237,7 @@ void drawMenu() {
 				pgf_draw_text((SCREEN_WIDTH / 2.0f) + 10.0f, y, GREEN, FONT_SIZE, menu_entries[i].options[value]);
 			}
 		}
-		
+
 		// Info about Original filter
 		if (tab_sel == 2 && menu_sel == 0 && config.graphics_filtering == 0) {
 			char *title = "All graphics related options are not taking effect with the Original rendering mode.";
@@ -316,29 +321,50 @@ void ctrlMenu() {
 	}
 }
 
+int getCpuSpeed(int speed) {
+	int ret;
+
+	switch (config.cpu_speed) {
+		case VITA_CPU_SPEED_111:
+			ret = 111;
+			break;
+		case VITA_CPU_SPEED_222:
+			ret = 222;
+			break;
+		case VITA_CPU_SPEED_444:
+			ret = 444;
+			break;
+		default:
+			ret = 333;
+			break;
+	}
+
+	return ret;
+}
+
 void getPspScreenSize(float *scale) {
 	switch (config.screen_size) {
 		case SCREEN_SIZE_1_75:
 			*scale = 1.75f;
 			break;
-			
+
 		case SCREEN_SIZE_1_50:
 			*scale = 1.5f;
 			break;
-			
+
 		case SCREEN_SIZE_1_25:
 			*scale = 1.25f;
 			break;
-			
+
 		case SCREEN_SIZE_1_00:
 			*scale = 1.0f;
 			break;
-			
+
 		case SCREEN_SIZE_2_00:
 		default:
 			*scale = 2.0f;
 			break;
-	}	
+	}
 }
 
 void getPopsScreenSize(float *scale_x, float *scale_y) {
@@ -347,17 +373,17 @@ void getPopsScreenSize(float *scale_x, float *scale_y) {
 			*scale_x = 1.0625f;
 			*scale_y = 1.0625f;
 			break;
-			
+
 		case SCREEN_MODE_ZOOM:
 			*scale_x = 1.5f;
 			*scale_y = 1.5f;
 			break;
-			
+
 		case SCREEN_MODE_FULL:
 			*scale_x = 1.5f;
 			*scale_y = 1.0625f;
 			break;
-			
+
 		case SCREEN_MODE_ORIGINAL:
 		default:
 			*scale_x = 1.0f;
