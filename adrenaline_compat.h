@@ -97,9 +97,9 @@ typedef struct {
 	uint64_t result; //0x0
 	SceUID sema_id; //0x8
 	int32_t unk_C; //0xC
-	uint64_t *reponse; //0x10
+	uint64_t *response; //0x10
 	uint64_t unk_1C; //0x1C
-} SceKermitReponse; //0x24 or 0x30????
+} SceKermitResponse; //0x24 or 0x30????
 
 // 0xBFC008C0
 typedef struct {
