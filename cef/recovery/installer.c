@@ -29,7 +29,6 @@
 #define SMALL_BUFFER_SIZE 2 * 1024 * 1024
 
 char *flash0_dirs[] = {
-	"ms0:/__ADRENALINE__/flash0",
 	"ms0:/__ADRENALINE__/flash0/codepage",
 	"ms0:/__ADRENALINE__/flash0/data",
 	"ms0:/__ADRENALINE__/flash0/dic",
@@ -44,7 +43,6 @@ char *flash0_dirs[] = {
 };
 
 char *flash1_dirs[] = {
-	"ms0:/__ADRENALINE__/flash1",
 	"ms0:/__ADRENALINE__/flash1/dic",
 	"ms0:/__ADRENALINE__/flash1/gps",
 	"ms0:/__ADRENALINE__/flash1/net",
@@ -141,7 +139,7 @@ void Installer() {
 	// Open file
 	SceUID fd = sceIoOpen("ms0:/__ADRENALINE__/661.PBP", PSP_O_RDONLY, 0);
 	if (fd < 0) {
-		printf("Cannot find ur0:adrenaline/661.PBP.\n");
+		printf("Cannot find ux0:app/" ADRENALINE_TITLEID "/661.PBP.\n");
 		goto EXIT;
 	}
 
@@ -191,6 +189,11 @@ void Installer() {
 	sceKernelDelayThread(1 * 1000 * 1000);
 
 	// Create directories
+	sceIoMkdir("ms0:/__ADRENALINE__/flash0", 0777);
+	sceIoMkdir("ms0:/__ADRENALINE__/flash1", 0777);
+	sceIoMkdir("ms0:/__ADRENALINE__/flash2", 0777);
+	sceIoMkdir("ms0:/__ADRENALINE__/flash3", 0777);
+
 	res = CreateDirectories(flash0_dirs, sizeof(flash0_dirs) / sizeof(char **));
 	if (res < 0) {
 		printf("Error creating directories (0x%08X).\n", res);
@@ -202,7 +205,7 @@ void Installer() {
 		printf("Error creating directories (0x%08X).\n", res);
 		goto EXIT;
 	}
-	
+
 	printf("OK\n\n");
 	sceKernelDelayThread(1 * 1000 * 1000);
 
@@ -341,6 +344,8 @@ void ResetSettings() {
 	printf(" > Resetting settings...");
 
 	removePath("ms0:/__ADRENALINE__/flash1");
+
+	sceIoMkdir("ms0:/__ADRENALINE__/flash1", 0777);
 
 	int res = CreateDirectories(flash1_dirs, sizeof(flash1_dirs) / sizeof(char **));
 	if (res < 0) {

@@ -175,8 +175,6 @@ typedef struct {
 typedef struct {
 	int bootfileindex;
 
-	char titleid[12];
-
 	char *module_after;
 	void *buf;
 	int size;

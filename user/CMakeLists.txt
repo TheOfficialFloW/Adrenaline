@@ -8,13 +8,13 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
-project(adrenaline)
+project(adrenaline_user)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -Wall -O3 -nostartfiles")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions")
 
-add_executable(adrenaline
+add_executable(adrenaline_user
   main.c
   flashfs.c
   msfs.c
@@ -25,7 +25,7 @@ add_executable(adrenaline
   lz4/lz4.c
 )
 
-target_link_libraries(adrenaline
+target_link_libraries(adrenaline_user
   AdrenalineKernel_stub
   taiHEN_stub
   vita2d
@@ -59,16 +59,11 @@ target_link_libraries(adrenaline
   SceVshBridge_stub
 )
 
-vita_create_self(adrenaline.suprx adrenaline CONFIG exports.yml UNSAFE)
+vita_create_self(adrenaline_user.suprx adrenaline_user CONFIG exports.yml UNSAFE)
 
-vita_create_stubs(stubs adrenaline ${CMAKE_SOURCE_DIR}/exports.yml)
+vita_create_stubs(stubs adrenaline_user ${CMAKE_SOURCE_DIR}/exports.yml)
 
 add_custom_target(copy
-  COMMAND cp adrenaline.suprx F:/adrenaline/adrenaline.suprx
-  DEPENDS adrenaline.suprx
-)
-
-add_custom_target(updater
-  COMMAND bin2c adrenaline.suprx ../../cef/updater/adrenaline_suprx.h adrenaline_suprx
-  DEPENDS adrenaline.suprx
+  COMMAND cp adrenaline_user.suprx F:/app/PSPEMUCFW/adrenaline_user.suprx
+  DEPENDS adrenaline_user.suprx
 )

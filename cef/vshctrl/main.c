@@ -88,22 +88,6 @@ int HideDlc(char *name) {
 	return 0;
 }
 
-int HideAdrenaline(char *name) {
-	char path[512];
-	sprintf(path, "ms0:/PSP/GAME/%s/EBOOT.PBP", name);
-
-	SceIoStat stat;
-	memset(&stat, 0, sizeof(stat));
-	if (sceIoGetstat(path, &stat) >= 0) {
-		if (strcmp(name, sctrlGetTitleid()) == 0) {
-			strcpy(name, "__SCE"); // hide icon
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
 int GetIsoIndex(const char *file) {
 	char *p = strstr(file, "/MMMMMISO");
 	if (!p)
@@ -431,8 +415,6 @@ int sceIoDreadPatched(SceUID fd, SceIoDirent *dir) {
 		
 		if (config.hidedlcs)
 			HideDlc(dir->d_name);
-		
-		HideAdrenaline(dir->d_name);
 	}
 
 	pspSdkSetK1(k1);

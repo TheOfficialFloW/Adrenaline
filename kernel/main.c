@@ -35,8 +35,9 @@ static tai_hook_ref_t ksceKernelFreeMemBlockRef;
 static tai_hook_ref_t ksceKernelUnmapMemBlockRef;
 static tai_hook_ref_t SceGrabForDriver_E9C25A28_ref;
 static tai_hook_ref_t sm_stuff_ref;
+static tai_hook_ref_t ksceSblAimgrIsDEXRef;
 
-static int hooks[5];
+static int hooks[6];
 static int n_hooks = 0;
 
 static SceUID extra_1_blockid = -1, extra_2_blockid = -1;
@@ -120,6 +121,11 @@ int kuCtrlPeekBufferPositive(int port, SceCtrlData *pad_data, int count) {
 	return res;
 }
 
+int ksceSblAimgrIsDEXPatched() {
+	TAI_CONTINUE(int, ksceSblAimgrIsDEXRef);
+	return 1;
+}
+
 void _start() __attribute__ ((weak, alias("module_start")));
 int module_start(SceSize args, void *argp) {
 	int res;
@@ -142,10 +148,14 @@ int module_start(SceSize args, void *argp) {
 	// SceGrabForDriver
 	hooks[n_hooks++] = taiHookFunctionImportForKernel(KERNEL_PID, &SceGrabForDriver_E9C25A28_ref, "SceCompat", 0x81C54BED, 0xE9C25A28, SceGrabForDriver_E9C25A28_patched);
 
+	// SceSblAIMgrForDriver
+	hooks[n_hooks++] = taiHookFunctionImportForKernel(KERNEL_PID, &ksceSblAimgrIsDEXRef, "SceCompat", 0xFD00C69A, 0xF4B98F66, ksceSblAimgrIsDEXPatched);
+
 	return SCE_KERNEL_START_SUCCESS;
 }
 
 int module_stop(SceSize args, void *argp) {
+	taiHookReleaseForKernel(hooks[--n_hooks], ksceSblAimgrIsDEXRef);
 	taiHookReleaseForKernel(hooks[--n_hooks], SceGrabForDriver_E9C25A28_ref);
 	taiHookReleaseForKernel(hooks[--n_hooks], ksceKernelUnmapMemBlockRef);
 	taiHookReleaseForKernel(hooks[--n_hooks], ksceKernelFreeMemBlockRef);

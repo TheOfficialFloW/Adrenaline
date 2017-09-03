@@ -50,8 +50,16 @@ int removePath(const char *path) {
 }
 
 int sceLflashFatfmtStartFatfmt(int argc, char *argv[]) {
-	if (argv && strcmp(argv[1], "lflash0:0,1") == 0) {
-		removePath("ms0:/__ADRENALINE__/flash1");
+	if (argv) {
+		if (strncmp(argv[1], "lflash0:0,", 10) == 0) {
+			int num = argv[1][10] - '0';
+
+			char path[128];
+			sprintf(path, "ms0:/__ADRENALINE__/flash%d", num);
+
+			removePath(path);
+			sceIoMkdir(path, 0777);
+		}
 	}
 
 	return 0;

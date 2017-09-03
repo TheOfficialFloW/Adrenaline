@@ -23,7 +23,7 @@
 
 #include "executable_patch.h"
 
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 

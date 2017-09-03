@@ -209,7 +209,7 @@ int _flashIoOpen(u32 *args) {
 		((u32 *)arg)[18] = 1;
 	}
 
-	if (fs_num == 1 || res >= 0)
+	if (fs_num >= 1 || res >= 0)
 		return res;
 
 	arg->fs_num = fs_num;
@@ -277,7 +277,7 @@ int _flashIoRemove(u32 *args) {
 	int fs_num = BuildMsPathChangeFsNum(arg, name, ms_path);
 	int res = ms_funcs.IoRemove(arg, ms_path);
 
-	if (fs_num == 1 || res >= 0)
+	if (fs_num >= 1 || res >= 0)
 		return res;
 
 	arg->fs_num = fs_num;
@@ -293,7 +293,7 @@ int _flashIoMkdir(u32 *args) {
 	int fs_num = BuildMsPathChangeFsNum(arg, name, ms_path);
 	int res = ms_funcs.IoMkdir(arg, ms_path, mode);
 
-	if (fs_num == 1 || res >= 0)
+	if (fs_num >= 1 || res >= 0)
 		return res;
 
 	arg->fs_num = fs_num;
@@ -308,7 +308,7 @@ int _flashIoRmdir(u32 *args) {
 	int fs_num = BuildMsPathChangeFsNum(arg, name, ms_path);
 	int res = ms_funcs.IoRmdir(arg, ms_path);
 
-	if (fs_num == 1 || res >= 0)
+	if (fs_num >= 1 || res >= 0)
 		return res;
 
 	arg->fs_num = fs_num;
@@ -326,7 +326,7 @@ int _flashIoDopen(u32 *args) {
 		((u32 *)arg)[18] = 1;
 	}
 
-	if (fs_num == 1 || res >= 0)
+	if (fs_num >= 1 || res >= 0)
 		return res;
 
 	arg->fs_num = fs_num;
@@ -363,7 +363,7 @@ int _flashIoGetstat(u32 *args) {
 	int fs_num = BuildMsPathChangeFsNum(arg, file, ms_path);
 	int res = ms_funcs.IoGetstat(arg, ms_path, stat);
 
-	if (fs_num == 1 || res >= 0)
+	if (fs_num >= 1 || res >= 0)
 		return res;
 
 	arg->fs_num = fs_num;
@@ -380,7 +380,7 @@ int _flashIoChstat(u32 *args) {
 	int fs_num = BuildMsPathChangeFsNum(arg, file, ms_path);
 	int res = ms_funcs.IoChstat(arg, ms_path, stat, bits);
 
-	if (fs_num == 1 || res >= 0)
+	if (fs_num >= 1 || res >= 0)
 		return res;
 
 	arg->fs_num = fs_num;
@@ -395,7 +395,7 @@ int _flashIoChdir(u32 *args) {
 	int fs_num = BuildMsPathChangeFsNum(arg, dir, ms_path);
 	int res = ms_funcs.IoChdir(arg, ms_path);
 
-	if (fs_num == 1 || res >= 0)
+	if (fs_num >= 1 || res >= 0)
 		return res;
 
 	arg->fs_num = fs_num;

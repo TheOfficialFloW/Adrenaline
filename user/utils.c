@@ -58,7 +58,7 @@ int debugPrintf(char *text, ...) {
 	vsprintf(string, text, list);
 	va_end(list);
 
-	SceUID fd = sceIoOpen("ur0:adrenaline/user_log.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0777);
+	SceUID fd = sceIoOpen("ux0:data/adrenaline_user_log.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0777);
 	if (fd >= 0) {
 		sceIoWrite(fd, string, strlen(string));
 		sceIoClose(fd);

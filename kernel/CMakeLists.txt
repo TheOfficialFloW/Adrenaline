@@ -8,18 +8,18 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
-project(adrenaline)
+project(adrenaline_kernel)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -Wall -O3 -nostdlib")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions")
 
-add_executable(adrenaline
+add_executable(adrenaline_kernel
   main.c
   utils.c
 )
 
-target_link_libraries(adrenaline
+target_link_libraries(adrenaline_kernel
   taihenForKernel_stub
   SceCpuForDriver_stub
   SceCtrlForDriver_stub
@@ -30,9 +30,9 @@ target_link_libraries(adrenaline
   SceThreadmgrForDriver_stub
 )
 
-vita_create_self(adrenaline.skprx adrenaline CONFIG exports.yml UNSAFE)
+vita_create_self(adrenaline_kernel.skprx adrenaline_kernel CONFIG exports.yml UNSAFE)
 
-vita_create_stubs(stubs adrenaline ${CMAKE_SOURCE_DIR}/exports.yml KERNEL)
+vita_create_stubs(stubs adrenaline_kernel ${CMAKE_SOURCE_DIR}/exports.yml KERNEL)
 
 install(DIRECTORY ${CMAKE_BINARY_DIR}/stubs/
   DESTINATION lib
@@ -40,11 +40,6 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/stubs/
 )
 
 add_custom_target(copy
-  COMMAND cp adrenaline.skprx F:/adrenaline/adrenaline.skprx
-  DEPENDS adrenaline.skprx
-)
-
-add_custom_target(updater
-  COMMAND bin2c adrenaline.skprx ../../cef/updater/adrenaline_skprx.h adrenaline_skprx
-  DEPENDS adrenaline.skprx
+  COMMAND cp adrenaline_kernel.skprx F:/app/PSPEMUCFW/adrenaline_kernel.skprx
+  DEPENDS adrenaline_kernel.skprx
 )

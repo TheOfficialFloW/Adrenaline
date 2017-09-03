@@ -16,39 +16,49 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <psp2kern/kernel/modulemgr.h>
-#include <psp2kern/kernel/sysmem.h>
-#include <psp2kern/io/fcntl.h>
+#include <psp2/kernel/modulemgr.h>
+#include <psp2/kernel/sysmem.h>
+#include <psp2/io/fcntl.h>
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 
-void debug_printf(char *msg) {
-	SceUID fd = ksceIoOpen("ux0:data/adrenaline_kernel_log.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0777);
+int debugPrintf(char *text, ...) {
+	va_list list;
+	char string[512];
+
+	va_start(list, text);
+	vsprintf(string, text, list);
+	va_end(list);
+
+	SceUID fd = sceIoOpen("ux0:data/adrenaline_vsh_log.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0777);
 	if (fd >= 0) {
-		ksceIoWrite(fd, msg, strlen(msg));
-		ksceIoClose(fd);
+		sceIoWrite(fd, string, strlen(string));
+		sceIoClose(fd);
 	}
+
+	return 0;
 }
 
 int ReadFile(char *file, void *buf, int size) {
-	SceUID fd = ksceIoOpen(file, SCE_O_RDONLY, 0);
+	SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
 	if (fd < 0)
 		return fd;
 
-	int read = ksceIoRead(fd, buf, size);
+	int read = sceIoRead(fd, buf, size);
 
-	ksceIoClose(fd);
+	sceIoClose(fd);
 	return read;
 }
 
 int WriteFile(char *file, void *buf, int size) {
-	SceUID fd = ksceIoOpen(file, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+	SceUID fd = sceIoOpen(file, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
 	if (fd < 0)
 		return fd;
 
-	int written = ksceIoWrite(fd, buf, size);
+	int written = sceIoWrite(fd, buf, size);
 
-	ksceIoClose(fd);
+	sceIoClose(fd);
 	return written;
 }

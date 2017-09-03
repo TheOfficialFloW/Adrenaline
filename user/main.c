@@ -28,6 +28,7 @@
 #include <psp2/io/dirent.h>
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
+#include <psp2/kernel/clib.h>
 #include <psp2/kernel/dmac.h>
 #include <psp2/kernel/modulemgr.h>
 #include <psp2/kernel/sysmem.h>
@@ -92,12 +93,11 @@ static tai_hook_ref_t ScePspemuGetTitleidRef;
 static tai_hook_ref_t ScePspemuInitAudioOutRef;
 static tai_hook_ref_t ScePspemuConvertAddressRef;
 static tai_hook_ref_t ScePspemuDecodePopsAudioRef;
+static tai_hook_ref_t ScePspemuGetParamRef;
 
 uint32_t text_addr, text_size, data_addr, data_size;
 
 static int lock_power = 0;
-
-static char app_titleid[12];
 
 SceUID usbdevice_modid = -1;
 
@@ -129,6 +129,101 @@ void SendAdrenalineRequest(int cmd) {
 #define LZ4_ACCELERATION 8
 #define SAVESTATE_TEMP_SIZE (32 * 1024 * 1024)
 
+int SaveState(SceAdrenaline *adrenaline, void *savestate_data) {
+	void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_COMPAT_CACHE_NONE, PSP_RAM_SIZE);
+
+	char path[128];
+	makeSaveStatePath(path, adrenaline->num);
+
+	SceUID fd = sceIoOpen(path, SCE_O_WRONLY, 0777);
+	if (fd < 0)
+		return fd;
+
+	// Header
+	AdrenalineStateHeader header;
+	memset(&header, 0, sizeof(AdrenalineStateHeader));
+	header.magic = ADRENALINE_SAVESTATE_MAGIC;
+	header.version = ADRENALINE_SAVESTATE_VERSION;
+	header.screenshot_offset = sizeof(AdrenalineStateHeader);
+	header.screenshot_size = SCREENSHOT_SIZE;
+	header.descriptors_offset = header.screenshot_offset + header.screenshot_size;
+	header.descriptors_size = MAX_DESCRIPTORS * sizeof(ScePspemuMsfsDescriptor);
+	header.ram_part1_offset = header.descriptors_offset + header.descriptors_size;
+	header.sp = adrenaline->sp;
+	header.ra = adrenaline->ra;
+	strcpy(header.title, adrenaline->title);
+
+	// Write descriptors
+	ScePspemuMsfsDescriptor *descriptors = ScePspemuMsfsGetFileDescriptors();
+	sceIoLseek(fd, header.descriptors_offset, SCE_SEEK_SET);
+	sceIoWrite(fd, descriptors, header.descriptors_size);
+
+	// Write compressed RAM
+	uint32_t compressed_size_part1 = LZ4_compress_fast(ram, savestate_data, SAVESTATE_TEMP_SIZE, SAVESTATE_TEMP_SIZE, LZ4_ACCELERATION);
+	sceIoLseek(fd, header.ram_part1_offset, SCE_SEEK_SET);
+	sceIoWrite(fd, savestate_data, compressed_size_part1);
+
+	uint32_t compressed_size_part2 = LZ4_compress_fast(ram + SAVESTATE_TEMP_SIZE, savestate_data, SAVESTATE_TEMP_SIZE, SAVESTATE_TEMP_SIZE, LZ4_ACCELERATION);
+	header.ram_part2_offset = header.ram_part1_offset + compressed_size_part1;
+	sceIoLseek(fd, header.ram_part2_offset, SCE_SEEK_SET);
+	sceIoWrite(fd, savestate_data, compressed_size_part2);
+
+	// Write header
+	header.ram_part1_size = compressed_size_part1;
+	header.ram_part2_size = compressed_size_part2;
+	sceIoLseek(fd, 0, SCE_SEEK_SET);
+	sceIoWrite(fd, &header, sizeof(AdrenalineStateHeader));
+
+	sceIoClose(fd);
+
+	return 0;
+}
+
+int LoadState(SceAdrenaline *adrenaline, void *savestate_data) {
+	void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_COMPAT_CACHE_INVALIDATE, PSP_RAM_SIZE);
+
+	char path[128];
+	makeSaveStatePath(path, adrenaline->num);
+
+	SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
+	if (fd < 0)
+		return fd;
+
+	AdrenalineStateHeader header;
+
+	// Read header
+	sceIoLseek(fd, 0, SCE_SEEK_SET);
+	sceIoRead(fd, &header, sizeof(AdrenalineStateHeader));
+
+	// Read compressed RAM
+	sceIoLseek(fd, header.ram_part1_offset, SCE_SEEK_SET);
+	sceIoRead(fd, savestate_data, header.ram_part1_size);
+	LZ4_decompress_fast(savestate_data, ram, SAVESTATE_TEMP_SIZE);
+
+	sceIoLseek(fd, header.ram_part2_offset, SCE_SEEK_SET);
+	sceIoRead(fd, savestate_data, header.ram_part2_size);
+	LZ4_decompress_fast(savestate_data, ram + SAVESTATE_TEMP_SIZE, SAVESTATE_TEMP_SIZE);
+
+	// Read descriptors
+	ScePspemuMsfsDescriptor *descriptors = malloc(MAX_DESCRIPTORS * sizeof(ScePspemuMsfsDescriptor));
+	if (descriptors) {
+		sceIoLseek(fd, header.descriptors_offset, SCE_SEEK_SET);
+		sceIoRead(fd, descriptors, header.descriptors_size);
+		ScePspemuMsfsSetFileDescriptors(descriptors);
+		free(descriptors);
+	}
+
+	// Set registers
+	adrenaline->sp = header.sp;
+	adrenaline->ra = header.ra;
+
+	sceIoClose(fd);
+
+	ScePspemuWritebackCache(ram, PSP_RAM_SIZE);
+
+	return 0;
+}
+
 int AdrenalineCompat(SceSize args, void *argp) {
 	void *savestate_data = NULL;
 
@@ -150,97 +245,18 @@ int AdrenalineCompat(SceSize args, void *argp) {
 		int res = -1;
 		
 		if (request->cmd == ADRENALINE_VITA_CMD_SAVESTATE) {
-			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_COMPAT_CACHE_NONE, PSP_RAM_SIZE);
-
-			char path[128];
-			makeSaveStatePath(path, adrenaline->num);
-
-			SceUID fd = sceIoOpen(path, SCE_O_WRONLY, 0777);
-			if (fd >= 0) {
-				// Header
-				AdrenalineStateHeader header;
-				memset(&header, 0, sizeof(AdrenalineStateHeader));
-				header.magic = ADRENALINE_SAVESTATE_MAGIC;
-				header.version = ADRENALINE_SAVESTATE_VERSION;
-				header.screenshot_offset = sizeof(AdrenalineStateHeader);
-				header.screenshot_size = SCREENSHOT_SIZE;
-				header.descriptors_offset = header.screenshot_offset + header.screenshot_size;
-				header.descriptors_size = MAX_DESCRIPTORS * sizeof(ScePspemuMsfsDescriptor);
-				header.ram_part1_offset = header.descriptors_offset + header.descriptors_size;
-				header.sp = adrenaline->sp;
-				header.ra = adrenaline->ra;
-				strcpy(header.title, adrenaline->title);
-
-				// Write descriptors
-				ScePspemuMsfsDescriptor *descriptors = ScePspemuMsfsGetFileDescriptors();
-				sceIoLseek(fd, header.descriptors_offset, SCE_SEEK_SET);
-				sceIoWrite(fd, descriptors, header.descriptors_size);
-
-				// Write compressed RAM
-				uint32_t compressed_size_part1 = LZ4_compress_fast(ram, savestate_data, SAVESTATE_TEMP_SIZE, SAVESTATE_TEMP_SIZE, LZ4_ACCELERATION);
-				sceIoLseek(fd, header.ram_part1_offset, SCE_SEEK_SET);
-				sceIoWrite(fd, savestate_data, compressed_size_part1);
-
-				uint32_t compressed_size_part2 = LZ4_compress_fast(ram + SAVESTATE_TEMP_SIZE, savestate_data, SAVESTATE_TEMP_SIZE, SAVESTATE_TEMP_SIZE, LZ4_ACCELERATION);
-				header.ram_part2_offset = header.ram_part1_offset + compressed_size_part1;
-				sceIoLseek(fd, header.ram_part2_offset, SCE_SEEK_SET);
-				sceIoWrite(fd, savestate_data, compressed_size_part2);
-
-				// Write header
-				header.ram_part1_size = compressed_size_part1;
-				header.ram_part2_size = compressed_size_part2;
-				sceIoLseek(fd, 0, SCE_SEEK_SET);
-				sceIoWrite(fd, &header, sizeof(AdrenalineStateHeader));
-
-				sceIoClose(fd);
-			}
-
+			SaveState(adrenaline, savestate_data);
 			adrenaline->vita_response = ADRENALINE_VITA_RESPONSE_SAVED;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			
+			// Continue, do not send response
 			continue;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_LOADSTATE) {
-			void *ram = (void *)ScePspemuConvertAddress(0x88000000, SCE_COMPAT_CACHE_INVALIDATE, PSP_RAM_SIZE);
-
-			char path[128];
-			makeSaveStatePath(path, adrenaline->num);
-
-			SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
-			if (fd >= 0) {
-				AdrenalineStateHeader header;
-
-				// Read header
-				sceIoLseek(fd, 0, SCE_SEEK_SET);
-				sceIoRead(fd, &header, sizeof(AdrenalineStateHeader));
-
-				// Read compressed RAM
-				sceIoLseek(fd, header.ram_part1_offset, SCE_SEEK_SET);
-				sceIoRead(fd, savestate_data, header.ram_part1_size);
-				LZ4_decompress_fast(savestate_data, ram, SAVESTATE_TEMP_SIZE);
-
-				sceIoLseek(fd, header.ram_part2_offset, SCE_SEEK_SET);
-				sceIoRead(fd, savestate_data, header.ram_part2_size);
-				LZ4_decompress_fast(savestate_data, ram + SAVESTATE_TEMP_SIZE, SAVESTATE_TEMP_SIZE);
-
-				// Read descriptors
-				ScePspemuMsfsDescriptor *descriptors = malloc(MAX_DESCRIPTORS * sizeof(ScePspemuMsfsDescriptor));
-				if (descriptors) {
-					sceIoLseek(fd, header.descriptors_offset, SCE_SEEK_SET);
-					sceIoRead(fd, descriptors, header.descriptors_size);
-					ScePspemuMsfsSetFileDescriptors(descriptors);
-					free(descriptors);
-				}
-
-				// Set registers
-				adrenaline->sp = header.sp;
-				adrenaline->ra = header.ra;
-
-				sceIoClose(fd);
-			}
-
-			ScePspemuWritebackCache(ram, PSP_RAM_SIZE);
-
+			LoadState(adrenaline, savestate_data);
 			adrenaline->vita_response = ADRENALINE_VITA_RESPONSE_LOADED;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
+			
+			// Continue, do not send response
 			continue;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_GET_USB_STATE) {
 			SceUdcdDeviceState state;
@@ -270,7 +286,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 						sceIoClose(fd);
 				}
 
-				usbdevice_modid = startUsb("ur0:adrenaline/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
+				usbdevice_modid = startUsb("ux0:app/" ADRENALINE_TITLEID "/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
 
 				// Response
 				res = (usbdevice_modid < 0) ? usbdevice_modid : 0;
@@ -353,7 +369,7 @@ static int AdrenalineExit(SceSize args, void *argp) {
 			if (doubleClick(SCE_CTRL_PSBUTTON, 300 * 1000)) {
 				stopUsb(usbdevice_modid);
 
-				if (sceAppMgrLaunchAppByName2(app_titleid, NULL, NULL) < 0)
+				if (sceAppMgrLaunchAppByName2(ADRENALINE_TITLEID, NULL, NULL) < 0)
 					ScePspemuErrorExit(0);
 			}
 		}
@@ -455,8 +471,6 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
 	void *n = (void *)ScePspemuConvertAddress(0x88FB0000, SCE_COMPAT_CACHE_INVALIDATE, 0x100);
 	memset(n, 0, 0x100);
 
-	strcpy((char *)(n+4), app_titleid);
-
 	SceCtrlData pad;
 	kuCtrlPeekBufferPositive(0, &pad, 1);
 
@@ -465,7 +479,7 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
 
 	SceIoStat stat;
 	memset(&stat, 0, sizeof(SceIoStat));
-	if (sceIoGetstat("ur0:adrenaline/flash0", &stat) < 0)
+	if (sceIoGetstat("ux0:app/" ADRENALINE_TITLEID "/flash0", &stat) < 0)
 		((uint32_t *)n)[0] = 4; // Recovery mode
 
 	ScePspemuWritebackCache(n, 0x100);
@@ -500,6 +514,18 @@ static SceUID sceKernelCreateThreadPatched(const char *name, SceKernelThreadEntr
 	}
 
 	return TAI_CONTINUE(SceUID, sceKernelCreateThreadRef, name, entry, initPriority, stackSize, attr, cpuAffinityMask, option);
+}
+
+static int ScePspemuGetParamPatched(char *discid, int *parentallevel, char *gamedataid, char *appver, int *bootable, int *isPops, int *isPocketStation) {
+	TAI_CONTINUE(int, ScePspemuGetParamRef, discid, parentallevel, gamedataid, appver, bootable, isPops, isPocketStation);
+	
+	// originalpath
+	strcpy((char *)(data_addr + 0x432C), "ux0:app/" ADRENALINE_TITLEID "/EBOOT.PBP");
+
+	// selfpath
+	strcpy((char *)(data_addr + 0x472C), "ux0:app/" ADRENALINE_TITLEID "/EBOOT.PBP");
+
+	return 0;
 }
 
 static int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
@@ -770,7 +796,7 @@ static SceUID sceIoOpenPatched(const char *file, int flags, SceMode mode) {
 			file = new_file;
 		}
 	}
-
+	
 	return TAI_CONTINUE(SceUID, sceIoOpenRef, file, flags, mode);
 }
 
@@ -817,15 +843,12 @@ void _start() __attribute__ ((weak, alias("module_start")));
 int module_start(SceSize args, void *argp) {
 	int res;
 
-	// Get app titleid
-	sceAppMgrGetNameById(sceKernelGetProcessId(), app_titleid);
-
 	// Init vita newlib
 	_init_vita_newlib();
 
 	// Read config
 	memset(&config, 0, sizeof(AdrenalineConfig));
-	ReadFile("ur0:adrenaline/adrenaline.bin", &config, sizeof(AdrenalineConfig));
+	ReadFile("ux0:app/" ADRENALINE_TITLEID "/adrenaline.bin", &config, sizeof(AdrenalineConfig));
 
 	// Tai module info
 	tai_module_info_t tai_info;
@@ -881,7 +904,8 @@ int module_start(SceSize args, void *argp) {
 	hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuInitAudioOutRef, tai_info.modid, 0, 0xD190, 0x1, ScePspemuInitAudioOutPatched);
 	hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuConvertAddressRef, tai_info.modid, 0, 0x6364, 0x1, ScePspemuConvertAddressPatched);
 	hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuDecodePopsAudioRef, tai_info.modid, 0, 0x2D62C, 0x1, ScePspemuDecodePopsAudioPatched);
-
+	hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuGetParamRef, tai_info.modid, 0, 0xAAF4, 0x1, ScePspemuGetParamPatched);
+	
 	// 0x01C00000 -> 0x03C00000
 	uint32_t cmp_a4_3C00000 = 0x7F70F1B3;
 	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x6394, &cmp_a4_3C00000, sizeof(cmp_a4_3C00000));
@@ -1017,6 +1041,7 @@ int module_stop(SceSize args, void *argp) {
 		taiInjectRelease(uids[i]);
 	}
 
+	taiHookRelease(hooks[--n_hooks], ScePspemuGetParamRef);
 	taiHookRelease(hooks[--n_hooks], ScePspemuDecodePopsAudioRef);
 	taiHookRelease(hooks[--n_hooks], ScePspemuConvertAddressRef);
 	taiHookRelease(hooks[--n_hooks], ScePspemuInitAudioOutRef);

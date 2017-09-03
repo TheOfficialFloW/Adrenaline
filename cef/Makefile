@@ -50,6 +50,7 @@ _satelite:
 	cp "satelite/satelite.prx" "flash0/vsh/module/satelite.prx"
 	make -C satelite clean
 	bin2c flash0/vsh/module/satelite.prx ../user/files/satelite.h satelite
+
 _recovery:
 	make -C recovery clean
 	make -C recovery

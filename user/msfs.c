@@ -37,7 +37,7 @@ static void buildPspemuMsfsPath(char *out_path, const char *in_path) {
 		in_path++;
 
 	if (strncmp(in_path, "__ADRENALINE__", 14) == 0) {
-		snprintf(out_path, MAX_PATH_LENGTH, "ur0:adrenaline%s", in_path+14);
+		snprintf(out_path, MAX_PATH_LENGTH, "ux0:app/" ADRENALINE_TITLEID "/%s", in_path+14);
 	} else {
 		snprintf(out_path, MAX_PATH_LENGTH, "%s/%s", getPspemuMemoryStickLocation(), in_path);
 	}
@@ -585,13 +585,10 @@ static int ScePspemuMsfsChdir(const char *path) {
 static int ScePspemuMsfsDevctl(const char *dev, unsigned int cmd, void *indata, int inlen, void *outdata, int outlen) {
 	// Device information command
 	if (cmd == 0x02425818 && outdata && outlen == sizeof(ScePspemuIoDevInfo)) {
-		const char *path;
+		char *path;
 		SceIoDevInfo devinfo;
 		memset(&devinfo, 0, sizeof(SceIoDevInfo));
 		switch (config.ms_location) {
-			case MEMORY_STICK_LOCATION_UX0:
-				path = "ux0:";
-				break;
 			case MEMORY_STICK_LOCATION_UR0:
 				path = "ur0:";
 				break;
@@ -600,6 +597,9 @@ static int ScePspemuMsfsDevctl(const char *dev, unsigned int cmd, void *indata, 
 				break;
 			case MEMORY_STICK_LOCATION_UMA0:
 				path = "uma0:";
+				break;
+			default:
+				path = "ux0:";
 				break;
 		}
 
