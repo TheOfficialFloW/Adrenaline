@@ -42,6 +42,9 @@ For 6.61 Adrenaline-4 or higher, you can use the 'System Update' in the XMB to u
 Changelog
 ---------
 
+### Changelog v6 fix
+- Fixed bug where CSO games freezed up the system.
+
 ### Changelog v6
 - Redesigned boot process. Adrenaline does now not require any basegame or activation anymore.
 - Added 'uma0:' to 'Memory Stick Location'.

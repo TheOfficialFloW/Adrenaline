@@ -36,7 +36,7 @@ int mallocinit() {
 		return 0;
 	}
 
-	heapid = sceKernelCreateHeap661(PSP_MEMORY_PARTITION_KERNEL, 128 * 1024, 1, "");
+	heapid = sceKernelCreateHeap661(PSP_MEMORY_PARTITION_KERNEL, 256 * 1024, 1, "");
 
 	return (heapid < 0) ? heapid : 0;
 }

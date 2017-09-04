@@ -159,6 +159,8 @@ static void initNet() {
 }
 
 int main() {
+	int res;
+
 	psvDebugScreenInit();
 
 	// Safe mode
@@ -175,7 +177,8 @@ int main() {
 	if (sceIoGetstat("ux0:app/" ADRENALINE_TITLEID "/flash0", &stat) < 0 &&
 		sceIoGetstat("ux0:app/" ADRENALINE_TITLEID "/661.PBP", &stat) < 0) {
 		printf("The 6.61 firmware has not been installed yet and 661.PBP does not exist.\n");
-		printf("Press X to download the PSP 6.61 firmware.\n\n");
+		printf("Press X to download the PSP 6.61 firmware.\n");
+		printf("Press any other button to ignore it (but you need to manually put 661.PBP to ux0:app/" ADRENALINE_TITLEID "/661.PBP" ").\n\n");
 
 		while (1) {
 			SceCtrlData pad;
@@ -183,14 +186,26 @@ int main() {
 
 			if (pad.buttons & SCE_CTRL_CROSS) {
 				initNet();
-				downloadFile(EBOOT_URL, "ux0:app/" ADRENALINE_TITLEID "/661.PBP");
+
+				res = downloadFile(EBOOT_URL, "ux0:app/" ADRENALINE_TITLEID "/661.PBP");
+				if (res < 0) {
+					printf("Error 0x%08X downloading file.\n", res);
+					while (1);
+				}
+				
+				break;
+			} else if (pad.buttons != 0) {
 				break;
 			}
 		}
 	}
 
 	// Load kernel module
-	taiLoadStartKernelModule("ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_kernel.skprx", 0, NULL, 0);
+	res = taiLoadStartKernelModule("ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_kernel.skprx", 0, NULL, 0);
+	if (res < 0) {
+		printf("Could not load adrenaline_kernel.skprx. Please uninstall the old Adrenaline first.");
+		while (1);
+	}
 
 	return 0;
 }
