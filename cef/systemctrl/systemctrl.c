@@ -145,7 +145,7 @@ void sctrlHENPatchSyscall(u32 addr, void *newaddr) {
 }
 
 void SetUmdFile(char *file) {
-	strncpy(rebootex_config.umdfilename, file, 0x47);
+	strncpy(rebootex_config.umdfilename, file, 255);
 }
 
 char *GetUmdFile() {

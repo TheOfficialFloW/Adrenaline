@@ -21,6 +21,7 @@ add_executable(adrenaline_vsh
 
 target_link_libraries(adrenaline_vsh
   taiHEN_stub
+  SceAppMgr_stub
   SceLsdb_stub_weak
 )
 
@@ -29,6 +30,11 @@ vita_create_self(adrenaline_vsh.suprx adrenaline_vsh CONFIG exports.yml UNSAFE)
 vita_create_stubs(stubs adrenaline_vsh ${CMAKE_SOURCE_DIR}/exports.yml)
 
 add_custom_target(copy
-  COMMAND cp adrenaline_vsh.suprx F:/app/PSPEMUCFW/adrenaline_vsh.suprx
+  COMMAND cp adrenaline_vsh.suprx F:/app/PSPEMUCFW/sce_module/adrenaline_vsh.suprx
+  DEPENDS adrenaline_vsh.suprx
+)
+
+add_custom_target(pkg
+  COMMAND cp adrenaline_vsh.suprx ../../bubble/pkg/sce_module/adrenaline_vsh.suprx
   DEPENDS adrenaline_vsh.suprx
 )

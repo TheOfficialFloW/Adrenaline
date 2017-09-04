@@ -8,11 +8,11 @@ SceUID umdfd;
 int umd_open;
 int umd_is_cso;
 
-char umdfilename[0x48];
+char umdfilename[256];
 
 void VshCtrlSetUmdFile(char *file) {
 	SetUmdFile(file);
-	strncpy(umdfilename, file, 0x47);
+	strncpy(umdfilename, file, 255);
 	sceIoClose(umdfd);
 	umd_open = 0;
 	umdfd = -1;

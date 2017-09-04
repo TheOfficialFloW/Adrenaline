@@ -140,7 +140,24 @@ int _msIoDevctl(u32 *args) {
 		return 0;
 	}
 
-	return ms_funcs.IoDevctl(arg, devname, cmd, indata, inlen, outdata, outlen);
+	int res = ms_funcs.IoDevctl(arg, devname, cmd, indata, inlen, outdata, outlen);
+
+	// Fix integer overflow in Outrun
+	if (cmd == 0x02425818) {
+		if (sceKernelBootFrom() == PSP_BOOT_DISC) {
+			u32 *data = *(u32 *)indata;
+			if (data) {
+				ScePspemuIoDevInfo *info = (ScePspemuIoDevInfo *)data;
+
+				u64 size = (u64)info->free_clusters * (u64)info->sector_size * (u64)info->sector_count;
+				if (size >= 0x7FFFFFFF) {					
+					info->free_clusters = 0x7FFFFFFF / info->sector_size / info->sector_count;
+				}
+			}
+		}
+	}
+
+	return res;
 }
 
 int msIoOpen(PspIoDrvFileArg *arg, char *file, int flags, SceMode mode) {

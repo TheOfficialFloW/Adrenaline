@@ -60,21 +60,6 @@
 #define KERMIT_CMD_MSFS_DEVCTL			(0x00000C60)
 
 typedef struct {
-	SceSize size;
-	char shortFileName[13];
-	char __padding__[3];
-	char longFileName[1024];
-} SceFatMsDirent;
-
-typedef struct {
-	uint32_t max_clusters;
-	uint32_t free_clusters;
-	uint32_t max_sectors;
-	uint32_t sector_size;
-	uint32_t sector_count;
-} ScePspemuIoDevInfo;
-
-typedef struct {
 	char path[MAX_PATH_LENGTH];
 	char filter[MAX_NAME_LENGTH];
 	SceUID fd;

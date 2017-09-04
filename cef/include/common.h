@@ -183,7 +183,7 @@ typedef struct {
 	u32 ram2;
 	u32 ram11;
 
-	char umdfilename[0x48];
+	char umdfilename[256];
 } RebootexConfig;
 
 int sctrlGetUsbState();

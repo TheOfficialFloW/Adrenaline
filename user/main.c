@@ -286,7 +286,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 						sceIoClose(fd);
 				}
 
-				usbdevice_modid = startUsb("ux0:app/" ADRENALINE_TITLEID "/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
+				usbdevice_modid = startUsb("ux0:app/" ADRENALINE_TITLEID "/sce_module/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);
 
 				// Response
 				res = (usbdevice_modid < 0) ? usbdevice_modid : 0;

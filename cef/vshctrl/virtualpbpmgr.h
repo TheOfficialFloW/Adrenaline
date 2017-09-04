@@ -7,7 +7,7 @@
 typedef struct
 {
 	u32  header[10];
-	char isofile[112];	
+	char isofile[256];	
 	char discid[10];
 	u8   pad[6];
 	char sfotitle[64];

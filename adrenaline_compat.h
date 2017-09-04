@@ -28,7 +28,6 @@
 #define ADRENALINE_VERSION_MAJOR_STR str(ADRENALINE_VERSION_MAJOR)
 #define ADRENALINE_VERSION_MINOR_STR str(ADRENALINE_VERSION_MINOR)
 
-// TODO: use _C9H13N03
 #define ADRENALINE_TITLEID "PSPEMUCFW"
 
 #define SCE_PSPEMU_FLASH0_PACKAGE_SIZE 0x920000
@@ -44,6 +43,21 @@
 #define PSP_SCREEN_WIDTH 480
 #define PSP_SCREEN_HEIGHT 272
 #define PSP_SCREEN_LINE 512
+
+typedef struct {
+	SceSize size;
+	char shortFileName[13];
+	char __padding__[3];
+	char longFileName[1024];
+} SceFatMsDirent;
+
+typedef struct {
+	unsigned int max_clusters;
+	unsigned int free_clusters;
+	unsigned int max_sectors;
+	unsigned int sector_size;
+	unsigned int sector_count;
+} ScePspemuIoDevInfo;
 
 enum KermitModes {
 	KERMIT_MODE_NONE,

@@ -30,14 +30,19 @@
 
 #include "utils.h"
 
+#include "../adrenaline_compat.h"
+
+int ksceKernelGetProcessInfo(SceUID pid, void *info);
+
 static tai_hook_ref_t ksceKernelAllocMemBlockRef;
 static tai_hook_ref_t ksceKernelFreeMemBlockRef;
 static tai_hook_ref_t ksceKernelUnmapMemBlockRef;
 static tai_hook_ref_t SceGrabForDriver_E9C25A28_ref;
 static tai_hook_ref_t sm_stuff_ref;
 static tai_hook_ref_t ksceSblAimgrIsDEXRef;
+static tai_hook_ref_t ksceKernelStartPreloadedModulesRef;
 
-static int hooks[6];
+static int hooks[8];
 static int n_hooks = 0;
 
 static SceUID extra_1_blockid = -1, extra_2_blockid = -1;
@@ -126,9 +131,49 @@ int ksceSblAimgrIsDEXPatched() {
 	return 1;
 }
 
+static int getShellPid() {
+	uint32_t info[0xE8/4];
+	memset(info, 0, sizeof(info));
+	info[0] = sizeof(info);
+
+	SceUID current_pid = 0, parent_pid = 0;
+
+	do {
+		current_pid = parent_pid;
+
+		if (ksceKernelGetProcessInfo(current_pid, info) < 0)
+			return -1;
+
+		parent_pid = info[5];
+
+		if (parent_pid == -1)
+			return -1;
+	} while (parent_pid != KERNEL_PID);
+
+	return current_pid;
+}
+
+static int ksceKernelStartPreloadedModulesPatched(SceUID pid) {
+	int res = TAI_CONTINUE(int, ksceKernelStartPreloadedModulesRef, pid);
+
+	char titleid[32];
+	ksceKernelGetProcessTitleId(pid, titleid, sizeof(titleid));
+
+	if (strcmp(titleid, "main") == 0) {
+		ksceKernelLoadStartModuleForPid(pid, "ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_vsh.suprx", 0, NULL, 0, NULL, NULL);
+	} else if (strcmp(titleid, ADRENALINE_TITLEID) == 0) {
+		ksceKernelLoadStartModuleForPid(pid, "ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_user.suprx", 0, NULL, 0, NULL, NULL);
+	}
+
+	return res;
+}
+
 void _start() __attribute__ ((weak, alias("module_start")));
 int module_start(SceSize args, void *argp) {
 	int res;
+
+	// Load plugin for SceShell
+	ksceKernelLoadStartModuleForPid(getShellPid(), "ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_vsh.suprx", 0, NULL, 0, NULL, NULL);
 
 	// Tai module info
 	tai_module_info_t tai_info;
@@ -151,10 +196,14 @@ int module_start(SceSize args, void *argp) {
 	// SceSblAIMgrForDriver
 	hooks[n_hooks++] = taiHookFunctionImportForKernel(KERNEL_PID, &ksceSblAimgrIsDEXRef, "SceCompat", 0xFD00C69A, 0xF4B98F66, ksceSblAimgrIsDEXPatched);
 
+	// SceKernelModulemgr
+	hooks[n_hooks++] = taiHookFunctionExportForKernel(KERNEL_PID, &ksceKernelStartPreloadedModulesRef, "SceKernelModulemgr", 0xC445FA63, 0x432DCC7A, ksceKernelStartPreloadedModulesPatched);
+
 	return SCE_KERNEL_START_SUCCESS;
 }
 
 int module_stop(SceSize args, void *argp) {
+	taiHookReleaseForKernel(hooks[--n_hooks], ksceKernelStartPreloadedModulesRef);
 	taiHookReleaseForKernel(hooks[--n_hooks], ksceSblAimgrIsDEXRef);
 	taiHookReleaseForKernel(hooks[--n_hooks], SceGrabForDriver_E9C25A28_ref);
 	taiHookReleaseForKernel(hooks[--n_hooks], ksceKernelUnmapMemBlockRef);

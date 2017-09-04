@@ -16,6 +16,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <psp2/appmgr.h>
 #include <psp2/io/dirent.h>
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
@@ -95,6 +96,11 @@ int module_start(SceSize args, void *argp) {
 	} else {
 		hooks[3] = taiHookFunctionImport(&sceLsdbGetTypeRef, "SceShell", 0x6BC25E17, 0xDEC358E4, sceLsdbGetTypePatched);
 	}
+
+	// Destroy
+	sceAppMgrDestroyAppByName(ADRENALINE_TITLEID);
+
+	// TODO: autoreload
 
 	return SCE_KERNEL_START_SUCCESS;
 }

@@ -24,9 +24,12 @@ target_link_libraries(adrenaline_kernel
   SceCpuForDriver_stub
   SceCtrlForDriver_stub
   SceIofilemgrForDriver_stub
+  SceModulemgrForDriver_stub
   SceModulemgrForKernel_stub
+  SceProcessmgrForDriver_stub
   SceSysclibForDriver_stub
   SceSysmemForDriver_stub
+  SceSysrootForKernel_stub
   SceThreadmgrForDriver_stub
 )
 
@@ -40,6 +43,11 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/stubs/
 )
 
 add_custom_target(copy
-  COMMAND cp adrenaline_kernel.skprx F:/app/PSPEMUCFW/adrenaline_kernel.skprx
+  COMMAND cp adrenaline_kernel.skprx F:/app/PSPEMUCFW/sce_module/adrenaline_kernel.skprx
+  DEPENDS adrenaline_kernel.skprx
+)
+
+add_custom_target(pkg
+  COMMAND cp adrenaline_kernel.skprx ../../bubble/pkg/sce_module/adrenaline_kernel.skprx
   DEPENDS adrenaline_kernel.skprx
 )

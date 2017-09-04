@@ -30,7 +30,7 @@ PSP_MODULE_INFO("VshControl", 0x1007, 1, 0);
 
 #define DUMMY_CAT_ISO_EXTENSION "     "
 
-char categorypath[512];
+char categorypath[256];
 SceUID categorydfd = -1;
 
 SceUID gamedfd = -1, isodfd = -1, overiso = 0;
@@ -56,7 +56,7 @@ void KXploitString(char *str) {
 }
 
 int CorruptIconPatch(char *name) {
-	char path[512];
+	char path[256];
 	sprintf(path, "ms0:/PSP/GAME/%s%%/EBOOT.PBP", name);
 
 	SceIoStat stat;
@@ -70,7 +70,7 @@ int CorruptIconPatch(char *name) {
 }
 
 int HideDlc(char *name) {
-	char path[512];
+	char path[256];
 	sprintf(path, "ms0:/PSP/GAME/%s/PARAM.PBP", name);
 
 	SceIoStat stat;
@@ -223,7 +223,7 @@ int ReadCache() {
 	memset(cache, 0, sizeof(VirtualPbp) * 128);
 
 	for (i = 0; i < 0x10; i++) {
-		fd = sceIoOpen("ms0:/PSP/SYSTEM/isocaches.bin", PSP_O_RDONLY, 0);
+		fd = sceIoOpen("ms0:/PSP/SYSTEM/isocache2.bin", PSP_O_RDONLY, 0);
 		if (fd >= 0)
 			break;
 	}
@@ -264,7 +264,7 @@ int SaveCache() {
 	sceIoMkdir("ms0:/PSP/SYSTEM", 0777);
 
 	for (i = 0; i < 0x10; i++) {
-		fd = sceIoOpen("ms0:/PSP/SYSTEM/isocaches.bin", PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0777);
+		fd = sceIoOpen("ms0:/PSP/SYSTEM/isocache2.bin", PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0777);
 		if (fd >= 0)
 			break;
 	}
@@ -314,7 +314,7 @@ int AddIsoDirent(char *path, SceUID fd, SceIoDirent *dir, int readcategories) {
 
 NEXT:
 	if ((res = sceIoDread(fd, dir)) > 0) {
-		char fullpath[512];
+		char fullpath[256];
 		int res2 = -1;
 		int docache;
 
@@ -535,8 +535,24 @@ int sceIoGetstatPatched(const char *file, SceIoStat *stat) {
 		return res;
 	}
 
+	int game = 0;
+	if (strcmp(file, "ms0:/PSP/GAME") == 0)
+		game = 1;
+
 	pspSdkSetK1(k1);
-	return sceIoGetstat(file, stat);
+
+	int res = sceIoGetstat(file, stat);
+
+	if (game && res < 0) {
+		pspSdkSetK1(0);
+		sceIoMkdir("ms0:/PSP", 0777);
+		sceIoMkdir("ms0:/PSP/GAME", 0777);
+		pspSdkSetK1(k1);
+
+		res = sceIoGetstat(file, stat);
+	}
+
+	return res;
 }
 
 int sceIoChstatPatched(const char *file, SceIoStat *stat, int bits) {
@@ -579,6 +595,17 @@ int sceIoRmdirPatched(const char *path) {
 
 	pspSdkSetK1(k1);
 	return sceIoRmdir(path);
+}
+
+int sceIoMkdirPatched(const char *dir, SceMode mode) {
+	int k1 = pspSdkSetK1(0);
+
+	if (strcmp(dir, "ms0:/PSP/GAME") == 0) {
+		sceIoMkdir("ms0:/ISO", mode);
+	}
+
+	pspSdkSetK1(k1);
+	return sceIoMkdir(dir, mode);
 }
 
 ///////////////////////////////////////////////////////
@@ -711,6 +738,7 @@ ImportPatch import_patch[] = {
 	{ &sceIoChstat, sceIoChstatPatched },
 	{ &sceIoRemove, sceIoRemovePatched },
 	{ &sceIoRmdir, sceIoRmdirPatched },
+	{ &sceIoMkdir, sceIoMkdirPatched },
 };
 
 void IoPatches() {
