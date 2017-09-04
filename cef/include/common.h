@@ -189,6 +189,5 @@ typedef struct {
 int sctrlGetUsbState();
 int sctrlStartUsb();
 int sctrlStopUsb();
-char *sctrlGetTitleid();
 
 #endif

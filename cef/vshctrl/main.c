@@ -30,6 +30,8 @@ PSP_MODULE_INFO("VshControl", 0x1007, 1, 0);
 
 #define DUMMY_CAT_ISO_EXTENSION "     "
 
+#define MAX_FILES 128
+
 char categorypath[256];
 SceUID categorydfd = -1;
 
@@ -218,9 +220,9 @@ int ReadCache() {
 	int i;
 
 	if (!cache)
-		cache = (VirtualPbp *)oe_malloc(128 * sizeof(VirtualPbp));
+		cache = (VirtualPbp *)oe_malloc(MAX_FILES * sizeof(VirtualPbp));
 
-	memset(cache, 0, sizeof(VirtualPbp) * 128);
+	memset(cache, 0, sizeof(VirtualPbp) * MAX_FILES);
 
 	for (i = 0; i < 0x10; i++) {
 		fd = sceIoOpen("ms0:/PSP/SYSTEM/isocache2.bin", PSP_O_RDONLY, 0);
@@ -231,7 +233,7 @@ int ReadCache() {
 	if (i == 0x10)
 		return -1;
 
-	sceIoRead(fd, cache, sizeof(VirtualPbp) * 128);
+	sceIoRead(fd, cache, sizeof(VirtualPbp) * MAX_FILES);
 	sceIoClose(fd);
 
 	return 0;
@@ -244,7 +246,7 @@ int SaveCache() {
 	if (!cache)
 		return -1;
 
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < MAX_FILES; i++) {
 		if (cache[i].isofile[0] != 0) {
 			SceIoStat stat;
 			memset(&stat, 0, sizeof(stat));
@@ -272,7 +274,7 @@ int SaveCache() {
 	if (i == 0x10)
 		return -1;
 
-	sceIoWrite(fd, cache, sizeof(VirtualPbp) * 128);
+	sceIoWrite(fd, cache, sizeof(VirtualPbp) * MAX_FILES);
 	sceIoClose(fd);
 
 	return 0;
@@ -280,7 +282,7 @@ int SaveCache() {
 
 int IsCached(char *isofile, ScePspDateTime *mtime, VirtualPbp *res) {
 	int i;
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < MAX_FILES; i++) {
 		if (cache[i].isofile[0] != 0) {
 			if (strcmp(cache[i].isofile, isofile) == 0) {
 				if (memcmp(mtime, &cache[i].mtime, sizeof(ScePspDateTime)) == 0) {
@@ -296,7 +298,7 @@ int IsCached(char *isofile, ScePspDateTime *mtime, VirtualPbp *res) {
 
 int Cache(VirtualPbp *pbp) {
 	int i;
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < MAX_FILES; i++) {
 		if (cache[i].isofile[0] == 0) {
 			memcpy(&cache[i], pbp, sizeof(VirtualPbp));
 			cachechanged = 1;
@@ -307,14 +309,13 @@ int Cache(VirtualPbp *pbp) {
 	return 0;
 }
 
-VirtualPbp vpbp;
-
 int AddIsoDirent(char *path, SceUID fd, SceIoDirent *dir, int readcategories) {
 	int res;
 
 NEXT:
 	if ((res = sceIoDread(fd, dir)) > 0) {
-		char fullpath[256];
+		static VirtualPbp vpbp;
+		static char fullpath[256];
 		int res2 = -1;
 		int docache;
 
@@ -337,7 +338,7 @@ NEXT:
 				// Fake the entry from file to directory
 				dir->d_stat.st_mode = 0x11FF;
 				dir->d_stat.st_attr = 0x0010;
-				dir->d_stat.st_size = 0;	
+				dir->d_stat.st_size = 0;
 				
 				// Change the modifcation time to creation time
 				memcpy(&dir->d_stat.st_mtime, &dir->d_stat.st_ctime, sizeof(ScePspDateTime));
@@ -414,7 +415,7 @@ int sceIoDreadPatched(SceUID fd, SceIoDirent *dir) {
 			CorruptIconPatch(dir->d_name);
 		
 		if (config.hidedlcs)
-			HideDlc(dir->d_name);
+			HideDlc(dir->d_name);		
 	}
 
 	pspSdkSetK1(k1);
