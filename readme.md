@@ -27,7 +27,7 @@ How to install
 ux0:app/PSPEMUCFW/sce_module/adrenaline_kernel.skprx
 ```
 
-**Note #2:** If you have been using a previous Adrenaline, please uninstall it before using `6.61 Adrenaline-6` or higher.
+**Note #2:** If you have been using a previous Adrenaline, please uninstall it before using `6.61 Adrenaline-6` or higher. Just remove the directory `ux0:adrenaline` to avoid interference.
 
 Network update
 --------------
