@@ -6,7 +6,7 @@ A software that transforms your PS Vita into a two-in-one device
 Donation
 --------
 If you wish to donate me some money, I'd really appreciate. But just don't write thanks for PSP piracy xD
-[Donation link](goo.gl/uAIPIY)
+[Donation link](http://goo.gl/uAIPIY)
 
 What is Adrenaline?
 -------------------
