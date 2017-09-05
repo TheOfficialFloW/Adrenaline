@@ -104,7 +104,7 @@ static int sm_stuff_patched() {
 	return TAI_CONTINUE(int, sm_stuff_ref);
 }
 
-statc int ksceSblAimgrIsDEXPatched() {
+static int ksceSblAimgrIsDEXPatched() {
 	TAI_CONTINUE(int, ksceSblAimgrIsDEXRef);
 	return 1;
 }
