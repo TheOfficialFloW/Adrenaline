@@ -19,6 +19,7 @@
 #include <common.h>
 
 #include "main.h"
+#include "adrenaline.h"
 #include "../../adrenaline_compat.h"
 
 #include "rebootex.h"

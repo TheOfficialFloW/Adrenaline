@@ -19,6 +19,7 @@
 #include <common.h>
 
 #include "main.h"
+#include "adrenaline.h"
 
 int sctrlKernelSetUserLevel(int level) {
 	int k1 = pspSdkSetK1(0);

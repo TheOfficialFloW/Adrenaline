@@ -91,8 +91,8 @@ int module_start(SceSize args, void *argp) {
 	tai_module_info_t info;
 	info.size = sizeof(info);
 	if (taiGetModuleInfo("SceLsdb", &info) < 0) {
-		hooks[0] = taiHookFunctionImport(&sceSysmoduleLoadModuleInternalWithArgRef, "SceShell", TAI_ANY_LIBRARY, 0xC3C26339, sceSysmoduleLoadModuleInternalWithArgPatched);
-		hooks[1] = taiHookFunctionImport(&sceSysmoduleUnloadModuleInternalWithArgRef, "SceShell", TAI_ANY_LIBRARY, 0xA2F40C4C, sceSysmoduleUnloadModuleInternalWithArgPatched);
+		hooks[0] = taiHookFunctionImport(&sceSysmoduleLoadModuleInternalWithArgRef, "SceShell", 0x03FCF19D, 0xC3C26339, sceSysmoduleLoadModuleInternalWithArgPatched);
+		hooks[1] = taiHookFunctionImport(&sceSysmoduleUnloadModuleInternalWithArgRef, "SceShell", 0x03FCF19D, 0xA2F40C4C, sceSysmoduleUnloadModuleInternalWithArgPatched);
 	} else {
 		hooks[3] = taiHookFunctionImport(&sceLsdbGetTypeRef, "SceShell", 0x6BC25E17, 0xDEC358E4, sceLsdbGetTypePatched);
 	}

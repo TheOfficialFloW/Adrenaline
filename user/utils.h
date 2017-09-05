@@ -29,6 +29,7 @@ int ReadFile(char *file, void *buf, int size);
 int WriteFile(char *file, void *buf, int size);
 
 void readPad();
+int doubleClick(uint32_t buttons, uint64_t max_time);
 
 void getSizeString(char string[16], uint64_t size);
 void getTimeString(char string[16], int time_format, SceDateTime *time);

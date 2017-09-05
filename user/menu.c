@@ -201,7 +201,8 @@ void drawMenu() {
 		if (i != 0)
 			vita2d_draw_rectangle(WINDOW_X + (i * TAB_SIZE) - 2.0f, FONT_Y_LINE(19) - 5.0f, 4.0f, 38.0f, COLOR_ALPHA(BLACK, 0x8F));
 
-		pgf_draw_text(WINDOW_X + (i * TAB_SIZE) + ALIGN_CENTER(TAB_SIZE, vita2d_pgf_text_width(font, FONT_SIZE, tab_entries[i].name)), FONT_Y_LINE(19), WHITE, FONT_SIZE, tab_entries[i].name);
+		float x = WINDOW_X + (i * TAB_SIZE) + ALIGN_CENTER(TAB_SIZE, vita2d_pgf_text_width(font, FONT_SIZE, tab_entries[i].name));
+		pgf_draw_text(x, FONT_Y_LINE(19), WHITE, FONT_SIZE, tab_entries[i].name);
 	}
 
 	// Draw entries

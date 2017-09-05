@@ -22,6 +22,7 @@
 #include <psp2/compat.h>
 #include <psp2/ctrl.h>
 #include <psp2/io/stat.h>
+#include <taihen.h>
 #include "../adrenaline_compat.h"
 
 #define ALIGN(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
@@ -80,6 +81,28 @@ extern int (* ScePspemuConvertStatTimeToLocaltime)(SceIoStat *stat);
 extern int (* ScePspemuSettingsHandler)(int a1, int a2, int a3, int a4);
 extern int (* ScePspemuSetDisplayConfig)();
 extern int (* ScePspemuPausePops)(int pause);
+extern int (* ScePspemuInitPops)();
+extern int (* ScePspemuInitPocs)();
+
+extern tai_hook_ref_t sceCompatSuspendResumeRef;
+extern tai_hook_ref_t sceCompatWriteSharedCtrlRef;
+extern tai_hook_ref_t sceCompatWaitSpecialRequestRef;
+extern tai_hook_ref_t sceShellUtilRegisterSettingsHandlerRef;
+extern tai_hook_ref_t sceKernelCreateThreadRef;
+extern tai_hook_ref_t sceIoOpenRef;
+extern tai_hook_ref_t sceIoGetstatRef;
+extern tai_hook_ref_t sceAudioOutOpenPortRef;
+extern tai_hook_ref_t sceAudioOutOutputRef;
+extern tai_hook_ref_t sceCtrlPeekBufferNegative2Ref;
+extern tai_hook_ref_t sceDisplaySetFrameBufForCompatRef;
+
+extern tai_hook_ref_t ScePspemuInitTitleSpecificInfoRef;
+extern tai_hook_ref_t ScePspemuGetStartupPngRef;
+extern tai_hook_ref_t ScePspemuGetTitleidRef;
+extern tai_hook_ref_t ScePspemuInitAudioOutRef;
+extern tai_hook_ref_t ScePspemuConvertAddressRef;
+extern tai_hook_ref_t ScePspemuDecodePopsAudioRef;
+extern tai_hook_ref_t ScePspemuGetParamRef;
 
 extern uint32_t text_addr, text_size, data_addr, data_size;
 

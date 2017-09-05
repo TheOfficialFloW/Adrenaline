@@ -104,29 +104,7 @@ static int sm_stuff_patched() {
 	return TAI_CONTINUE(int, sm_stuff_ref);
 }
 
-int kuCtrlPeekBufferPositive(int port, SceCtrlData *pad_data, int count) {
-	uint32_t state;
-	ENTER_SYSCALL(state);
-
-	SceCtrlData pad;
-	uint32_t off;
-
-	// set cpu offset to zero
-	asm volatile ("mrc p15, 0, %0, c13, c0, 4" : "=r" (off));
-	asm volatile ("mcr p15, 0, %0, c13, c0, 4" :: "r" (0));
-
-	int res = ksceCtrlPeekBufferPositive(port, &pad, count);
-
-	// restore cpu offset
-	asm volatile ("mcr p15, 0, %0, c13, c0, 4" :: "r" (off));
-
-	ksceKernelMemcpyKernelToUser((uintptr_t)pad_data, &pad, sizeof(SceCtrlData));
-
-	EXIT_SYSCALL(state);
-	return res;
-}
-
-int ksceSblAimgrIsDEXPatched() {
+statc int ksceSblAimgrIsDEXPatched() {
 	TAI_CONTINUE(int, ksceSblAimgrIsDEXRef);
 	return 1;
 }
@@ -165,6 +143,28 @@ static int ksceKernelStartPreloadedModulesPatched(SceUID pid) {
 		ksceKernelLoadStartModuleForPid(pid, "ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_user.suprx", 0, NULL, 0, NULL, NULL);
 	}
 
+	return res;
+}
+
+int kuCtrlPeekBufferPositive(int port, SceCtrlData *pad_data, int count) {
+	uint32_t state;
+	ENTER_SYSCALL(state);
+
+	SceCtrlData pad;
+	uint32_t off;
+
+	// set cpu offset to zero
+	asm volatile ("mrc p15, 0, %0, c13, c0, 4" : "=r" (off));
+	asm volatile ("mcr p15, 0, %0, c13, c0, 4" :: "r" (0));
+
+	int res = ksceCtrlPeekBufferPositive(port, &pad, count);
+
+	// restore cpu offset
+	asm volatile ("mcr p15, 0, %0, c13, c0, 4" :: "r" (off));
+
+	ksceKernelMemcpyKernelToUser((uintptr_t)pad_data, &pad, sizeof(SceCtrlData));
+
+	EXIT_SYSCALL(state);
 	return res;
 }
 

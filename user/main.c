@@ -17,7 +17,6 @@
 */
 
 #include <psp2/appmgr.h>
-#include <psp2/audioout.h>
 #include <psp2/ctrl.h>
 #include <psp2/display.h>
 #include <psp2/power.h>
@@ -39,9 +38,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <taihen.h>
-
 #include "main.h"
+#include "pops.h"
+#include "titleinfo.h"
 #include "flashfs.h"
 #include "msfs.h"
 #include "menu.h"
@@ -69,31 +68,33 @@ int (* ScePspemuConvertStatTimeToLocaltime)(SceIoStat *stat);
 int (* ScePspemuSettingsHandler)(int a1, int a2, int a3, int a4);
 int (* ScePspemuSetDisplayConfig)();
 int (* ScePspemuPausePops)(int pause);
+int (* ScePspemuInitPops)();
+int (* ScePspemuInitPocs)();
+
+tai_hook_ref_t sceCompatSuspendResumeRef;
+tai_hook_ref_t sceCompatWriteSharedCtrlRef;
+tai_hook_ref_t sceCompatWaitSpecialRequestRef;
+tai_hook_ref_t sceShellUtilRegisterSettingsHandlerRef;
+tai_hook_ref_t sceKernelCreateThreadRef;
+tai_hook_ref_t sceIoOpenRef;
+tai_hook_ref_t sceIoGetstatRef;
+tai_hook_ref_t sceAudioOutOpenPortRef;
+tai_hook_ref_t sceAudioOutOutputRef;
+tai_hook_ref_t sceCtrlPeekBufferNegative2Ref;
+tai_hook_ref_t sceDisplaySetFrameBufForCompatRef;
+
+tai_hook_ref_t ScePspemuInitTitleSpecificInfoRef;
+tai_hook_ref_t ScePspemuGetStartupPngRef;
+tai_hook_ref_t ScePspemuGetTitleidRef;
+tai_hook_ref_t ScePspemuInitAudioOutRef;
+tai_hook_ref_t ScePspemuConvertAddressRef;
+tai_hook_ref_t ScePspemuDecodePopsAudioRef;
+tai_hook_ref_t ScePspemuGetParamRef;
 
 static SceUID hooks[16];
 static SceUID uids[64];
 static int n_hooks = 0;
 static int n_uids = 0;
-
-static tai_hook_ref_t sceCompatSuspendResumeRef;
-static tai_hook_ref_t sceCompatWriteSharedCtrlRef;
-static tai_hook_ref_t sceCompatWaitSpecialRequestRef;
-static tai_hook_ref_t sceShellUtilRegisterSettingsHandlerRef;
-static tai_hook_ref_t sceKernelCreateThreadRef;
-static tai_hook_ref_t sceIoOpenRef;
-static tai_hook_ref_t sceIoGetstatRef;
-static tai_hook_ref_t sceAudioOutOpenPortRef;
-static tai_hook_ref_t sceAudioOutOutputRef;
-static tai_hook_ref_t sceCtrlPeekBufferNegative2Ref;
-static tai_hook_ref_t sceDisplaySetFrameBufForCompatRef;
-
-static tai_hook_ref_t ScePspemuInitTitleSpecificInfoRef;
-static tai_hook_ref_t ScePspemuGetStartupPngRef;
-static tai_hook_ref_t ScePspemuGetTitleidRef;
-static tai_hook_ref_t ScePspemuInitAudioOutRef;
-static tai_hook_ref_t ScePspemuConvertAddressRef;
-static tai_hook_ref_t ScePspemuDecodePopsAudioRef;
-static tai_hook_ref_t ScePspemuGetParamRef;
 
 uint32_t text_addr, text_size, data_addr, data_size;
 
@@ -116,6 +117,8 @@ void GetFunctions() {
 	ScePspemuConvertStatTimeToLocaltime = (void *)(text_addr + 0x8680 + 0x1);
 	ScePspemuSetDisplayConfig           = (void *)(text_addr + 0x20E50 + 0x1);
 	ScePspemuPausePops                  = (void *)(text_addr + 0x300C0 + 0x1);
+	ScePspemuInitPops                   = (void *)(text_addr + 0x30678 + 0x1);
+	ScePspemuInitPocs                   = (void *)(text_addr + 0x227C4 + 0x1);
 }
 
 void SendAdrenalineRequest(int cmd) {
@@ -330,38 +333,6 @@ int AdrenalineCompat(SceSize args, void *argp) {
 	return sceKernelExitDeleteThread(0);
 }
 
-static int doubleClick(uint32_t buttons, uint64_t max_time) {
-	static uint32_t old_buttons, current_buttons, released_buttons;
-	static uint64_t last_time = 0;
-	static int clicked = 0;
-	int double_clicked = 0;
-
-	SceCtrlData pad;
-	kuCtrlPeekBufferPositive(0, &pad, 1);
-
-	old_buttons = current_buttons;
-	current_buttons = pad.buttons;
-	released_buttons = ~current_buttons & old_buttons;
-
-	if (released_buttons & buttons) {
-		if (clicked) {
-			if ((sceKernelGetProcessTimeWide()-last_time) < max_time) {
-				double_clicked = 1;
-				clicked = 0;
-				last_time = 0;
-			} else {
-				clicked = 1;
-				last_time = sceKernelGetProcessTimeWide();
-			}
-		} else {
-			clicked = 1;
-			last_time = sceKernelGetProcessTimeWide();
-		}
-	}
-
-	return double_clicked;
-}
-
 static int AdrenalineExit(SceSize args, void *argp) {
 	while (1) {
 		// Double click detection
@@ -508,7 +479,9 @@ static int sceShellUtilRegisterSettingsHandlerPatched(int (* handler)(int a1, in
 	return TAI_CONTINUE(int, sceShellUtilRegisterSettingsHandlerRef, handler, unk);
 }
 
-static SceUID sceKernelCreateThreadPatched(const char *name, SceKernelThreadEntry entry, int initPriority, int stackSize, SceUInt attr, int cpuAffinityMask, const SceKernelThreadOptParam *option) {
+static SceUID sceKernelCreateThreadPatched(const char *name, SceKernelThreadEntry entry, int initPriority,
+											int stackSize, SceUInt attr, int cpuAffinityMask,
+											const SceKernelThreadOptParam *option) {
 	if (strcmp(name, "ScePspemuRemoteMsfs") == 0) {
 		entry = (SceKernelThreadEntry)ScePspemuRemoteMsfs;
 	}
@@ -528,142 +501,6 @@ static int ScePspemuGetParamPatched(char *discid, int *parentallevel, char *game
 	return 0;
 }
 
-static int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
-	int res = 0;
-
-	// Make __sce_menuinfo path
-	snprintf((char *)(data_addr + 0x11C7D0C), 0x80, "ms0:PSP/GAME/%s/__sce_menuinfo", titleid);
-
-	uint32_t *info = (uint32_t *)(data_addr + 0x1156450);
-
-	// Video delay
-	// Buzz!: Brain Bender: 3000. Fixes buggy PMF sequence
-	info[0x00] = 3000;
-
-	// Use current titleid for adhoc if 
-	// it's set to any other value than 0xFFFFFFFF
-	info[0x01] = 0xFFFFFFFF;
-
-	// IO read delay
-	info[0x02] = 0xFFFFFFFF;
-
-	// One of those games. Adhoc related
-	// 0x0: ULJS00218
-	// 0x1: ULES01275
-	// 0x2: ULES00703
-	// 0x3: ULES00125
-	// 0x4: UCJS10003
-	info[0x03] = 0xFFFFFFFF;
-
-	// Unused. Msfs related
-	info[0x04] = 0xFFFFFFFF;
-
-	// Net send delay
-	info[0x05] = 0xFFFFFFFF;
-
-	// Audio delay. Used in socom
-	info[0x06] = 0xFFFFFFFF;
-
-	// Net send related
-	info[0x07] = 0xFFFFFFFF;
-
-	// Delay. Not sure for what
-	info[0x08] = 0xFFFFFFFF;
-
-	// Msfs lseek patch. Value 0 or 1. Used in Ratched & Clank
-	info[0x09] = 0xFFFFFFFF;
-
-	// Use current titleid for adhoc if 
-	// it's set to any other value than 0xFFFFFFFF
-	info[0x0A] = 0xFFFFFFFF;
-
-	// Game patches
-	// 0x01: UCUS98687 Twisted Metal: Head-On
-	// 0x02: UCES00018 Twisted Metal: Head-On
-	// 0x03: NPJG00115 INFLUENCE
-	// 0x04: ULJM05500 Monster Hunter Portable 2nd G
-	// 0x05: ULJM05800 Monster Hunter Portable 3rd
-	// 0x06: ULES00851 Monster Hunter Freedom 2
-	// 0x07: ULES01213 Monster Hunter Freedom Unite
-	// 0x08: UCES01563 Geronimo Stilton: Return to the Kingdom of Fantasy
-	// 0x09: NPUG80850 Geronimo Stilton: Return to the Kingdom of Fantasy
-	// 0x0A: NPJH00039 Hatsune Miku: Project Diva - Tsuika Gakkyoku Shuu Deluxe Pack 1 - Miku Uta, Okawar
-	// 0x0B: NPJH00040 Hatsune Miku: Project Diva - Tsuika Gakkyoku Shuu Deluxe Pack 2 - Motto Okawari Rin, Len, Luka
-	// 0x0C: NPJH50594 Jikkyou Powerful Pro Yakyuu 2012
-	// 0x0D: NPJH50708 Jikkyou Powerful Pro Yakyuu 2012 Ketteiban
-	// 0x0E: ULES00981 Star Wars: The Force Unleashed
-	// 0x0F: ULUS10345 Star Wars: The Force Unleashed
-	// 0x10: ULUS10088 Field Commander
-	// 0x11: NPUH10091 Pool Hall Pro
-	// 0x12: ULES00821 World of Pool
-	info[0x0B] = 0xFFFFFFFF;
-
-	// This enables audio in MotorStorm
-	info[0x0C] = 0x1000;
-
-	// Net termination delay
-	info[0x0D] = 0xFFFFFFFF;
-
-	// Use ME 2. Used in Harvest Moon
-	info[0x0E] = 0xFFFFFFFF;
-
-	// Wlan related. Only used in B-Boy
-	info[0x0F] = 0xFFFFFFFF;
-
-	// SHA-1 size
-	info[0x10] = 0xFFFFFFFF;
-	
-	// SHA-1 hash digest
-	info[0x11] = 0xFFFFFFFF;
-
-	// Io cache file buffer size. Used in LocoRoco
-	info[0x12] = 0xFFFFFFFF;
-
-	// The game Thrillville sets this to 1
-	info[0x13] = 0xFFFFFFFF;
-
-	// Video delay. Used in Dangan-Ronpa
-	info[0x14] = 0xFFFFFFFF;
-
-	// If set to 0, the wlan switch is turned off. Used in Metal Slug
-	info[0x15] = 0xFFFFFFFF;
-
-	// Unknown. Video related
-	info[0x16] = 0xFFFFFFFF;
-
-	// Delay before act.dat read
-	// This is only used in one unknown game
-	info[0x17] = 0xFFFFFFFF;
-
-	// Video flag
-	// 0x2: This will cause problems with PMF. KillZone wont't work for example
-	// 0x400: This will cause problems with PMF.
-	info[0x18] = 0xFFFFFFFF;
-
-	// Unknown. Adhoc related?
-	info[0x19] = 0xFFFFFFFF;
-
-	// Unknown. Adhoc related?
-	info[0x1A] = 0xFFFFFFFF;
-
-	// Unknown. Adhoc related?
-	info[0x1B] = 0xFFFFFFFF;
-
-	// Unknown. Adhoc related?
-	info[0x1C] = 0xFFFFFFFF;
-
-	// Title ID for adhoc
-	info[0x1D] = 0xFFFFFFFF;
-
-	// Used for peripheral
-	info[0x1E] = 0xFFFFFFFF;
-
-	// Not use msfs file size limit
-	info[0x1F] = 0xFFFFFFFF;
-
-	return res;
-}
-
 static int ScePspemuGetStartupPngPatched(int num, void *png_buf, int *png_size, int *unk) {
 	int num_startup_png = TAI_CONTINUE(int, ScePspemuGetStartupPngRef, num, png_buf, png_size, unk);
 
@@ -677,164 +514,6 @@ static int ScePspemuGetStartupPngPatched(int num, void *png_buf, int *png_size, 
 	}
 
 	return num_startup_png;
-}
-
-static int ScePspemuInitAudioOutPatched() {
-	int res = TAI_CONTINUE(int, ScePspemuInitAudioOutRef);
-
-	int (* ScePspemuInitPops)() = (void *)(text_addr + 0x30678 + 0x1);
-	int (* ScePspemuInitPocs)() = (void *)(text_addr + 0x227C4 + 0x1);
-
-	res = ScePspemuInitPops();
-	if (res < 0)
-		return res;
-
-	SceUID blockid = sceKernelAllocMemBlock("ScePspemuMcWork", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, 0x40000, NULL);
-	if (blockid < 0)
-		return blockid;
-
-	sceKernelGetMemBlockBase(blockid, (void *)(data_addr + 0x10100));
-
-	int (* sub_811B2390)() = (void *)(text_addr + 0x31F90 + 0x1);
-	sub_811B2390(*(uint32_t *)(data_addr + 0x10100), 0x1E000);
-
-	res = ScePspemuInitPocs();
-	if (res < 0)
-		return res;
-
-	return res;
-}
-
-static int pops_audio_port = -1;
-
-static int sceAudioOutOpenPortPatched(int type, int len, int freq, int mode) {
-	int res = TAI_CONTINUE(int, sceAudioOutOpenPortRef, type, len, freq, mode);
-
-	// Use voice port
-	if (res == SCE_AUDIO_OUT_ERROR_PORT_FULL && type == SCE_AUDIO_OUT_PORT_TYPE_BGM) {
-		pops_audio_port = TAI_CONTINUE(int, sceAudioOutOpenPortRef, SCE_AUDIO_OUT_PORT_TYPE_VOICE, len, freq, mode);
-		return pops_audio_port;
-	}
-
-	return res;
-}
-
-static int sceAudioOutOutputPatched(int port, const void *buf) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
-
-	if (port == pops_audio_port && !adrenaline->pops_mode) {
-		sceDisplayWaitVblankStart();
-		return 0;
-	}
-
-	return TAI_CONTINUE(int, sceAudioOutOutputRef, port, buf);
-}
-
-static int ScePspemuDecodePopsAudioPatched(int a1, int a2, int a3, int a4) {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
-
-	if (!adrenaline->pops_mode) {
-		return 0;
-	}
-
-	return TAI_CONTINUE(int, ScePspemuDecodePopsAudioRef, a1, a2, a3, a4);
-}
-
-static int sceCtrlPeekBufferNegative2Patched(int port, SceCtrlData *pad_data, int count) {
-	int res = TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, port, pad_data, count);
-
-	if (res == 0x80340001) {
-		if (!sceKernelIsPSVitaTV()) {
-			if (config.use_ds3_ds4 && port == 1) {
-				return TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, 0, pad_data, count);
-			} else {
-				*(uint8_t *)(CONVERT_ADDRESS(0xABCD00A7)) = 0;
-			}
-		}
-	}
-
-	return res;
-}
-
-static char *ScePspemuGetTitleidPatched() {
-	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
-	return adrenaline->titleid;
-}
-
-static int ScePspemuConvertAddressPatched(uint32_t addr, int mode, uint32_t cache_size) {
-	if (addr >= 0x09FE0000 && addr < 0x09FE01B0) {
-		addr = 0x0BCD0000 | (addr & 0xFFFF);
-	}
-
-	return TAI_CONTINUE(int, ScePspemuConvertAddressRef, addr, mode, cache_size);
-}
-
-static SceUID sceIoOpenPatched(const char *file, int flags, SceMode mode) {
-	char *p = strrchr(file, '/');
-	if (p) {
-		static char new_file[256];
-
-		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
-
-		if (strcmp(p+1, "__sce_menuinfo") == 0) {			
-			char *filename = adrenaline->filename;			
-			if (strncmp(filename, "ms0:/", 5) == 0) {
-				char *q = strrchr(filename, '/');
-				if (q) {
-					char path[128];
-					strncpy(path, filename+5, q-(filename+5));
-					path[q-(filename+5)] = '\0';
-					
-					snprintf(new_file, sizeof(new_file), "%s/%s/__sce_menuinfo", getPspemuMemoryStickLocation(), path);
-					file = new_file;
-				}
-			}
-		} else if (strcmp(p+1, "PARAM.SFO") == 0 ||
-				   strcmp(p+1, "SCEVMC0.VMP") == 0 ||
-				   strcmp(p+1, "SCEVMC1.VMP") == 0) {
-			snprintf(new_file, sizeof(new_file), "%s/PSP/SAVEDATA/%s/%s", getPspemuMemoryStickLocation(), adrenaline->titleid, p+1);
-			file = new_file;
-		}
-	}
-	
-	return TAI_CONTINUE(SceUID, sceIoOpenRef, file, flags, mode);
-}
-
-static int sceIoGetstatPatched(const char *file, SceIoStat *stat) {
-	char *p = strrchr(file, '/');
-	if (p) {
-		static char new_file[256];
-
-		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
-
-		if (strcmp(p+1, "PARAM.SFO") == 0 ||
-			strcmp(p+1, "SCEVMC0.VMP") == 0 ||
-			strcmp(p+1, "SCEVMC1.VMP") == 0) {
-			snprintf(new_file, sizeof(new_file), "%s/PSP/SAVEDATA/%s/%s", getPspemuMemoryStickLocation(), adrenaline->titleid, p+1);
-			file = new_file;
-		}
-	}
-
-	return TAI_CONTINUE(int, sceIoGetstatRef, file, stat);
-}
-
-extern void *pops_data;
-
-static int sceDisplaySetFrameBufForCompatPatched(int a1, int a2, int a3, int a4, int a5, SceDisplayFrameBuf *pParam) {
-	if (config.graphics_filtering != 0) {
-		if (pParam == NULL) {
-			static SceDisplayFrameBuf param;
-			param.size = sizeof(SceDisplayFrameBuf);
-			param.base = pops_data;
-			param.pitch = SCREEN_LINE;
-			param.pixelformat = SCE_DISPLAY_PIXELFORMAT_A8B8G8R8;
-			param.width = SCREEN_WIDTH;
-			param.height = SCREEN_HEIGHT;
-			pParam = &param;
-		}
-	}
-
-	return TAI_CONTINUE(int, sceDisplaySetFrameBufForCompatRef, a1, a2, a3, a4, a5, pParam);
 }
 
 #define PSPEMU_BASE 0x81180400
@@ -906,7 +585,7 @@ int module_start(SceSize args, void *argp) {
 	hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuDecodePopsAudioRef, tai_info.modid, 0, 0x2D62C, 0x1, ScePspemuDecodePopsAudioPatched);
 	hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuGetParamRef, tai_info.modid, 0, 0xAAF4, 0x1, ScePspemuGetParamPatched);
 	
-	// 0x01C00000 -> 0x03C00000
+	// Increase RAM size from 0x01C00000 to 0x03C00000
 	uint32_t cmp_a4_3C00000 = 0x7F70F1B3;
 	uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x6394, &cmp_a4_3C00000, sizeof(cmp_a4_3C00000));
 
