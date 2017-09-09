@@ -25,7 +25,7 @@ add_executable(adrenaline
 )
 
 target_link_libraries(adrenaline
-  taiHEN_stub
+  taihen_stub
   SceAppMgr_stub
   SceCtrl_stub
   SceDisplay_stub

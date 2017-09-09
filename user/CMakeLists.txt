@@ -29,7 +29,7 @@ add_executable(adrenaline_user
 
 target_link_libraries(adrenaline_user
   AdrenalineKernel_stub
-  taiHEN_stub
+  taihen_stub
   vita2d
   vitashaders
   c
@@ -50,7 +50,7 @@ target_link_libraries(adrenaline_user
   SceMtpIfDriver_stub
   ScePgf_stub_weak
   ScePower_stub
-  SceProcessMgr_stub
+  SceProcessmgr_stub
   SceRtc_stub
   SceScreenShot_stub_weak
   SceShellSvc_stub
