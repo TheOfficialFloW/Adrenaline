@@ -61,6 +61,7 @@ vita2d_pgf *font;
 int language = 0, enter_button = 0, date_format = 0, time_format = 0;
 
 static int EnterStandbyMode();
+static int ShutdownDevice();
 static int OpenOfficialSettings();
 static int ExitPspEmuApplication();
 
@@ -73,6 +74,7 @@ static char *ms_location_options[] = { "ux0:pspemu", "ur0:pspemu", "imc0:pspemu"
 
 static MenuEntry main_entries[] = {
 	{ "Enter Standby Mode", MENU_ENTRY_TYPE_CALLBACK, 0, EnterStandbyMode, NULL, NULL, 0 },
+	{ "Shutdown Device", MENU_ENTRY_TYPE_CALLBACK, 0, ShutdownDevice, NULL, NULL, 0 },
 	{ "Open Official Settings", MENU_ENTRY_TYPE_CALLBACK, 0, OpenOfficialSettings, NULL, NULL, 0 },
 	{ "Exit PspEmu Application", MENU_ENTRY_TYPE_CALLBACK, 0, ExitPspEmuApplication, NULL, NULL, 0 },
 	{ "Exit Adrenaline Menu", MENU_ENTRY_TYPE_CALLBACK, 0, ExitAdrenalineMenu, NULL, NULL, 0 },
@@ -127,6 +129,13 @@ static int EnterStandbyMode() {
 	stopUsb(usbdevice_modid);
 	ExitAdrenalineMenu();
 	scePowerRequestSuspend();
+	return 0;
+}
+
+static int ShutdownDevice() {
+	stopUsb(usbdevice_modid);
+	ExitAdrenalineMenu();
+	scePowerRequestStandby();
 	return 0;
 }
 
