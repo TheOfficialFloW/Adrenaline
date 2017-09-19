@@ -63,7 +63,7 @@ int language = 0, enter_button = 0, date_format = 0, time_format = 0;
 static int EnterStandbyMode();
 static int OpenOfficialSettings();
 static int ExitPspEmuApplication();
-static int ShutdownPSVITA();
+static int ShutdownDevice();
 
 static char *graphics_options[] = { "Original", "Bilinear", "Sharp bilinear", "Advanced AA", "LCD3x" };
 static char *screen_mode_options[] = { "Original", "Normal", "Zoom", "Full" };
@@ -77,7 +77,7 @@ static MenuEntry main_entries[] = {
 	{ "Open Official Settings", MENU_ENTRY_TYPE_CALLBACK, 0, OpenOfficialSettings, NULL, NULL, 0 },
 	{ "Exit PspEmu Application", MENU_ENTRY_TYPE_CALLBACK, 0, ExitPspEmuApplication, NULL, NULL, 0 },
 	{ "Exit Adrenaline Menu", MENU_ENTRY_TYPE_CALLBACK, 0, ExitAdrenalineMenu, NULL, NULL, 0 },
-	{ "Turn Off PSVITA", MENU_ENTRY_TYPE_CALLBACK, 0, ShutdownPSVITA, NULL, NULL, 0 },
+	{ "Shutdown Device", MENU_ENTRY_TYPE_CALLBACK, 0, ShutdownDevice, NULL, NULL, 0 },
 };
 
 static MenuEntry settings_entries[] = {
@@ -159,7 +159,7 @@ static int EnterAdrenalineMenu() {
 
 	return 0;
 }
-static int ShutdownPSVITA() {
+static int ShutdownDevice() {
 	stopUsb(usbdevice_modid);
 	ExitAdrenalineMenu();
 	scePowerRequestStandby();
