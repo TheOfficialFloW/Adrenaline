@@ -9,6 +9,14 @@
 		<startup-image>startup.png</startup-image>
 	</gate>
 	
+	<frame id="frame1">
+		<liveitem>
+			<text valign="bottom" align="left" text-align="left" text-valign="bottom" line-space="1" ellipsis="off">
+				<str size="100" bold="off" shadow="off"></str>
+			</text>
+		</liveitem>
+	</frame>
+	
 	<frame id="frame2">
 		<liveitem>
 			<text valign="bottom" align="left" text-align="left" text-valign="bottom" line-space="3" ellipsis="on">
