@@ -87,7 +87,7 @@ void psvDebugScreenInit() {
 
 	g_vram_base = base;
 
-	sceDisplaySetFrameBuf(&framebuf, SCE_DISPLAY_UPDATETIMING_NEXTVSYNC);
+	int ret = sceDisplaySetFrameBuf(&framebuf, SCE_DISPLAY_UPDATETIMING_NEXTVSYNC);
 
 	g_fg_color = 0xFFFFFFFF;
 	g_bg_color = 0x00000000;

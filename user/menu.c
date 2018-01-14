@@ -422,12 +422,10 @@ int AdrenalineDraw(SceSize args, void *argp) {
 
 	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 
-#if SHOW_FPS
 	// FPS counting
 	SceUInt64 cur_micros = 0, delta_micros = 0, last_micros = 0;
 	uint32_t frames = 0;
 	float fps = 0.0f;
-#endif
 
 	while (1) {
 		// Draw savestate screen
@@ -507,8 +505,6 @@ int AdrenalineDraw(SceSize args, void *argp) {
 		if (menu_open)
 			drawMenu();
 
-
-#if SHOW_FPS
 		// Show FPS
 		// pgf_draw_textf(0.0f, 0.0f, WHITE, FONT_SIZE, "FPS: %.2f", fps);
 
@@ -520,15 +516,11 @@ int AdrenalineDraw(SceSize args, void *argp) {
 			fps = (frames/(double)delta_micros)*1000000.0f;
 			frames = 0;
 		}
-#endif
 
 		// End drawing
 		vita2d_end_drawing();
 		vita2d_swap_buffers();
-
-#if SHOW_FPS
 		frames++;
-#endif
 
 		// Sync
 		if (!adrenaline->pops_mode || adrenaline->draw_psp_screen_in_pops)
