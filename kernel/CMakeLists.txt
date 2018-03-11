@@ -21,11 +21,11 @@ add_executable(adrenaline_kernel
 
 target_link_libraries(adrenaline_kernel
   taihenForKernel_stub
+  taihenModuleUtils_stub
   SceCpuForDriver_stub
   SceCtrlForDriver_stub
   SceIofilemgrForDriver_stub
   SceModulemgrForDriver_stub
-  SceModulemgrForKernel_stub
   SceProcessmgrForDriver_stub
   SceSysclibForDriver_stub
   SceSysmemForDriver_stub

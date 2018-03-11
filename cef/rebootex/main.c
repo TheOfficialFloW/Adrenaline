@@ -50,12 +50,16 @@ void SetMemoryPartitionTablePatched(void *sysmem_config, SceSysmemPartTable *tab
 int PatchSysMem(void *a0, void *sysmem_config) {
 	int (* module_bootstart)(SceSize args, void *sysmem_config) = (void *)_lw((u32)a0 + 0x28);
 
-	// Patch to add new partition	
-	SetMemoryPartitionTable = (void *)0x88012258;
-	MAKE_CALL(0x880115E0, SetMemoryPartitionTablePatched);
+	u32 i;
+	for (i = 0; i < 0x14000; i += 4) {
+		u32 addr = 0x88000000 + i;
 
-	// Fake as slim model
-	// _sw(1, sysmem_config + 0x14);
+		// Patch to add new partition
+		if (_lw(addr) == 0x14600003) {
+			K_HIJACK_CALL(addr - 0x1C, SetMemoryPartitionTablePatched, SetMemoryPartitionTable);
+			continue;
+		}
+	}
 
 	ClearCaches();
 
@@ -75,9 +79,17 @@ int DecryptExecutablePatched(void *buf, int size, int *retSize) {
 int PatchLoadCore(int (* module_bootstart)(SceSize args, void *argp), void *argp) {
 	u32 text_addr = ((u32)module_bootstart) - 0xAF8;
 
-	// Allow custom modules
-	DecryptExecutable = (void *)text_addr + 0x77B4;
-	MAKE_CALL(text_addr + 0x5864, DecryptExecutablePatched);
+	u32 i;
+	for (i = 0; i < 0x8000; i += 4) {
+		u32 addr = text_addr + i;
+
+		// Allow custom modules
+		if (_lw(addr) == 0xAE2D0048) {
+			DecryptExecutable = (void *)K_EXTRACT_CALL(addr + 8);
+			MAKE_CALL(addr + 8, DecryptExecutablePatched);
+			break;
+		}
+	}
 
 	ClearCaches();
 
@@ -185,20 +197,37 @@ int sceKernelBootLoadFilePatched(BootFile *file, void *a1, void *a2, void *a3, v
 
 int _start(void *reboot_param, struct SceKernelLoadExecVSHParam *vsh_param, int api, int initial_rnd) __attribute__((section(".text.start")));
 int _start(void *reboot_param, struct SceKernelLoadExecVSHParam *vsh_param, int api, int initial_rnd) {
-	// Patch call to SysMem module_bootstart
-	_sw(0x02402021, 0x886024F8); //move $a0, $s2
-	MAKE_CALL(0x8860255C, PatchSysMem);
+	u32 i;
+	for (i = 0; i < 0x4000; i += 4) {
+		u32 addr = 0x88600000 + i;
 
-	// Patch call to LoadCore module_bootstart
-	_sw(0x00602021, 0x8860241C); //move $a0, $v1
-	MAKE_JUMP(0x88602424, PatchLoadCore);
+		// Patch call to SysMem module_bootstart
+		if (_lw(addr) == 0x24040004) {
+			_sw(0x02402021, addr); //move $a0, $s2
+			MAKE_CALL(addr + 0x64, PatchSysMem);
+			continue;
+		}
 
-	// Patch sceKernelCheckPspConfig
-	MAKE_CALL(0x88602C04, sceKernelCheckPspConfigPatched);
+		// Patch call to LoadCore module_bootstart
+		if (_lw(addr) == 0x00600008) {
+			_sw(0x00602021, addr - 8); //move $a0, $v1
+			MAKE_JUMP(addr, PatchLoadCore);
+			continue;
+		}
 
-	// Patch sceKernelBootLoadFile
-	sceKernelBootLoadFile = (void *)0x886020BC;
-	MAKE_CALL(0x886022FC, sceKernelBootLoadFilePatched);
+		// Patch sceKernelCheckPspConfig
+		if (_lw(addr) == 0x04400022) {
+			MAKE_CALL(addr - 8, sceKernelCheckPspConfigPatched);
+			continue;
+		}
+
+		// Patch sceKernelBootLoadFile
+		if (_lw(addr) == 0xAFBF0000 && _lw(addr + 8) == 0x00000000) {
+			sceKernelBootLoadFile = (void *)K_EXTRACT_CALL(addr + 4);
+			MAKE_CALL(addr + 4, sceKernelBootLoadFilePatched);
+			continue;
+		}
+	}
 
 	ClearCaches();
 

@@ -104,6 +104,7 @@ extern tai_hook_ref_t ScePspemuConvertAddressRef;
 extern tai_hook_ref_t ScePspemuDecodePopsAudioRef;
 extern tai_hook_ref_t ScePspemuGetParamRef;
 
+extern uint32_t module_nid;
 extern uint32_t text_addr, text_size, data_addr, data_size;
 
 int sceKernelIsPSVitaTV();

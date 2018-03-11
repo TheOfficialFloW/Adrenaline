@@ -48,8 +48,15 @@ int ScePspemuInitAudioOutPatched() {
 
 	sceKernelGetMemBlockBase(blockid, (void *)(data_addr + 0x10100));
 
-	int (* sub_811B2390)() = (void *)(text_addr + 0x31F90 + 0x1);
-	sub_811B2390(*(uint32_t *)(data_addr + 0x10100), 0x1E000);
+	int (* init_sth)();
+
+	if (module_nid == 0x2714F07D) { // 3.60 retail
+		init_sth = (void *)(text_addr + 0x31F90 + 0x1);
+	} else if (module_nid == 0x3F75D4D3) { // 3.65/3.67 retail
+		init_sth = (void *)(text_addr + 0x31FA4 + 0x1);
+	}
+
+	init_sth(*(uint32_t *)(data_addr + 0x10100), 0x1E000);
 
 	res = ScePspemuInitPocs();
 	if (res < 0)

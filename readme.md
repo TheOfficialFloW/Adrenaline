@@ -42,6 +42,9 @@ For 6.61 Adrenaline-4 or higher, you can use the 'System Update' in the XMB to u
 Changelog
 ---------
 
+### Changelog v6.1
+- Added support for 3.65/3.67.
+
 ### Changelog v6 fix
 - Fixed bug where CSO games freezed up the system.
 

@@ -58,9 +58,21 @@ typedef struct SysMemPartition {
 
 void ApplyMemory() {
 	if (rebootex_config.ram2 != 0 && (rebootex_config.ram2 + rebootex_config.ram11) <= 52) {
-		SysMemPartition *(* GetPartition)(int partition) = (void *)0x88003F20;
+		SysMemPartition *(* GetPartition)(int partition) = NULL;
 		SysMemPartition *partition;
 		u32 user_size;
+
+		u32 i;
+		for (i = 0; i < 0x4000; i += 4) {
+			u32 addr = 0x88000000 + i;
+			if (_lw(addr) == 0x2C85000D) {
+				GetPartition = (void *)(addr - 4);
+				break;
+			}
+		}
+
+		if (!GetPartition)
+			return;
 
 		user_size = (rebootex_config.ram2 * 1024 * 1024);
 		partition = GetPartition(PSP_MEMORY_PARTITION_USER);

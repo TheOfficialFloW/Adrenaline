@@ -140,62 +140,121 @@ void PatchModuleMgr() {
 	SceModule2 *mod = sceKernelFindModuleByName661("sceModuleManager");
 	u32 text_addr = mod->text_addr;
 
-	// Patch to allow a full coverage of loaded modules
-	PrologueModule = (void *)text_addr + 0x8270;
-	MAKE_CALL(text_addr + 0x7158, PrologueModulePatched);
+	int i;
+	for (i = 0; i < mod->text_size; i += 4) {
+		u32 addr = text_addr + i;
 
-	// Patch PartitionCheck
-	HIJACK_FUNCTION(text_addr + 0x811C, PartitionCheckPatched, PartitionCheck);
+		if (_lw(addr) == 0xA4A60024) {
+			// Patch to allow a full coverage of loaded modules
+			PrologueModule = (void *)K_EXTRACT_CALL(addr - 4);
+			MAKE_CALL(addr - 4, PrologueModulePatched);
+			continue;
+		}
+
+		if (_lw(addr) == 0x27BDFFE0 && _lw(addr + 4) == 0xAFB10014) {
+			HIJACK_FUNCTION(addr, PartitionCheckPatched, PartitionCheck);
+			continue;
+		}
+	}
 
 	// Dummy patch for LEDA
-	MAKE_JUMP(sctrlHENFindImport("sceModuleManager", "ThreadManForKernel", 0x446D8DE6), sceKernelCreateThread);
+	MAKE_JUMP(sctrlHENFindImport(mod->modname, "ThreadManForKernel", 0x446D8DE6), sceKernelCreateThread);
 }
+
 
 void PatchLoadCore() {
 	SceModule2 *mod = sceKernelFindModuleByName661("sceLoaderCore");
 	u32 text_addr = mod->text_addr;
 
-	// Patch to allow homebrews
 	HIJACK_FUNCTION(K_EXTRACT_IMPORT(&sceKernelCheckExecFile661), sceKernelCheckExecFilePatched, _sceKernelCheckExecFile);
 	HIJACK_FUNCTION(K_EXTRACT_IMPORT(&sceKernelProbeExecutableObject661), sceKernelProbeExecutableObjectPatched, _sceKernelProbeExecutableObject);
 
-	// Allow custom modules
-	PspUncompress = (void *)text_addr + 0x55E4;
-	MAKE_CALL(text_addr + 0x4360, PspUncompressPatched);
+	int i;
+	for (i = 0; i < mod->text_size; i += 4) {
+		u32 addr = text_addr + i;
 
-	// Patch relocation check in switch statement (7 -> 0)
-	_sw(_lw(text_addr + 0x7F10), text_addr + 0x7F2C);
+		// Allow custom modules
+		if (_lw(addr) == 0x1440FF55) {
+			PspUncompress = (void *)K_EXTRACT_CALL(addr - 8);
+			MAKE_CALL(addr - 8, PspUncompressPatched);
+			continue;
+		}
 
-	// Allow kernel modules to have syscall imports
-	_sw(0x3C090000, text_addr + 0x3D70);
+		// Patch relocation check in switch statement (7 -> 0)
+		if (_lw(addr) == 0x00A22021) {
+			u32 high = (((u32)_lh(addr - 0xC)) << 16);
+			u32 low = ((u32)_lh(addr - 0x4));
 
-	// Allow lower devkit version
-	_sw(0x1000FFCB, text_addr + 0x6AD0);
+			if (low & 0x8000) high -= 0x10000;
 
-	// Allow higher devkit version
-	_sw(0, text_addr + 0x7308);
+			u32 *RelocationTable = (u32 *)(high | low);
 
-	// Patch to resolve NIDs
-	_sw(0x02203021, text_addr + 0x3A40); //move $a2, $s1
-	search_nid_in_entrytable = (void *)text_addr + 0xEA8;
-	MAKE_CALL(text_addr + 0x3A44, search_nid_in_entrytable_patched);
-	_sw(0x02403821, text_addr + 0x3A48); //move $a3, $s2
-	_sw(0, text_addr + 0x3BAC);
-	_sw(0, text_addr + 0x3BB4);
+			RelocationTable[7] = RelocationTable[0];
 
-	// Patch to undo prometheus patches
-	HIJACK_FUNCTION(text_addr + 0x3BB8, aLinkLibEntriesPatched, aLinkLibEntries);
+			continue;
+		}
 
-	// Patch call to init module_bootstart
-	MAKE_CALL(text_addr + 0x1A28, PatchInit);
-	_sw(0x02E02021, text_addr + 0x1A2C); //move $a0, $s7
+		// Allow kernel modules to have syscall imports
+		if (_lw(addr) == 0x30894000) {
+			_sw(0x3C090000, addr);
+			continue;
+		}
 
-	// Restore original call
-	MAKE_CALL(text_addr + 0x5864, FindProc("sceMemlmd", "memlmd", 0xEF73E85B));
+		// Allow lower devkit version
+		if (_lw(addr) == 0x14A0FFCB) {
+			_sh(0x1000, addr + 2);
+			continue;
+		}
 
-	// Find removed nids
-	LoadCoreForKernel_nids[0].function = (void *)text_addr + 0x73B0;
-	LoadCoreForKernel_nids[1].function = (void *)text_addr + 0x73F0;
+		// Allow higher devkit version
+		if (_lw(addr) == 0x14C0FFDF) {
+			_sw(0, addr);
+			continue;
+		}
+
+		// Patch to resolve NIDs
+		if (_lw(addr) == 0x8D450000) {
+			_sw(0x02203021, addr + 4); //move $a2, $s1
+			search_nid_in_entrytable = (void *)K_EXTRACT_CALL(addr + 8);
+			MAKE_CALL(addr + 8, search_nid_in_entrytable_patched);
+			_sw(0x02403821, addr + 0xC); //move $a3, $s2
+			continue;
+		}
+
+		if (_lw(addr) == 0xADA00004) {
+			// Patch to resolve NIDs
+			_sw(0, addr);
+			_sw(0, addr + 8);
+
+			// Patch to undo prometheus patches
+			HIJACK_FUNCTION(addr + 0xC, aLinkLibEntriesPatched, aLinkLibEntries);
+
+			continue;
+		}
+
+		// Patch call to init module_bootstart
+		if (_lw(addr) == 0x02E0F809) {
+			MAKE_CALL(addr, PatchInit);
+			_sw(0x02E02021, addr + 4); //move $a0, $s7
+			continue;
+		}
+
+		// Restore original call
+		if (_lw(addr) == 0xAE2D0048) {
+			MAKE_CALL(addr + 8, FindProc("sceMemlmd", "memlmd", 0xEF73E85B));
+			continue;
+		}
+
+		if (_lw(addr) == 0x40068000 && _lw(addr + 4) == 0x7CC51180) {
+			LoadCoreForKernel_nids[0].function = (void *)addr;
+			continue;
+		}
+
+		if (_lw(addr) == 0x40068000 && _lw(addr + 4) == 0x7CC51240) {
+			LoadCoreForKernel_nids[1].function = (void *)addr;
+			continue;
+		}
+	}
 }
 
 void PatchSysmem() {
@@ -423,7 +482,7 @@ int OnModuleStart(SceModule2 *mod) {
 }
 
 int module_start(SceSize args, void *argp) {
-	PatchSysmem();
+	// PatchSysmem();
 	PatchLoadCore();
 	PatchInterruptMgr();
 	PatchIoFileMgr();

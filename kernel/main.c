@@ -46,6 +46,7 @@ static int hooks[8];
 static int n_hooks = 0;
 
 static SceUID extra_1_blockid = -1, extra_2_blockid = -1;
+static uint32_t module_nid;
 
 static SceUID ksceKernelAllocMemBlockPatched(const char *name, SceKernelMemBlockType type, int size, SceKernelAllocMemBlockKernelOpt *optp) {
 	SceUID blockid = TAI_CONTINUE(SceUID, ksceKernelAllocMemBlockRef, name, type, size, optp);
@@ -97,8 +98,13 @@ static int sm_stuff_patched() {
 	if (a != 0) {
 		// jal 0x88FC0000
 		a = 0x0E3F0000;
-		ksceKernelMemcpyKernelToUser(0x70602D58, &a, sizeof(uint32_t));
-		ksceKernelCpuDcacheWritebackRange((void *)0x70602D58, sizeof(uint32_t));
+		if (module_nid == 0x8F2D0378) { // 3.60 retail
+			ksceKernelMemcpyKernelToUser(0x70602D58, &a, sizeof(uint32_t));
+			ksceKernelCpuDcacheWritebackRange((void *)0x70602D58, sizeof(uint32_t));
+		} else if (module_nid == 0x07937779 || module_nid == 0x71BF9CC5) { // 3.65/3.67 retail
+			ksceKernelMemcpyKernelToUser(0x70602D70, &a, sizeof(uint32_t));
+			ksceKernelCpuDcacheWritebackRange((void *)0x70602D70, sizeof(uint32_t));
+		}
 	}
 
 	return TAI_CONTINUE(int, sm_stuff_ref);
@@ -118,7 +124,6 @@ static int getShellPid() {
 
 	do {
 		current_pid = parent_pid;
-
 		if (ksceKernelGetProcessInfo(current_pid, info) < 0)
 			return -1;
 
@@ -182,8 +187,19 @@ int module_start(SceSize args, void *argp) {
 	if (res < 0)
 		return res;
 
+	module_nid = tai_info.module_nid;
+
 	// SceCompat
-	hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AA4, 1, sm_stuff_patched);
+  switch (tai_info.module_nid) {
+    case 0x8F2D0378: // 3.60 retail
+      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AA4, 1, sm_stuff_patched);
+      break;
+      
+		case 0x07937779: // 3.65 retail
+    case 0x71BF9CC5: // 3.67 retail
+      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AE8, 1, sm_stuff_patched);
+      break;
+  }
 
 	// SceSysmemForDriver
 	hooks[n_hooks++] = taiHookFunctionImportForKernel(KERNEL_PID, &ksceKernelAllocMemBlockRef, "SceCompat", 0x6F25E18A, 0xC94850C9, ksceKernelAllocMemBlockPatched);
@@ -197,7 +213,10 @@ int module_start(SceSize args, void *argp) {
 	hooks[n_hooks++] = taiHookFunctionImportForKernel(KERNEL_PID, &ksceSblAimgrIsDEXRef, "SceCompat", 0xFD00C69A, 0xF4B98F66, ksceSblAimgrIsDEXPatched);
 
 	// SceKernelModulemgr
-	hooks[n_hooks++] = taiHookFunctionExportForKernel(KERNEL_PID, &ksceKernelStartPreloadedModulesRef, "SceKernelModulemgr", 0xC445FA63, 0x432DCC7A, ksceKernelStartPreloadedModulesPatched);
+	hooks[n_hooks] = taiHookFunctionExportForKernel(KERNEL_PID, &ksceKernelStartPreloadedModulesRef, "SceKernelModulemgr", 0xC445FA63, 0x432DCC7A, ksceKernelStartPreloadedModulesPatched);
+	if (hooks[n_hooks] < 0)
+		hooks[n_hooks] = taiHookFunctionExportForKernel(KERNEL_PID, &ksceKernelStartPreloadedModulesRef, "SceKernelModulemgr", 0x92C9FFC2, 0x998C7AE9, ksceKernelStartPreloadedModulesPatched);
+	n_hooks++;
 
 	return SCE_KERNEL_START_SUCCESS;
 }
