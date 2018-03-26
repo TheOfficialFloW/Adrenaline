@@ -24,6 +24,7 @@ add_executable(adrenaline_user
   states.c
   usb.c
   utils.c
+  math_utils.c
   lz4/lz4.c
 )
 

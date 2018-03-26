@@ -59,6 +59,7 @@ typedef struct {
 	int magic[2];
 	int graphics_filtering;
 	int no_smooth_graphics;
+	int flux_mode;
 	int screen_size;
 	int ms_location;
 	int use_ds3_ds4;
