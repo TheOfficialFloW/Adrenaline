@@ -152,8 +152,21 @@ void PatchNpDrmDriver(u32 text_addr) {
 	if (!config.notusenodrmengine) {
 		if (sceKernelBootFrom() == PSP_BOOT_DISC) {
 			SceModule2 *mod = sceKernelFindModuleByName661("sceIOFileManager");
-			HIJACK_FUNCTION(mod->text_addr + 0x4A48, do_open_patched, do_open);
-			HIJACK_FUNCTION(mod->text_addr + 0x4EFC, do_ioctl_patched, do_ioctl);
+
+			int i;
+			for (i = 0; i < mod->text_size; i += 4) {
+				u32 addr = mod->text_addr + i;
+
+				if (_lw(addr) == 0x03641824) {
+					HIJACK_FUNCTION(addr - 4, do_open_patched, do_open);
+					continue;
+				}
+
+				if (_lw(addr) == 0x00C75821) {
+					HIJACK_FUNCTION(addr - 4, do_ioctl_patched, do_ioctl);
+					continue;
+				}
+			}
 
 			HIJACK_FUNCTION(text_addr + 0x1590, sceNpDrmRenameCheckPatched, _sceNpDrmRenameCheck);
 			HIJACK_FUNCTION(text_addr + 0x1714, sceNpDrmEdataSetupKeyPatched, _sceNpDrmEdataSetupKey);

@@ -190,16 +190,16 @@ int module_start(SceSize args, void *argp) {
 	module_nid = tai_info.module_nid;
 
 	// SceCompat
-  switch (tai_info.module_nid) {
-    case 0x8F2D0378: // 3.60 retail
-      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AA4, 1, sm_stuff_patched);
-      break;
+	switch (tai_info.module_nid) {
+		case 0x8F2D0378: // 3.60 retail
+			hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AA4, 1, sm_stuff_patched);
+			break;
 
 		case 0x07937779: // 3.65 retail
-    case 0x71BF9CC5: // 3.67 retail
-      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AE8, 1, sm_stuff_patched);
-      break;
-  }
+		case 0x71BF9CC5: // 3.67 retail
+			hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AE8, 1, sm_stuff_patched);
+			break;
+	}
 
 	// SceSysmemForDriver
 	hooks[n_hooks++] = taiHookFunctionImportForKernel(KERNEL_PID, &ksceKernelAllocMemBlockRef, "SceCompat", 0x6F25E18A, 0xC94850C9, ksceKernelAllocMemBlockPatched);
