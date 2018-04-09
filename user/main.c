@@ -255,19 +255,19 @@ int AdrenalineCompat(SceSize args, void *argp) {
 		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE | SCE_COMPAT_CACHE_INVALIDATE, ADRENALINE_SIZE);
 
 		int res = -1;
-		
+
 		if (request->cmd == ADRENALINE_VITA_CMD_SAVESTATE) {
 			SaveState(adrenaline, savestate_data);
 			adrenaline->vita_response = ADRENALINE_VITA_RESPONSE_SAVED;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
-			
+
 			// Continue, do not send response
 			continue;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_LOADSTATE) {
 			LoadState(adrenaline, savestate_data);
 			adrenaline->vita_response = ADRENALINE_VITA_RESPONSE_LOADED;
 			ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
-			
+
 			// Continue, do not send response
 			continue;
 		} else if (request->cmd == ADRENALINE_VITA_CMD_GET_USB_STATE) {
@@ -280,7 +280,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 			// Start usb
 			if (usbdevice_modid < 0 && !sceKernelIsPSVitaTV()) {
 				char *path;
-				
+
 				if (config.ms_location == MEMORY_STICK_LOCATION_UR0) {
 					path = "sdstor0:int-lp-ign-user";
 				} else if (config.ms_location == MEMORY_STICK_LOCATION_IMC0) {
@@ -291,7 +291,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
 					path = "sdstor0:xmc-lp-ign-userext";
 
 					SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
-					
+
 					if (fd < 0)
 						path = "sdstor0:int-lp-ign-userext";
 					else
@@ -343,8 +343,6 @@ int AdrenalineCompat(SceSize args, void *argp) {
 }
 
 static int AdrenalineExit(SceSize args, void *argp) {
-	debugPrintf("%s\n", __FUNCTION__);
-
 	while (1) {
 		// Double click detection
 		if (menu_open == 0) {
@@ -383,8 +381,6 @@ static int AdrenalinePowerTick(SceSize args, void *argp) {
 }
 
 static int InitAdrenaline() {
-	debugPrintf("%s\n", __FUNCTION__);
-
 	// Set GPU frequency to highest
 	scePowerSetGpuClockFrequency(222);
 
@@ -413,8 +409,6 @@ static int InitAdrenaline() {
 }
 
 int sceCompatSuspendResumePatched(int unk) {
-	debugPrintf("%s\n", __FUNCTION__);
-
 	// Lock USB connection and PS button
 	sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION | SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN_2);
 
@@ -448,8 +442,6 @@ static int sceCompatWriteSharedCtrlPatched(SceCtrlDataPsp *pad_data) {
 }
 
 static int sceCompatWaitSpecialRequestPatched(int mode) {
-	debugPrintf("%s\n", __FUNCTION__);
-
 	ScePspemuBuildFlash0();
 
 	uint32_t *m = (uint32_t *)ScePspemuConvertAddress(0x88FC0000, SCE_COMPAT_CACHE_INVALIDATE, size_payloadex);
@@ -493,8 +485,6 @@ static int sceShellUtilRegisterSettingsHandlerPatched(int (* handler)(int a1, in
 		handler = ScePspemuCustomSettingsHandler;
 	}
 
-	debugPrintf("%s\n", __FUNCTION__);
-
 	return TAI_CONTINUE(int, sceShellUtilRegisterSettingsHandlerRef, handler, unk);
 }
 
@@ -505,14 +495,10 @@ static SceUID sceKernelCreateThreadPatched(const char *name, SceKernelThreadEntr
 		entry = (SceKernelThreadEntry)ScePspemuRemoteMsfs;
 	}
 
-	debugPrintf("%s %s\n", __FUNCTION__, name);
-
 	return TAI_CONTINUE(SceUID, sceKernelCreateThreadRef, name, entry, initPriority, stackSize, attr, cpuAffinityMask, option);
 }
 
 static int ScePspemuGetParamPatched(char *discid, int *parentallevel, char *gamedataid, char *appver, int *bootable, int *isPops, int *isPocketStation) {
-	debugPrintf("%s\n", __FUNCTION__);
-
 	TAI_CONTINUE(int, ScePspemuGetParamRef, discid, parentallevel, gamedataid, appver, bootable, isPops, isPocketStation);
 
 	// originalpath
@@ -525,8 +511,6 @@ static int ScePspemuGetParamPatched(char *discid, int *parentallevel, char *game
 }
 
 static int ScePspemuGetStartupPngPatched(int num, void *png_buf, int *png_size, int *unk) {
-	debugPrintf("%s\n", __FUNCTION__);
-
 	int num_startup_png = TAI_CONTINUE(int, ScePspemuGetStartupPngRef, num, png_buf, png_size, unk);
 
 	if (config.skip_logo) {
@@ -580,7 +564,7 @@ int module_start(SceSize args, void *argp) {
 
 	// SceCompat
 	hooks[n_hooks++] = taiHookFunctionImport(&sceCompatSuspendResumeRef, "ScePspemu", 0x0F35909D, 0x324112CA, sceCompatSuspendResumePatched);
-	hooks[n_hooks++] = taiHookFunctionImport(&sceCompatWriteSharedCtrlRef, "ScePspemu", 0x0F35909D, 0x2306FFED, sceCompatWriteSharedCtrlPatched);	
+	hooks[n_hooks++] = taiHookFunctionImport(&sceCompatWriteSharedCtrlRef, "ScePspemu", 0x0F35909D, 0x2306FFED, sceCompatWriteSharedCtrlPatched);
 	hooks[n_hooks++] = taiHookFunctionImport(&sceCompatWaitSpecialRequestRef, "ScePspemu", 0x0F35909D, 0x714F7ED6, sceCompatWaitSpecialRequestPatched);
 
 	// SceShellUtil
@@ -869,7 +853,7 @@ int module_start(SceSize args, void *argp) {
 		// Fake vita mode for ctrlEmulation
 		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x20740, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
 		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x20852, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
-		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x301F0, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));		
+		uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x301F0, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
 	}
 
 	return SCE_KERNEL_START_SUCCESS;

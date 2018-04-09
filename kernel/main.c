@@ -194,7 +194,7 @@ int module_start(SceSize args, void *argp) {
     case 0x8F2D0378: // 3.60 retail
       hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AA4, 1, sm_stuff_patched);
       break;
-      
+
 		case 0x07937779: // 3.65 retail
     case 0x71BF9CC5: // 3.67 retail
       hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AE8, 1, sm_stuff_patched);

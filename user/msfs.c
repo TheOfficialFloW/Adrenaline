@@ -472,7 +472,7 @@ static int ScePspemuMsfsExtraDread(ScePspemuMsfsDescriptor *descriptor, SceIoDir
 				strcpy(dir->d_name, ".");
 				descriptor->extra = 1;
 				break;
-				
+
 			case 1:
 				strcpy(dir->d_name, "..");
 				descriptor->extra = -1;
@@ -623,7 +623,7 @@ static int ScePspemuMsfsDevctl(const char *dev, unsigned int cmd, void *indata, 
 	return SCE_ERROR_ERRNO_EINVAL;
 }
 
-int ScePspemuRemoteMsfs(SceSize args, void *argp) {	
+int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 	while (1) {
 		// Wait and get kermit request
 		SceKermitRequest *request;
@@ -637,13 +637,13 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 				res = ScePspemuMsfsInit();
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_EXIT:
 			{
 				res = ScePspemuMsfsExit();
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_OPEN:
 			{
 				char *file = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);
@@ -652,14 +652,14 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 				res = ScePspemuMsfsOpen(file, flags, mode);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_CLOSE:
 			{
 				SceUID fd = request->args[0];
 				res = ScePspemuMsfsClose(fd);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_READ:
 			{
 				SceUID fd = request->args[0];
@@ -672,7 +672,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_WRITE:
 			{
 				SceUID fd = request->args[0];
@@ -681,7 +681,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 				res = ScePspemuMsfsWrite(fd, data, size);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_LSEEK:
 			{
 				SceUID fd = request->args[0];
@@ -690,7 +690,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 				res = ScePspemuMsfsLseek(fd, offset, whence);
 				break;
 			}
-				
+
 			case KERMIT_CMD_MSFS_IOCTL:
 			{
 				SceUID fd = request->args[0];
@@ -706,14 +706,14 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_REMOVE:
 			{
 				char *file = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);
 				res = ScePspemuMsfsRemove(file);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_MKDIR:
 			{
 				char *dir = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);
@@ -721,28 +721,28 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 				res = ScePspemuMsfsMkdir(dir, mode);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_RMDIR:
 			{
 				char *path = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);
 				res = ScePspemuMsfsRmdir(path);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_DOPEN:
 			{
 				char *dirname = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);
 				res = ScePspemuMsfsDopen(dirname);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_DCLOSE:
 			{
 				SceUID fd = request->args[0];
 				res = ScePspemuMsfsDclose(fd);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_DREAD:
 			{
 				SceUID fd = request->args[0];
@@ -754,7 +754,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_GETSTAT:
 			{
 				char *file = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);
@@ -766,7 +766,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_CHSTAT:
 			{
 				char *file = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);
@@ -775,7 +775,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 				res = ScePspemuMsfsChstat(file, stat, bits);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_RENAME:
 			{
 				char *oldname = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);
@@ -783,14 +783,14 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 				res = ScePspemuMsfsRename(oldname, newname);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_CHDIR:
 			{
 				char *path = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);
 				res = ScePspemuMsfsChdir(path);
 				break;
 			}
-			
+
 			case KERMIT_CMD_MSFS_DEVCTL:
 			{
 				char *dev = (char *)ScePspemuConvertAddress(request->args[0], SCE_COMPAT_CACHE_NONE, 0x4000);

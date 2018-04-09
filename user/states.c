@@ -73,7 +73,7 @@ static int n_options = 0;
 static int option_mode = 0;
 
 void makeSaveStatePath(char *path, int num) {
-	sprintf(path, "%s/PSP/SAVESTATE/STATE%02d.BIN", getPspemuMemoryStickLocation(), num);	
+	sprintf(path, "%s/PSP/SAVESTATE/STATE%02d.BIN", getPspemuMemoryStickLocation(), num);
 }
 
 extern void *pops_data;
@@ -120,7 +120,7 @@ void saveState(int num) {
 	char path[128];
 
 	// Make dir
-	sprintf(path, "%s/PSP/SAVESTATE", getPspemuMemoryStickLocation());	
+	sprintf(path, "%s/PSP/SAVESTATE", getPspemuMemoryStickLocation());
 	sceIoMkdir(path, 0777);
 
 	makeSaveStatePath(path, num);
@@ -133,7 +133,7 @@ void saveState(int num) {
 		saveFrameBuffer(fd);
 		sceIoClose(fd);
 	}
-	
+
 	SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE | SCE_COMPAT_CACHE_INVALIDATE, ADRENALINE_SIZE);
 	adrenaline->num = num;
 	ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
@@ -174,7 +174,7 @@ void finishStates() {
 					vita2d_free_texture(states[i].tex);
 			}
 		}
-		
+
 		free(states);
 		states = NULL;
 	}
@@ -207,7 +207,7 @@ int initStates() {
 			memset(&dir, 0, sizeof(SceIoDirent));
 
 			res = sceIoDread(dfd, &dir);
-			if (res > 0) {				
+			if (res > 0) {
 				if (strncmp(dir.d_name, "STATE", 5) == 0) {
 					char num_str[3];
 					num_str[0] = dir.d_name[5];
@@ -219,14 +219,14 @@ int initStates() {
 						int num = strtol(num_str, 0, 10);
 						if (num >= MAX_STATES)
 							continue;
-						
+
 						char path[128];
 						makeSaveStatePath(path, num);
 
 						SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
 						if (fd < 0)
 							continue;
-					
+
 						// Read header
 						AdrenalineStateHeader header;
 						sceIoRead(fd, &header, sizeof(AdrenalineStateHeader));
@@ -235,7 +235,7 @@ int initStates() {
 						if (header.magic == ADRENALINE_SAVESTATE_MAGIC && header.version == ADRENALINE_SAVESTATE_VERSION) {
 							// Set number
 							states[num].num = num;
-							
+
 							// Get title
 							strcpy(states[num].title, header.title);
 
@@ -246,7 +246,7 @@ int initStates() {
 								sceIoLseek(fd, header.screenshot_offset, SCE_SEEK_SET);
 								sceIoRead(fd, vita2d_texture_get_datap(states[num].tex), header.screenshot_size);
 							}
-							
+
 							// Set file stat
 							SceIoStat stat;
 							memset(&stat, 0, sizeof(SceIoStat));
@@ -273,7 +273,7 @@ void drawStates() {
 		return;
 
 	float k = 92.0f / 136.0f;
-	
+
 	int i;
 	for (i = 0; i < 3; i++) {
 		if (i == rel_pos)
@@ -298,14 +298,14 @@ void drawStates() {
 			getTimeString(time_string, time_format, &states[base_pos + i].time);
 
 			pgf_draw_textf(250.0f, FONT_Y_LINE(3 + i * 5), WHITE, FONT_SIZE, "%s %s", date_string, time_string);
-			
+
 			// Size
 			char string[16];
 			getSizeString(string, states[base_pos + i].size);
 			pgf_draw_text(250.0f, FONT_Y_LINE(4 + i * 5), WHITE, FONT_SIZE, string);
 		}
 	}
-	
+
 	// Show options
 	if (open_options) {
 		int i;
@@ -324,7 +324,7 @@ void ctrlStates() {
 		if (released_buttons & SCE_CTRL_CANCEL) {
 			open_options = 0;
 		}
-		
+
 		if (released_buttons & SCE_CTRL_ENTER) {
 			if (option_mode == OPTION_MODE_NEW) {
 				switch (option_sel) {
@@ -334,7 +334,7 @@ void ctrlStates() {
 						saveState(base_pos+rel_pos);
 						break;
 					}
-					
+
 					case 1:
 					{
 						open_options = 0;
@@ -349,21 +349,21 @@ void ctrlStates() {
 						loadState(base_pos+rel_pos);
 						break;
 					}
-					
+
 					case 1:
 					{
 						ExitAdrenalineMenu();
 						saveState(base_pos+rel_pos);
 						break;
 					}
-					
+
 					case 2:
 					{
 						deleteState(base_pos+rel_pos);
 						open_options = 0;
 						break;
 					}
-					
+
 					case 3:
 					{
 						open_options = 0;
@@ -377,7 +377,7 @@ void ctrlStates() {
 			if (option_sel > 0)
 				option_sel--;
 		}
-	
+
 		if (hold_buttons & SCE_CTRL_DOWN) {
 			if (option_sel < N_OPTION_ENTRIES_EXIST-1)
 				option_sel++;
@@ -390,7 +390,7 @@ void ctrlStates() {
 				base_pos--;
 			}
 		}
-	
+
 		if (hold_buttons & SCE_CTRL_DOWN) {
 			if (rel_pos < MAX_STATES-1) {
 				if (rel_pos < MAX_POSITION-1) {

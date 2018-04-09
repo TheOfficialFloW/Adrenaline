@@ -99,24 +99,24 @@ static int downloadFile(const char *src, const char *dst) {
 
 		while (1) {
 			int read = sceHttpReadData(reqId, buf, sizeof(buf));
-			
+
 			if (read < 0) {
 				res = read;
 				break;
 			}
-			
+
 			if (read == 0)
 				break;
 
 			int written = sceIoWrite(fd, buf, read);
-			
+
 			if (written < 0) {
 				res = written;
 				break;
 			}
 
 			value += read;
-			
+
 			psvDebugScreenSetXY(x, y);
 			printf("%d%%", (value * 100) / (uint32_t)size);
 		}
@@ -192,7 +192,7 @@ int main() {
 					printf("Error 0x%08X downloading file.\n", res);
 					while (1);
 				}
-				
+
 				break;
 			} else if (pad.buttons != 0) {
 				break;

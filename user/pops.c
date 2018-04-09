@@ -48,7 +48,7 @@ int ScePspemuInitAudioOutPatched() {
 
 	sceKernelGetMemBlockBase(blockid, (void *)(data_addr + 0x10100));
 
-	int (* init_sth)();
+	int (* init_sth)() = NULL;
 
 	if (module_nid == 0x2714F07D) { // 3.60 retail
 		init_sth = (void *)(text_addr + 0x31F90 + 0x1);
@@ -136,15 +136,15 @@ SceUID sceIoOpenPatched(const char *file, int flags, SceMode mode) {
 
 		SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 
-		if (strcmp(p+1, "__sce_menuinfo") == 0) {			
-			char *filename = adrenaline->filename;			
+		if (strcmp(p+1, "__sce_menuinfo") == 0) {
+			char *filename = adrenaline->filename;
 			if (strncmp(filename, "ms0:/", 5) == 0) {
 				char *q = strrchr(filename, '/');
 				if (q) {
 					char path[128];
 					strncpy(path, filename+5, q-(filename+5));
 					path[q-(filename+5)] = '\0';
-					
+
 					snprintf(new_file, sizeof(new_file), "%s/%s/__sce_menuinfo", getPspemuMemoryStickLocation(), path);
 					file = new_file;
 				}
@@ -156,7 +156,7 @@ SceUID sceIoOpenPatched(const char *file, int flags, SceMode mode) {
 			file = new_file;
 		}
 	}
-	
+
 	return TAI_CONTINUE(SceUID, sceIoOpenRef, file, flags, mode);
 }
 

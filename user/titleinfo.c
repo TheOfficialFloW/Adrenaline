@@ -50,7 +50,7 @@ int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
 	// Buzz!: Brain Bender: 3000. Fixes buggy PMF sequence
 	info[0x00] = 3000;
 
-	// Use current titleid for adhoc if 
+	// Use current titleid for adhoc if
 	// it's set to any other value than 0xFFFFFFFF
 	info[0x01] = 0xFFFFFFFF;
 
@@ -83,7 +83,7 @@ int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
 	// Msfs lseek patch. Value 0 or 1. Used in Ratched & Clank
 	info[0x09] = 0xFFFFFFFF;
 
-	// Use current titleid for adhoc if 
+	// Use current titleid for adhoc if
 	// it's set to any other value than 0xFFFFFFFF
 	info[0x0A] = 0xFFFFFFFF;
 
@@ -122,7 +122,7 @@ int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
 
 	// SHA-1 size
 	info[0x10] = 0xFFFFFFFF;
-	
+
 	// SHA-1 hash digest
 	info[0x11] = 0xFFFFFFFF;
 

@@ -57,8 +57,6 @@
 #include "includes/vflux_f.h"
 #include "includes/vflux_v.h"
 
-#define ALIGN(x, a) (((x) + ((a) - 1)) & ~((a) - 1))
-
 static const SceGxmProgram *const gxm_program_vflux_v = (SceGxmProgram*)&vflux_v;
 static const SceGxmProgram *const gxm_program_vflux_f = (SceGxmProgram*)&vflux_f;
 
@@ -216,7 +214,7 @@ void drawMenu() {
 	int i;
 	for (i = 0; i < N_TABS; i++) {
 		vita2d_draw_rectangle(WINDOW_X + (i * TAB_SIZE), FONT_Y_LINE(19) - 5.0f, TAB_SIZE, 38.0f, tab_sel == i ? 0xFF7F3F00 : COLOR_ALPHA(GRAY, 0x8F));
-		
+
 		if (i != 0)
 			vita2d_draw_rectangle(WINDOW_X + (i * TAB_SIZE) - 2.0f, FONT_Y_LINE(19) - 5.0f, 4.0f, 38.0f, COLOR_ALPHA(BLACK, 0x8F));
 
@@ -252,7 +250,7 @@ void drawMenu() {
 				pgf_draw_text((SCREEN_WIDTH / 2.0f) + 10.0f, y, GREEN, FONT_SIZE, menu_entries[i].options[value]);
 			}
 		}
-		
+
 		// Info about Original filter
 		if (tab_sel == 2 && menu_sel == 0 && config.graphics_filtering == 0) {
 			char *title = "All graphics related options are not taking effect with the Original rendering mode.";
@@ -341,24 +339,24 @@ void getPspScreenSize(float *scale) {
 		case SCREEN_SIZE_1_75:
 			*scale = 1.75f;
 			break;
-			
+
 		case SCREEN_SIZE_1_50:
 			*scale = 1.5f;
 			break;
-			
+
 		case SCREEN_SIZE_1_25:
 			*scale = 1.25f;
 			break;
-			
+
 		case SCREEN_SIZE_1_00:
 			*scale = 1.0f;
 			break;
-			
+
 		case SCREEN_SIZE_2_00:
 		default:
 			*scale = 2.0f;
 			break;
-	}	
+	}
 }
 
 void getPopsScreenSize(float *scale_x, float *scale_y) {
@@ -367,17 +365,17 @@ void getPopsScreenSize(float *scale_x, float *scale_y) {
 			*scale_x = 1.0625f;
 			*scale_y = 1.0625f;
 			break;
-			
+
 		case SCREEN_MODE_ZOOM:
 			*scale_x = 1.5f;
 			*scale_y = 1.5f;
 			break;
-			
+
 		case SCREEN_MODE_FULL:
 			*scale_x = 1.5f;
 			*scale_y = 1.0625f;
 			break;
-			
+
 		case SCREEN_MODE_ORIGINAL:
 		default:
 			*scale_x = 1.0f;
@@ -423,10 +421,10 @@ int AdrenalineDraw(SceSize args, void *argp) {
 	vita2d_shader *sharp_shader = vita2d_create_shader((SceGxmProgram *)sharp_bilinear_v, (SceGxmProgram *)sharp_bilinear_f);
 	vita2d_shader *advanced_aa_shader = vita2d_create_shader((SceGxmProgram *)advanced_aa_v, (SceGxmProgram *)advanced_aa_f);
 	vita2d_shader *lcd3x_shader = vita2d_create_shader((SceGxmProgram *)lcd3x_v, (SceGxmProgram *)lcd3x_f);
-	
+
 	// f.lux shader
 	vita2d_shader *flux_shader = vita2d_create_shader_untextured((SceGxmProgram *)gxm_program_vflux_v, (SceGxmProgram *)gxm_program_vflux_f);
-	
+
 	// f.lux vertices
 	SceUID flux_vertices_id = sceKernelAllocMemBlock(
 		"flux vertices",
@@ -434,7 +432,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
 		ALIGN(sizeof(float)*12, 4 * 1024),
 		NULL);
 	float *flux_vertices;
-	sceKernelGetMemBlockBase(flux_vertices_id, &flux_vertices);
+	sceKernelGetMemBlockBase(flux_vertices_id, (void **)&flux_vertices);
 	flux_vertices[0] = 0.0f;
 	flux_vertices[1] = 0.0f;
 	flux_vertices[2] = 0.5f;
@@ -448,7 +446,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
 	flux_vertices[10] = 0.0f;
 	flux_vertices[11] = 0.5f;
 	sceGxmMapMemory(flux_vertices, ALIGN(sizeof(float)*12, 4 * 1024), SCE_GXM_MEMORY_ATTRIB_READ);
-	
+
 	// f.lux indices
 	SceUID flux_indices_id = sceKernelAllocMemBlock(
 		"flux indices",
@@ -456,23 +454,23 @@ int AdrenalineDraw(SceSize args, void *argp) {
 		ALIGN(sizeof(uint16_t)*4, 4 * 1024),
 		NULL);
 	uint16_t *flux_indices;
-	sceKernelGetMemBlockBase(flux_indices_id, &flux_indices);
+	sceKernelGetMemBlockBase(flux_indices_id, (void **)&flux_indices);
 	int i;
 	for (i=0;i<4;i++){
 		flux_indices[i] = i;
 	}
 	sceGxmMapMemory(flux_indices, ALIGN(sizeof(uint16_t)*4, 4 * 1024), SCE_GXM_MEMORY_ATTRIB_READ);
-	
+
 	// f.lux model-view-projection matrix
 	matrix4x4 projection, modelview, mvp;
 	matrix4x4_identity(modelview);
 	matrix4x4_init_orthographic(projection, 0, 960, 544, 0, -1, 1);
 	matrix4x4_multiply(mvp, projection, modelview);
-	
+
 	// f.lux shaders uniforms
 	SceGxmProgramParameter *vflux_color_param = sceGxmProgramFindParameterByName(gxm_program_vflux_f, "color");
 	SceGxmProgramParameter *vflux_wvp_param = sceGxmProgramFindParameterByName(gxm_program_vflux_v, "wvp");
-	
+
 	vita2d_shader *shader = opaque_shader;
 
 	settings_semaid = sceKernelCreateSema("AdrenalineSettingsSemaphore", 0, 0, 1, NULL);
@@ -563,12 +561,12 @@ int AdrenalineDraw(SceSize args, void *argp) {
 		// Draw Menu
 		if (menu_open)
 			drawMenu();
-		
+
 		// f.lux filter drawing
 		if (config.flux_mode != 0){
-			
+
 			uint8_t flux_idx = (config.flux_mode * 4) - 1;
-			
+
 			// Updating our rectangle alpha value depending on daytime
 			SceDateTime time;
 			sceRtcGetCurrentClockLocalTime(&time);
@@ -585,21 +583,21 @@ int AdrenalineDraw(SceSize args, void *argp) {
 
 			// Setting vertex and fragment program for f.lux
 			sceGxmSetVertexProgram(_vita2d_context, flux_shader->vertexProgram);
-			sceGxmSetFragmentProgram(_vita2d_context, flux_shader->fragmentProgram);	
-			
+			sceGxmSetFragmentProgram(_vita2d_context, flux_shader->fragmentProgram);
+
 			// Setting color uniform
 			void *rgba_buffer, *wvp_buffer;
 			sceGxmReserveFragmentDefaultUniformBuffer(_vita2d_context, &rgba_buffer);
 			sceGxmSetUniformDataF(rgba_buffer, vflux_color_param, 0, 4, &flux_colors[(config.flux_mode - 1) * 4]);
-			
+
 			// Setting wvp uniform
 			sceGxmReserveVertexDefaultUniformBuffer(_vita2d_context, &wvp_buffer);
 			sceGxmSetUniformDataF(wvp_buffer, vflux_wvp_param, 0, 16, (const float*)mvp);
-			
+
 			// Performing f.lux filter draw
 			sceGxmSetVertexStream(_vita2d_context, 0, flux_vertices);
 			sceGxmDraw(_vita2d_context, SCE_GXM_PRIMITIVE_TRIANGLE_FAN, SCE_GXM_INDEX_FORMAT_U16, flux_indices, 4);
-			
+
 		}
 
 		// Show FPS

@@ -177,7 +177,7 @@ void convertUtcToLocalTime(SceDateTime *time_local, SceDateTime *time_utc) {
 	SceRtcTick tick;
 	sceRtcGetTick(time_utc, &tick);
 	sceRtcConvertUtcToLocalTime(&tick, &tick);
-	sceRtcSetTick(time_local, &tick);	
+	sceRtcSetTick(time_local, &tick);
 }
 
 void getTimeString(char string[16], int time_format, SceDateTime *time) {
