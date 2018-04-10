@@ -63,7 +63,21 @@ PspIoDrv *sctrlHENFindDriver(char *drvname) {
 	SceModule2 *mod = sceKernelFindModuleByName661("sceIOFileManager");
 	u32 text_addr = mod->text_addr;
 
-	u32 *(* GetDevice)(char *) = (void *)text_addr + 0x2A18;
+	u32 *(* GetDevice)(char *) = NULL;
+
+	int i;
+	for (i = 0; i < mod->text_size; i += 4) {
+		u32 addr = text_addr + i;
+		if (_lw(addr) == 0xA2200000) {
+			GetDevice = (void *)K_EXTRACT_CALL(addr + 4);
+			break;
+		}
+	}
+
+	if (!GetDevice) {
+		pspSdkSetK1(k1);
+		return 0;
+	}
 
 	u32 *u = GetDevice(drvname);
 	if (!u) {

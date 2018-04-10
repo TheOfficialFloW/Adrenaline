@@ -155,44 +155,72 @@ int DecodeKL4EPatched(void *dest, u32 size_dest, void *src, u32 size_src) {
 	return DecodeKL4E(dest, size_dest, src, size_src);
 }
 
-void PatchLoadExec(u32 text_addr) {
+void PatchLoadExec(u32 text_addr, u32 text_size) {
+	u32 jump = 0;
+
 	// Allow loadexec in whatever user level. Ignore K1 Check
 	_sh(0x1000, text_addr + 0x16A6);
 	_sh(0x1000, text_addr + 0x241E);
 	_sh(0x1000, text_addr + 0x2622);
 
-	// Allow loadexec in whatever user level. Make sceKernelGetUserLevel return 4
-	MAKE_DUMMY_FUNCTION(text_addr + 0x3690, 4);
+	int i;
+	for (i = 0; i < text_size; i += 4) {
+		u32 addr = text_addr + i;
 
-	// Remove apitype check in FW's above 2.60
-	memset((void *)text_addr + 0x2964, 0, 0x20);
+		// Allow loadexec in whatever user level. Make sceKernelGetUserLevel return 4
+		if (_lw(addr) == 0x1445FFF4) {
+			MAKE_DUMMY_FUNCTION(K_EXTRACT_CALL(addr - 0x10), 4);
+			continue;
+		}
 
-	// Patch to do things before reboot
-	RunReboot = (void *)text_addr + 0x2B04;
-	MAKE_CALL(text_addr + 0x29BC, RunRebootPatched);
+		// Remove apitype check in FW's above 2.60
+		if (_lw(addr) == 0x24070200) {
+			memset((void *)addr, 0, 0x20);
+			continue;
+		}
 
-	// Ignore kermit calls
-	_sw(0, text_addr + 0x2B9C);
+		// Patch to do things before reboot
+		if (_lw(addr) == 0x02202021 && _lw(addr + 4) == 0x00401821) {
+			K_HIJACK_CALL(addr - 4, RunRebootPatched, RunReboot);
+			continue;
+		}
+/*
+		// Ignore kermit calls
+		if (_lw(addr) == 0x17C001D3) {
+			_sw(0, addr);
+			jump = addr + 8;
+			continue;
+		}
+*/
+		// Redirect pointer to 0x88FC0000
+		if (_lw(addr) == 0x04400020) {
+			K_HIJACK_CALL(addr - 8, DecodeKL4EPatched, DecodeKL4E);
+			_sb(0xFC, addr + 0x44);
+			continue;
+		}
 
-	// Redirect pointer to 0x88FC0000
-	DecodeKL4E = (void *)text_addr + 0;
-	MAKE_CALL(text_addr + 0x2E00, DecodeKL4EPatched);
-	_sh(0x88FC, text_addr + 0x2E4C);
+		// Fix type check
+		if (_lw(addr) == 0x34650002) {
+			_sw(0x24050002, addr); //ori $a1, $v1, 0x2 -> li $a1, 2
+			_sw(0x12E500B7, addr + 4); //bnez $s7, loc_XXXXXXXX -> beq $s7, $a1, loc_XXXXXXXX
+			_sw(0xAC570018, addr + 8); //sw $a1, 24($v0) -> sw $s7, 24($v0)
+			continue;
+		}
 
-	// Fix type check
-	_sw(0x24050002, text_addr + 0x2D24); //ori $a1, $v1, 0x2 -> li $a1, 2
-	_sw(0x12E500B7, text_addr + 0x2D28); //bnez $s7, loc_XXXXXXXX -> beq $s7, $a1, loc_XXXXXXXX
-	_sw(0xAC570018, text_addr + 0x2D2C); //sw $a1, 24($v0) -> sw $s7, 24($v0)
+		if (_lw(addr) == 0x24100200) {
+			// Some registers are reserved. Use other registers to avoid malfunction
+			_sw(0x24050200, addr); //li $s0, 0x200 -> li $a1, 0x200
+			_sw(0x12650003, addr + 4); //beq $s3, $s0, loc_XXXXXXXX - > beq $s3, $a1, loc_XXXXXXXX
+			_sw(0x241E0210, addr + 8); //li $s5, 0x210 -> li $fp, 0x210
+			_sw(0x567EFFDE, addr + 0xC); //bne $s3, $s5, loc_XXXXXXXX -> bne $s3, $fp, loc_XXXXXXXX
 
-	// Some registers are reserved. Use other registers to avoid malfunction
-	_sw(0x24050200, text_addr + 0x3380); //li $s0, 0x200 -> li $a1, 0x200
-	_sw(0x12650003, text_addr + 0x3384); //beq $s3, $s0, loc_XXXXXXXX - > beq $s3, $a1, loc_XXXXXXXX
-	_sw(0x241E0210, text_addr + 0x3388); //li $s5, 0x210 -> li $fp, 0x210
-	_sw(0x567EFFDE, text_addr + 0x338C); //bne $s3, $s5, loc_XXXXXXXX -> bne $s3, $fp, loc_XXXXXXXX
+			// Allow LoadExecVSH type 1. Ignore peripheralCommon KERMIT_CMD_ERROR_EXIT
+			MAKE_JUMP(addr + 0x14, jump);
+			_sw(0x24170001, addr + 0x18); //li $s7, 1
 
-	// Allow LoadExecVSH type 1. Ignore peripheralCommon KERMIT_CMD_ERROR_EXIT
-	MAKE_JUMP(text_addr + 0x3394, text_addr + 0x2BA4);
-	_sw(0x24170001, text_addr + 0x3398); //li $s7, 1
+			continue;
+		}
+	}
 
 	ClearCaches();
 }

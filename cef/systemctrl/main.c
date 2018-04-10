@@ -257,12 +257,24 @@ void PatchLoadCore() {
 	}
 }
 
+// Taken from ARK-3
+u32 FindFirstBEQ(u32 addr) {
+	for (;; addr += 4){
+		if ((_lw(addr) & 0xFC000000) == 0x10000000)
+			return addr;
+	}
+
+	return 0;
+}
+
 void PatchSysmem() {
-	u32 offsets[] = { 0x88009F76, 0x8800A096, 0x8800A12E, 0x8800A1DE, 0x8800A2B2, 0x8800A356, 0x8800A3FA, 0x8800A492, 0x8800A542, 0x8800A5F2 };
+	u32 nids[] = { 0x7591C7DB, 0x342061E5, 0x315AD3A0, 0xEBD5C3E6, 0x057E7380, 0x91DE343C, 0x7893F79A, 0x35669D4C, 0x1B4217BC, 0x358CA1BB };
 
 	int i;
-	for (i = 0; i < (sizeof(offsets) / sizeof(u32)); i++) {
-		_sh(0x1000, offsets[i]);
+	for (i = 0; i < sizeof(nids) / sizeof(u32); i++) {
+		u32 addr = FindFirstBEQ(FindProc("sceSystemMemoryManager", "SysMemUserForUser", nids[i]));
+		if (addr)
+			_sh(0x1000, addr + 2);
 	}
 }
 
@@ -394,7 +406,7 @@ int OnModuleStart(SceModule2 *mod) {
 
 		PatchLowIODriver2(text_addr);
 	} else if (strcmp(modname, "sceLoadExec") == 0) {
-		PatchLoadExec(text_addr);
+		PatchLoadExec(text_addr, mod->text_size);
 	} else if (strcmp(modname, "scePower_Service") == 0) {
 		log("Built: %s %s\n", __DATE__, __TIME__);
 		log("Boot From: 0x%X\n", sceKernelBootFrom());
@@ -482,7 +494,7 @@ int OnModuleStart(SceModule2 *mod) {
 }
 
 int module_start(SceSize args, void *argp) {
-	// PatchSysmem();
+	PatchSysmem();
 	PatchLoadCore();
 	PatchInterruptMgr();
 	PatchIoFileMgr();

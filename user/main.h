@@ -1,19 +1,19 @@
 /*
-	Adrenaline
-	Copyright (C) 2016-2017, TheFloW
+  Adrenaline
+  Copyright (C) 2016-2017, TheFloW
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef __MAIN_H__
@@ -34,38 +34,38 @@
 #define ADRENALINE_CFG_MAGIC_2 0x334F4E33
 
 enum MemoryStickLocations {
-	MEMORY_STICK_LOCATION_UX0,
-	MEMORY_STICK_LOCATION_UR0,
-	MEMORY_STICK_LOCATION_IMC0,
-	MEMORY_STICK_LOCATION_UMA0,
+  MEMORY_STICK_LOCATION_UX0,
+  MEMORY_STICK_LOCATION_UR0,
+  MEMORY_STICK_LOCATION_IMC0,
+  MEMORY_STICK_LOCATION_UMA0,
 };
 
 enum AdrenalineScreenSizes {
-	SCREEN_SIZE_2_00,
-	SCREEN_SIZE_1_75,
-	SCREEN_SIZE_1_50,
-	SCREEN_SIZE_1_25,
-	SCREEN_SIZE_1_00,
+  SCREEN_SIZE_2_00,
+  SCREEN_SIZE_1_75,
+  SCREEN_SIZE_1_50,
+  SCREEN_SIZE_1_25,
+  SCREEN_SIZE_1_00,
 };
 
 enum AdrenalineScreenModes {
-	SCREEN_MODE_ORIGINAL,
-	SCREEN_MODE_NORMAL,
-	SCREEN_MODE_ZOOM,
-	SCREEN_MODE_FULL,
+  SCREEN_MODE_ORIGINAL,
+  SCREEN_MODE_NORMAL,
+  SCREEN_MODE_ZOOM,
+  SCREEN_MODE_FULL,
 };
 
 typedef struct {
-	int magic[2];
-	int graphics_filtering;
-	int no_smooth_graphics;
-	int flux_mode;
-	int screen_size;
-	int ms_location;
-	int use_ds3_ds4;
-	int screen_mode;
-	int skip_logo;
-	int reserved;
+  int magic[2];
+  int graphics_filtering;
+  int no_smooth_graphics;
+  int flux_mode;
+  int screen_size;
+  int ms_location;
+  int use_ds3_ds4;
+  int screen_mode;
+  int skip_logo;
+  int reserved;
 } AdrenalineConfig;
 
 extern AdrenalineConfig config;

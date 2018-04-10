@@ -9,20 +9,20 @@
 #define RAD_TO_RAD(x) ((x) * 180.0 / M_PI)
 
 typedef struct {
-	float x, y;
+  float x, y;
 } vector2f;
 
 typedef struct {
-	union { float x; float r; };
-	union { float y; float g; };
-	union { float z; float b; };
+  union { float x; float r; };
+  union { float y; float g; };
+  union { float z; float b; };
 } vector3f;
 
 typedef struct {
-	union { float x; float r; };
-	union { float y; float g; };
-	union { float z; float b; };
-	union { float w; float a; };
+  union { float x; float r; };
+  union { float y; float g; };
+  union { float z; float b; };
+  union { float w; float a; };
 } vector4f;
 
 typedef float matrix3x3[3][3];
@@ -83,7 +83,7 @@ void matrix4x4_init_perspective(matrix4x4 m, float fov, float aspect, float near
 
 void matrix3x3_normal_matrix(matrix3x3 out, const matrix4x4 m);
 void matrix4x4_build_model_matrix(matrix4x4 m, const vector3f *translation,
-	const vector3f *rotation);
+  const vector3f *rotation);
 void matrix4x4_oblique_near_plane(matrix4x4 projection, const vector4f *clip_plane);
 
 #endif

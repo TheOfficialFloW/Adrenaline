@@ -22,7 +22,7 @@
 void ApplyMemory();
 void UnprotectExtraMemory();
 
-void PatchLoadExec(u32 text_addr);
+void PatchLoadExec(u32 text_addr, u32 text_size);
 void PatchPeripheralDriver(char *modname);
 void PatchChkreg();
 void PatchImposeDriver(u32 text_addr);
