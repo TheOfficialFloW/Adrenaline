@@ -101,7 +101,7 @@ static int sm_stuff_patched() {
     if (module_nid == 0x8F2D0378) { // 3.60 retail
       ksceKernelMemcpyKernelToUser(0x70602D58, &a, sizeof(uint32_t));
       ksceKernelCpuDcacheWritebackRange((void *)0x70602D58, sizeof(uint32_t));
-    } else if (module_nid == 0x07937779 || module_nid == 0x71BF9CC5) { // 3.65/3.67 retail
+    } else if (module_nid == 0x07937779 || module_nid == 0x71BF9CC5 || module_nid == 0x7C185186) { // 3.65/3.67/3.68 retail
       ksceKernelMemcpyKernelToUser(0x70602D70, &a, sizeof(uint32_t));
       ksceKernelCpuDcacheWritebackRange((void *)0x70602D70, sizeof(uint32_t));
     }
@@ -194,6 +194,7 @@ int module_start(SceSize args, void *argp) {
 
     case 0x07937779: // 3.65 retail
     case 0x71BF9CC5: // 3.67 retail
+    case 0x7C185186: // 3.68 retail
       hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AE8, 1, sm_stuff_patched);
       break;
   }

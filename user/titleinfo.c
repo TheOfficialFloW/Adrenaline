@@ -39,7 +39,7 @@ int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
     snprintf((char *)(data_addr + 0x11C7D0C), 0x80, "ms0:PSP/GAME/%s/__sce_menuinfo", titleid);
 
     info = (uint32_t *)(data_addr + 0x1156450);
-  } else if (module_nid == 0x3F75D4D3) { // 3.65/3.67 retail
+  } else if (module_nid == 0x3F75D4D3) { // 3.65/3.67/3.68 retail
     // Make __sce_menuinfo path
     snprintf((char *)(data_addr + 0x11C7E0C), 0x80, "ms0:PSP/GAME/%s/__sce_menuinfo", titleid);
 

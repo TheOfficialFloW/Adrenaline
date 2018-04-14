@@ -184,14 +184,14 @@ void PatchLoadExec(u32 text_addr, u32 text_size) {
 			K_HIJACK_CALL(addr - 4, RunRebootPatched, RunReboot);
 			continue;
 		}
-/*
+
 		// Ignore kermit calls
 		if (_lw(addr) == 0x17C001D3) {
 			_sw(0, addr);
 			jump = addr + 8;
 			continue;
 		}
-*/
+
 		// Redirect pointer to 0x88FC0000
 		if (_lw(addr) == 0x04400020) {
 			K_HIJACK_CALL(addr - 8, DecodeKL4EPatched, DecodeKL4E);

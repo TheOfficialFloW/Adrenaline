@@ -52,7 +52,7 @@ int ScePspemuInitAudioOutPatched() {
 
   if (module_nid == 0x2714F07D) { // 3.60 retail
     init_sth = (void *)(text_addr + 0x31F90 + 0x1);
-  } else if (module_nid == 0x3F75D4D3) { // 3.65/3.67 retail
+  } else if (module_nid == 0x3F75D4D3) { // 3.65/3.67/3.68 retail
     init_sth = (void *)(text_addr + 0x31FA4 + 0x1);
   }
 
