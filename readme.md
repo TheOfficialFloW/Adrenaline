@@ -42,6 +42,11 @@ For 6.61 Adrenaline-4 or higher, you can use the 'System Update' in the XMB to u
 Changelog
 ---------
 
+### Changelog v6.2
+- Fixed PS1 framerate when using custom screen.
+- Fixed bug where exiting a game with 'High memory layout' would crash.
+- Fixed compatiblity with 'Kingdom Hearts: Birth by Sleep' english patch, again.
+
 ### Changelog v6.1
 - Added support for 3.65/3.67.
 

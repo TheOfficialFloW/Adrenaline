@@ -35,7 +35,7 @@
 #include <string.h>
 
 #include "utils.h"
-#include "graphics.h"
+#include "pspdebug.h"
 
 #include "../adrenaline_compat.h"
 
@@ -176,9 +176,9 @@ int main() {
 	memset(&stat, 0, sizeof(SceIoStat));
 	if (sceIoGetstat("ux0:app/" ADRENALINE_TITLEID "/flash0", &stat) < 0 &&
 		sceIoGetstat("ux0:app/" ADRENALINE_TITLEID "/661.PBP", &stat) < 0) {
-		printf("The 6.61 firmware has not been installed yet and 661.PBP does not exist.\n");
+		printf("The 6.61 firmware has not been installed yet and 661.PBP does not\nexist.\n");
 		printf("Press X to download the PSP 6.61 firmware.\n");
-		printf("Press any other button to ignore it (but you need to manually put 661.PBP to ux0:app/" ADRENALINE_TITLEID "/661.PBP" ").\n\n");
+		printf("Press any other button to ignore it (but you need to manually\nput 661.PBP to ux0:app/" ADRENALINE_TITLEID "/661.PBP" ").\n\n");
 
 		while (1) {
 			SceCtrlData pad;

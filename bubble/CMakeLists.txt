@@ -20,7 +20,7 @@ set(VITA_MAKE_FSELF_FLAGS "${VITA_MAKE_FSELF_FLAGS} -a 0x2800000000000001")
 add_executable(adrenaline
   main.c
   utils.c
-  graphics.c
+  scr_printf.c
   font.c
 )
 

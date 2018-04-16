@@ -400,7 +400,7 @@ int OnModuleStart(SceModule2 *mod) {
 
 		sctrlSEGetConfig(&config);
 
-		if (sceKernelInitKeyConfig() != PSP_INIT_KEYCONFIG_POPS && config.forcehighmemory) {
+		if (sceKernelInitKeyConfig() == PSP_INIT_KEYCONFIG_GAME  && config.forcehighmemory) {
 			sctrlHENSetMemory(52, 0);
 			ApplyMemory();
 		}
