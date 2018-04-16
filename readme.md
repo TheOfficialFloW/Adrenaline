@@ -43,6 +43,7 @@ Changelog
 ---------
 
 ### Changelog v6.2
+- Added f.lux by Rinnegatamante.
 - Fixed PS1 framerate when using custom screen.
 - Fixed bug where exiting a game with 'High memory layout' would crash.
 - Fixed compatiblity with 'Kingdom Hearts: Birth by Sleep' english patch, again.
