@@ -315,25 +315,9 @@ int bus_list[] = { 0, 10, 37,  50,  66, 111, 133, 150, 166 };
 
 #define N_CPU (sizeof(cpu_list) / sizeof(int))
 
-int RestoreSound() {
-	SceModule2 *mod = sceKernelFindModuleByName661("sceAudio_Driver");
-	if (!mod)
-		return -1;
-
-	int (* AudioSysEventHandler)(int ev_id, char *ev_name, void *param, int *result) = (void *)mod->text_addr + 0x179C;
-	AudioSysEventHandler(0x200, NULL, NULL, NULL);
-	AudioSysEventHandler(0x100000, NULL, NULL, NULL);
-
-	return 0;
-}
-
 void OnSystemStatusIdle() {
 	SceAdrenaline *adrenaline = (SceAdrenaline *)ADRENALINE_ADDRESS;
 
-	// Restore sound after exiting from pops mode
-	if (adrenaline->pops_mode)
-		RestoreSound();
-	
 	initAdrenalineInfo();
 
 	PatchVolatileMemBug();

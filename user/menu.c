@@ -620,6 +620,8 @@ int AdrenalineDraw(SceSize args, void *argp) {
     // Sync
     if (!adrenaline->pops_mode || adrenaline->draw_psp_screen_in_pops)
       sceCompatLCDCSync();
+    else
+      sceDisplayWaitVblankStart();
 
     // Ctrl
     if (menu_open)

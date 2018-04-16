@@ -150,8 +150,8 @@ SceUID sceIoOpenPatched(const char *file, int flags, SceMode mode) {
         }
       }
     } else if (strcmp(p+1, "PARAM.SFO") == 0 ||
-           strcmp(p+1, "SCEVMC0.VMP") == 0 ||
-           strcmp(p+1, "SCEVMC1.VMP") == 0) {
+               strcmp(p+1, "SCEVMC0.VMP") == 0 ||
+               strcmp(p+1, "SCEVMC1.VMP") == 0) {
       snprintf(new_file, sizeof(new_file), "%s/PSP/SAVEDATA/%s/%s", getPspemuMemoryStickLocation(), adrenaline->titleid, p+1);
       file = new_file;
     }
@@ -168,8 +168,8 @@ int sceIoGetstatPatched(const char *file, SceIoStat *stat) {
     SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
 
     if (strcmp(p+1, "PARAM.SFO") == 0 ||
-      strcmp(p+1, "SCEVMC0.VMP") == 0 ||
-      strcmp(p+1, "SCEVMC1.VMP") == 0) {
+        strcmp(p+1, "SCEVMC0.VMP") == 0 ||
+        strcmp(p+1, "SCEVMC1.VMP") == 0) {
       snprintf(new_file, sizeof(new_file), "%s/PSP/SAVEDATA/%s/%s", getPspemuMemoryStickLocation(), adrenaline->titleid, p+1);
       file = new_file;
     }
