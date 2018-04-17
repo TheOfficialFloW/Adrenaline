@@ -65,7 +65,10 @@ typedef struct {
   int use_ds3_ds4;
   int screen_mode;
   int skip_logo;
-  int reserved;
+  float psp_screen_scale_x;
+  float psp_screen_scale_y;
+  float ps1_screen_scale_x;
+  float ps1_screen_scale_y;
 } AdrenalineConfig;
 
 extern AdrenalineConfig config;

@@ -535,6 +535,14 @@ int module_start(SceSize args, void *argp) {
   // Read config
   memset(&config, 0, sizeof(AdrenalineConfig));
   ReadFile("ux0:app/" ADRENALINE_TITLEID "/adrenaline.bin", &config, sizeof(AdrenalineConfig));
+  if ((uint32_t)config.psp_screen_scale_x == 0)
+    config.psp_screen_scale_x = 2.0f;
+  if ((uint32_t)config.psp_screen_scale_y == 0)
+    config.psp_screen_scale_y = 2.0f;
+  if ((uint32_t)config.ps1_screen_scale_x == 0)
+    config.ps1_screen_scale_x = 1.0f;
+  if ((uint32_t)config.ps1_screen_scale_y == 0)
+    config.ps1_screen_scale_y = 1.0f;
 
   // Tai module info
   tai_module_info_t tai_info;

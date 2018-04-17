@@ -33,8 +33,10 @@
 #include <string.h>
 
 #include "main.h"
+#include "utils.h"
 
-uint32_t old_buttons, current_buttons, pressed_buttons, hold_buttons, hold2_buttons, released_buttons;
+Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
+Pad hold_count, hold2_count;
 
 int SCE_CTRL_ENTER = SCE_CTRL_CROSS, SCE_CTRL_CANCEL = SCE_CTRL_CIRCLE;
 
@@ -89,10 +91,10 @@ int WriteFile(char *file, void *buf, int size) {
   return written;
 }
 
+extern int enter_button;
 void readPad() {
-  static int hold_n = 0, hold2_n = 0;
-
   SceCtrlData pad;
+  memset(&pad, 0, sizeof(SceCtrlData));
   sceCtrlPeekBufferPositive(0, &pad, 1);
 
   SceCtrlData home;
@@ -101,30 +103,115 @@ void readPad() {
   pad.buttons &= ~SCE_CTRL_PSBUTTON;
   pad.buttons |= (home.buttons & SCE_CTRL_PSBUTTON);
 
-  old_buttons = current_buttons;
-  current_buttons = pad.buttons;
-  pressed_buttons = current_buttons & ~old_buttons;
-  released_buttons = ~current_buttons & old_buttons;
+  memcpy(&old_pad, current_pad, sizeof(Pad));
+  memset(&current_pad, 0, sizeof(Pad));
 
-  hold_buttons = pressed_buttons;
-  hold2_buttons = pressed_buttons;
+  if (pad.buttons & SCE_CTRL_UP)
+    current_pad[PAD_UP] = 1;  
+  if (pad.buttons & SCE_CTRL_DOWN)
+    current_pad[PAD_DOWN] = 1;  
+  if (pad.buttons & SCE_CTRL_LEFT)
+    current_pad[PAD_LEFT] = 1; 
+  if (pad.buttons & SCE_CTRL_RIGHT)
+    current_pad[PAD_RIGHT] = 1;  
+  if (pad.buttons & SCE_CTRL_LTRIGGER)
+    current_pad[PAD_LTRIGGER] = 1;  
+  if (pad.buttons & SCE_CTRL_RTRIGGER)
+    current_pad[PAD_RTRIGGER] = 1;  
+  if (pad.buttons & SCE_CTRL_TRIANGLE)
+    current_pad[PAD_TRIANGLE] = 1;  
+  if (pad.buttons & SCE_CTRL_CIRCLE)
+    current_pad[PAD_CIRCLE] = 1;  
+  if (pad.buttons & SCE_CTRL_CROSS)
+    current_pad[PAD_CROSS] = 1;  
+  if (pad.buttons & SCE_CTRL_SQUARE)
+    current_pad[PAD_SQUARE] = 1;
+  if (pad.buttons & SCE_CTRL_START)
+    current_pad[PAD_START] = 1;  
+  if (pad.buttons & SCE_CTRL_SELECT)
+    current_pad[PAD_SELECT] = 1;
+  if (pad.buttons & SCE_CTRL_PSBUTTON)
+    current_pad[PAD_PSBUTTON] = 1;
 
-  if (old_buttons & current_buttons) {
-    if (hold_n >= 10) {
-      hold_buttons = current_buttons;
-      hold_n = 6;
+  if (pad.ly < ANALOG_CENTER - ANALOG_THRESHOLD) {
+    current_pad[PAD_LEFT_ANALOG_UP] = 1;
+  } else if (pad.ly > ANALOG_CENTER + ANALOG_THRESHOLD) {
+    current_pad[PAD_LEFT_ANALOG_DOWN] = 1;
+  }
+
+  if (pad.lx < ANALOG_CENTER - ANALOG_THRESHOLD) {
+    current_pad[PAD_LEFT_ANALOG_LEFT] = 1;
+  } else if (pad.lx > ANALOG_CENTER + ANALOG_THRESHOLD) {
+    current_pad[PAD_LEFT_ANALOG_RIGHT] = 1;
+  }
+
+  if (pad.ry < ANALOG_CENTER - ANALOG_THRESHOLD) {
+    current_pad[PAD_RIGHT_ANALOG_UP] = 1;
+  } else if (pad.ry > ANALOG_CENTER + ANALOG_THRESHOLD) {
+    current_pad[PAD_RIGHT_ANALOG_DOWN] = 1;
+  }
+
+  if (pad.rx < ANALOG_CENTER - ANALOG_THRESHOLD) {
+    current_pad[PAD_RIGHT_ANALOG_LEFT] = 1;
+  } else if (pad.rx > ANALOG_CENTER + ANALOG_THRESHOLD) {
+    current_pad[PAD_RIGHT_ANALOG_RIGHT] = 1;
+  }
+  
+  int i;
+  for (i = 0; i < PAD_N_BUTTONS; i++) {
+    pressed_pad[i] = current_pad[i] & ~old_pad[i];
+    released_pad[i] = ~current_pad[i] & old_pad[i];
+    
+    hold_pad[i] = pressed_pad[i];
+    hold2_pad[i] = pressed_pad[i];
+    
+    if (current_pad[i]) {
+      if (hold_count[i] >= 10) {
+        hold_pad[i] = 1;
+        hold_count[i] = 6;
+      }
+
+      if (hold2_count[i] >= 10) {
+        hold2_pad[i] = 1;
+        hold2_count[i] = 10;
+      }
+
+      hold_count[i]++;
+      hold2_count[i]++;
+    } else {
+      hold_count[i] = 0;
+      hold2_count[i] = 0;
     }
-
-    if (hold2_n >= 10) {
-      hold2_buttons = current_buttons;
-      hold2_n = 10;
-    }
-
-    hold_n++;
-    hold2_n++;
+  }
+  
+  if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE) {
+    old_pad[PAD_ENTER] = old_pad[PAD_CIRCLE];
+    current_pad[PAD_ENTER] = current_pad[PAD_CIRCLE];
+    pressed_pad[PAD_ENTER] = pressed_pad[PAD_CIRCLE];
+    released_pad[PAD_ENTER] = released_pad[PAD_CIRCLE];
+    hold_pad[PAD_ENTER] = hold_pad[PAD_CIRCLE];
+    hold2_pad[PAD_ENTER] = hold2_pad[PAD_CIRCLE];
+    
+    old_pad[PAD_CANCEL] = old_pad[PAD_CROSS];
+    current_pad[PAD_CANCEL] = current_pad[PAD_CROSS];
+    pressed_pad[PAD_CANCEL] = pressed_pad[PAD_CROSS];
+    released_pad[PAD_CANCEL] = released_pad[PAD_CROSS];
+    hold_pad[PAD_CANCEL] = hold_pad[PAD_CROSS];
+    hold2_pad[PAD_CANCEL] = hold2_pad[PAD_CROSS];
   } else {
-    hold_n = 0;
-    hold2_n = 0;
+    old_pad[PAD_ENTER] = old_pad[PAD_CROSS];
+    current_pad[PAD_ENTER] = current_pad[PAD_CROSS];
+    pressed_pad[PAD_ENTER] = pressed_pad[PAD_CROSS];
+    released_pad[PAD_ENTER] = released_pad[PAD_CROSS];
+    hold_pad[PAD_ENTER] = hold_pad[PAD_CROSS];
+    hold2_pad[PAD_ENTER] = hold2_pad[PAD_CROSS];
+    
+    old_pad[PAD_CANCEL] = old_pad[PAD_CIRCLE];
+    current_pad[PAD_CANCEL] = current_pad[PAD_CIRCLE];
+    pressed_pad[PAD_CANCEL] = pressed_pad[PAD_CIRCLE];
+    released_pad[PAD_CANCEL] = released_pad[PAD_CIRCLE];
+    hold_pad[PAD_CANCEL] = hold_pad[PAD_CIRCLE];
+    hold2_pad[PAD_CANCEL] = hold2_pad[PAD_CIRCLE];
   }
 }
 

@@ -42,6 +42,11 @@ For 6.61 Adrenaline-4 or higher, you can use the 'System Update' in the XMB to u
 Changelog
 ---------
 
+### Changelog v6.3
+- Added ability to freely adjust the screen size to your desire in both psp and ps1 modes.
+- Removed 'Screen Mode' and 'Screen Size' from menu.
+- Improved Adrenaline Menu.
+
 ### Changelog v6.2
 - Added f.lux by Rinnegatamante.
 - Fixed PS1 framerate when using custom screen.

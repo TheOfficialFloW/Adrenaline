@@ -70,6 +70,7 @@ int language = 0, enter_button = 0, date_format = 0, time_format = 0;
 static int EnterStandbyMode();
 static int OpenOfficialSettings();
 static int ExitPspEmuApplication();
+static int ResetAdrenalineSettings();
 
 // RGB colors for the filter box used by f.lux
 static float flux_colors[] = {
@@ -79,29 +80,30 @@ static float flux_colors[] = {
 };
 
 static char *graphics_options[] = { "Original", "Bilinear", "Sharp bilinear", "Advanced AA", "LCD3x" };
-static char *screen_mode_options[] = { "Original", "Normal", "Zoom", "Full" };
 static char *flux_mode_options[] = { "None", "Yellow", "Blue", "Black" };
 static char *no_yes_options[] = { "No", "Yes" };
 static char *yes_no_options[] = { "Yes", "No" };
-static char *screen_size_options[] = { "2.0x", "1.75x", "1.5x", "1.25x", "1.0x" };
 static char *ms_location_options[] = { "ux0:pspemu", "ur0:pspemu", "imc0:pspemu", "uma0:pspemu" };
 
 static MenuEntry main_entries[] = {
-  { "Enter Standby Mode", MENU_ENTRY_TYPE_CALLBACK, 0, EnterStandbyMode, NULL, NULL, 0 },
-  { "Open Official Settings", MENU_ENTRY_TYPE_CALLBACK, 0, OpenOfficialSettings, NULL, NULL, 0 },
-  { "Exit PspEmu Application", MENU_ENTRY_TYPE_CALLBACK, 0, ExitPspEmuApplication, NULL, NULL, 0 },
-  { "Exit Adrenaline Menu", MENU_ENTRY_TYPE_CALLBACK, 0, ExitAdrenalineMenu, NULL, NULL, 0 },
+  { "Enter Standby Mode",        MENU_ENTRY_TYPE_CALLBACK, 0, EnterStandbyMode, NULL, NULL, 0 },
+  { "Open Official Settings",    MENU_ENTRY_TYPE_CALLBACK, 0, OpenOfficialSettings, NULL, NULL, 0 },
+  { "Exit PspEmu Application",   MENU_ENTRY_TYPE_CALLBACK, 0, ExitPspEmuApplication, NULL, NULL, 0 },
+  { "Exit Adrenaline Menu",      MENU_ENTRY_TYPE_CALLBACK, 0, ExitAdrenalineMenu, NULL, NULL, 0 },
 };
 
 static MenuEntry settings_entries[] = {
-  { "Graphics Filtering", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.graphics_filtering, graphics_options, sizeof(graphics_options) / sizeof(char **) },
-  { "Smooth Graphics", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.no_smooth_graphics, yes_no_options, sizeof(yes_no_options) / sizeof(char **) },
-  { "f.lux Filter Color", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.flux_mode, flux_mode_options, sizeof(flux_mode_options) / sizeof(char **) },
-  { "Screen Size (PSP)", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.screen_size, screen_size_options, sizeof(screen_size_options) / sizeof(char **) },
-  { "Screen Mode (PS1)", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.screen_mode, screen_mode_options, sizeof(screen_mode_options) / sizeof(char **) },
-  { "Memory Stick Location", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.ms_location, ms_location_options, sizeof(ms_location_options) / sizeof(char **) },
-  { "Use DS3/DS4 controller", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.use_ds3_ds4, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
+  { "Graphics Filtering",        MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.graphics_filtering, graphics_options, sizeof(graphics_options) / sizeof(char **) },
+  { "Smooth Graphics",           MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.no_smooth_graphics, yes_no_options, sizeof(yes_no_options) / sizeof(char **) },
+  { "f.lux Filter Color",        MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.flux_mode, flux_mode_options, sizeof(flux_mode_options) / sizeof(char **) },
+  { "Screen Scale X (PSP)",      MENU_ENTRY_TYPE_SCALE,  0, NULL, &config.psp_screen_scale_x, NULL, 0 },
+  { "Screen Scale Y (PSP)",      MENU_ENTRY_TYPE_SCALE,  0, NULL, &config.psp_screen_scale_y, NULL, 0 },
+  { "Screen Scale X (PS1)",      MENU_ENTRY_TYPE_SCALE,  0, NULL, &config.ps1_screen_scale_x, NULL, 0 },
+  { "Screen Scale Y (PS1)",      MENU_ENTRY_TYPE_SCALE,  0, NULL, &config.ps1_screen_scale_y, NULL, 0 },
+  { "Memory Stick Location",     MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.ms_location, ms_location_options, sizeof(ms_location_options) / sizeof(char **) },
+  { "Use DS3/DS4 controller",    MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.use_ds3_ds4, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
   { "Skip Adrenaline Boot Logo", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.skip_logo, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
+  { "Reset Adrenaline Settings", MENU_ENTRY_TYPE_CALLBACK, 0, ResetAdrenalineSettings, NULL, NULL, 0 },
 };
 
 static MenuEntry about_entries[] = {
@@ -201,6 +203,17 @@ int ExitAdrenalineMenu() {
   return 0;
 }
 
+int ResetAdrenalineSettings() {
+  memset(&config, 0, sizeof(AdrenalineConfig));
+  config.magic[0] = ADRENALINE_CFG_MAGIC_1;
+  config.magic[1] = ADRENALINE_CFG_MAGIC_2;
+  config.psp_screen_scale_x = 2.0f;
+  config.psp_screen_scale_y = 2.0f;
+  config.ps1_screen_scale_x = 1.0f;
+  config.ps1_screen_scale_y = 1.0f;
+  WriteFile("ux0:app/" ADRENALINE_TITLEID "/adrenaline.bin", &config, sizeof(AdrenalineConfig));
+}
+
 void drawMenu() {
   // Draw window
   vita2d_draw_rectangle(WINDOW_X, WINDOW_Y, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_COLOR);
@@ -236,7 +249,7 @@ void drawMenu() {
       if (i == menu_sel && tab_entries[tab_sel].moveable)
         vita2d_draw_rectangle(WINDOW_X, y + 3.0f, WINDOW_WIDTH, FONT_Y_SPACE, COLOR_ALPHA(0xFFFF1F7F, 0x8F));
 
-      if (menu_entries[i].type != MENU_ENTRY_TYPE_OPTION) {
+      if (menu_entries[i].type == MENU_ENTRY_TYPE_TEXT || menu_entries[i].type == MENU_ENTRY_TYPE_CALLBACK) {
         // Item
         float x = vita2d_pgf_text_width(font, FONT_SIZE, menu_entries[i].name);
         pgf_draw_text(ALIGN_CENTER(SCREEN_WIDTH, x), y, color, FONT_SIZE, menu_entries[i].name);
@@ -245,9 +258,15 @@ void drawMenu() {
         float x = vita2d_pgf_text_width(font, FONT_SIZE, menu_entries[i].name);
         pgf_draw_text(ALIGN_RIGHT((SCREEN_WIDTH / 2.0f) - 10.0f, x), y, color, FONT_SIZE, menu_entries[i].name);
 
-        // Option
-        int value = *(menu_entries[i].value);
-        pgf_draw_text((SCREEN_WIDTH / 2.0f) + 10.0f, y, GREEN, FONT_SIZE, menu_entries[i].options[value]);
+        if (menu_entries[i].type == MENU_ENTRY_TYPE_OPTION) {
+          // Option
+          int value = *(menu_entries[i].value);
+          pgf_draw_text((SCREEN_WIDTH / 2.0f) + 10.0f, y, GREEN, FONT_SIZE, menu_entries[i].options[value]);
+        } else if (menu_entries[i].type == MENU_ENTRY_TYPE_SCALE) {
+            // Option
+          float *value = (float *)menu_entries[i].value;
+          pgf_draw_textf((SCREEN_WIDTH / 2.0f) + 10.0f, y, GREEN, FONT_SIZE, "%.03f", *value);
+        }
       }
     }
 
@@ -264,23 +283,23 @@ void drawMenu() {
 void ctrlMenu() {
   readPad();
 
-  if (released_buttons & SCE_CTRL_PSBUTTON) {
+  if (released_pad[PAD_PSBUTTON]) {
     ExitAdrenalineMenu();
   }
 
   if (!open_options) {
-    if (released_buttons & SCE_CTRL_CANCEL) {
+    if (released_pad[PAD_CANCEL]) {
       ExitAdrenalineMenu();
     }
 
-    if (pressed_buttons & SCE_CTRL_LTRIGGER) {
+    if (pressed_pad[PAD_LTRIGGER]) {
       if (tab_sel > 0) {
         menu_sel = 0;
         tab_sel--;
       }
     }
 
-    if (pressed_buttons & SCE_CTRL_RTRIGGER) {
+    if (pressed_pad[PAD_RTRIGGER]) {
       if (tab_sel < N_TABS-1) {
         menu_sel = 0;
         tab_sel++;
@@ -293,40 +312,51 @@ void ctrlMenu() {
     ctrlStates();
   } else {
     if (tab_entries[tab_sel].moveable) {
-      if ((released_buttons & (SCE_CTRL_ENTER | SCE_CTRL_LEFT | SCE_CTRL_RIGHT))) {
-        MenuEntry *menu_entries = tab_entries[tab_sel].entries;
-        if (menu_entries) {
-          if (menu_entries[menu_sel].type == MENU_ENTRY_TYPE_CALLBACK) {
-            if (released_buttons & SCE_CTRL_ENTER) {
-              if (menu_entries[menu_sel].callback)
-                menu_entries[menu_sel].callback();
-            }
-          } else if (menu_entries[menu_sel].type == MENU_ENTRY_TYPE_OPTION) {
-            if (released_buttons & (SCE_CTRL_ENTER | SCE_CTRL_RIGHT)) {
-              if ((*menu_entries[menu_sel].value) < menu_entries[menu_sel].n_options-1)
-                (*menu_entries[menu_sel].value)++;
-              else
-                (*menu_entries[menu_sel].value) = 0;
-            }
-
-            if (released_buttons & SCE_CTRL_LEFT) {
-              if ((*menu_entries[menu_sel].value) > 0)
-                (*menu_entries[menu_sel].value)--;
-              else
-                (*menu_entries[menu_sel].value) = menu_entries[menu_sel].n_options-1;
-            }
-
-            changed = 1;
+      MenuEntry *menu_entries = tab_entries[tab_sel].entries;
+      if (menu_entries) {
+        if (menu_entries[menu_sel].type == MENU_ENTRY_TYPE_CALLBACK) {
+          if (released_pad[PAD_ENTER]) {
+            if (menu_entries[menu_sel].callback)
+              menu_entries[menu_sel].callback();
           }
+        } else if (menu_entries[menu_sel].type == MENU_ENTRY_TYPE_OPTION) {
+          if (released_pad[PAD_RIGHT] || released_pad[PAD_LEFT_ANALOG_RIGHT] || released_pad[PAD_ENTER]) {
+            if ((*menu_entries[menu_sel].value) < menu_entries[menu_sel].n_options-1)
+              (*menu_entries[menu_sel].value)++;
+            else
+              (*menu_entries[menu_sel].value) = 0;
+          }
+
+          if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT]) {
+            if ((*menu_entries[menu_sel].value) > 0)
+              (*menu_entries[menu_sel].value)--;
+            else
+              (*menu_entries[menu_sel].value) = menu_entries[menu_sel].n_options-1;
+          }
+
+          changed = 1;
+        } else if (menu_entries[menu_sel].type == MENU_ENTRY_TYPE_SCALE) {
+          if (hold2_pad[PAD_RIGHT] || hold2_pad[PAD_LEFT_ANALOG_RIGHT] || hold2_pad[PAD_ENTER]) {
+            float *a = (float *)menu_entries[menu_sel].value;
+            (*a) += 0.005f;
+          }
+
+          if (hold2_pad[PAD_LEFT] || hold2_pad[PAD_LEFT_ANALOG_LEFT]) {
+            float *a = (float *)menu_entries[menu_sel].value;
+            if (*a > 0.005f)
+              (*a) -= 0.005f;
+          }
+
+          changed = 1;
         }
       }
 
-      if (hold_buttons & SCE_CTRL_UP) {
+      if (hold_pad[PAD_UP] || hold_pad[PAD_LEFT_ANALOG_UP]) {
         if (menu_sel > 0)
           menu_sel--;
       }
 
-      if (hold_buttons & SCE_CTRL_DOWN) {
+      if (hold_pad[PAD_DOWN] || hold_pad[PAD_LEFT_ANALOG_DOWN]) {
         if (menu_sel < tab_entries[tab_sel].n_entries-1)
           menu_sel++;
       }
@@ -334,64 +364,14 @@ void ctrlMenu() {
   }
 }
 
-void getPspScreenSize(float *scale) {
-  switch (config.screen_size) {
-    case SCREEN_SIZE_1_75:
-      *scale = 1.75f;
-      break;
-
-    case SCREEN_SIZE_1_50:
-      *scale = 1.5f;
-      break;
-
-    case SCREEN_SIZE_1_25:
-      *scale = 1.25f;
-      break;
-
-    case SCREEN_SIZE_1_00:
-      *scale = 1.0f;
-      break;
-
-    case SCREEN_SIZE_2_00:
-    default:
-      *scale = 2.0f;
-      break;
-  }
+void getPspScreenSize(float *scale_x, float *scale_y) {
+  *scale_x = config.psp_screen_scale_x;
+  *scale_y = config.psp_screen_scale_y;
 }
 
 void getPopsScreenSize(float *scale_x, float *scale_y) {
-  switch (config.screen_mode) {
-    case SCREEN_MODE_NORMAL:
-      *scale_x = 1.0625f;
-      *scale_y = 1.0625f;
-      break;
-
-    case SCREEN_MODE_ZOOM:
-      *scale_x = 1.5f;
-      *scale_y = 1.5f;
-      break;
-
-    case SCREEN_MODE_FULL:
-      *scale_x = 1.5f;
-      *scale_y = 1.0625f;
-      break;
-
-    case SCREEN_MODE_ORIGINAL:
-    default:
-      *scale_x = 1.0f;
-      *scale_y = 1.0f;
-      break;
-  }
-
-  // PSTV scale fix
-  if (sceKernelIsPSVitaTV()) {
-    if (config.screen_mode == SCREEN_MODE_NORMAL) {
-      (*scale_y) = 1.0f;
-      (*scale_x) = 1.0f / 0.845f;
-    } else {
-      (*scale_y) *= 0.845f;
-    }
-  }
+  *scale_x = config.ps1_screen_scale_x;
+  *scale_y = config.ps1_screen_scale_y;
 }
 
 void *pops_data = NULL;
@@ -401,11 +381,6 @@ int AdrenalineDraw(SceSize args, void *argp) {
   sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_ENTER_BUTTON, &enter_button);
   sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_DATE_FORMAT, &date_format);
   sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_TIME_FORMAT, &time_format);
-
-  if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE) {
-    SCE_CTRL_ENTER = SCE_CTRL_CIRCLE;
-    SCE_CTRL_CANCEL = SCE_CTRL_CROSS;
-  }
 
   vita2d_init();
   font = vita2d_load_default_pgf();
@@ -550,10 +525,11 @@ int AdrenalineDraw(SceSize args, void *argp) {
       sceDmacMemcpy(psp_data, (void *)SCE_PSPEMU_FRAMEBUFFER, SCE_PSPEMU_FRAMEBUFFER_SIZE);
 
       // Draw psp screen
-      float scale = 2.00f;
+      float scale_x = 2.00f;
+      float scale_y = 2.00f;
       if (config.graphics_filtering != 0)
-        getPspScreenSize(&scale);
-      vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, scale, scale, 0.0, 240.0, 136.0);
+        getPspScreenSize(&scale_x, &scale_y);
+      vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, scale_x, scale_y, 0.0, 240.0, 136.0);
     } else {
       // Draw pops screen
       float scale_x = 1.0f;
@@ -575,7 +551,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
       // Updating our rectangle alpha value depending on daytime
       SceDateTime time;
       sceRtcGetCurrentClockLocalTime(&time);
-      if (time.hour < 6)        // Night/Early Morning
+      if (time.hour < 6)       // Night/Early Morning
         flux_colors[flux_idx] = 0.25f;
       else if (time.hour < 10) // Morning/Early Day
         flux_colors[flux_idx] = 0.1f;
@@ -583,7 +559,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
         flux_colors[flux_idx] = 0.05f;
       else if (time.hour < 19) // Late day
         flux_colors[flux_idx] = 0.15f;
-      else                       // Evening/Night
+      else                     // Evening/Night
         flux_colors[flux_idx] = 0.2f;
 
       // Setting vertex and fragment program for f.lux

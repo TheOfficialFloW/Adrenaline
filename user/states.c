@@ -321,11 +321,11 @@ void ctrlStates() {
     return;
 
   if (open_options) {
-    if (released_buttons & SCE_CTRL_CANCEL) {
+    if (released_pad[PAD_CANCEL]) {
       open_options = 0;
     }
 
-    if (released_buttons & SCE_CTRL_ENTER) {
+    if (released_pad[PAD_ENTER]) {
       if (option_mode == OPTION_MODE_NEW) {
         switch (option_sel) {
           case 0:
@@ -373,17 +373,17 @@ void ctrlStates() {
       }
     }
 
-    if (hold_buttons & SCE_CTRL_UP) {
+    if (hold_pad[PAD_UP] || hold_pad[PAD_LEFT_ANALOG_UP]) {
       if (option_sel > 0)
         option_sel--;
     }
 
-    if (hold_buttons & SCE_CTRL_DOWN) {
-      if (option_sel < N_OPTION_ENTRIES_EXIST-1)
+    if (hold_pad[PAD_DOWN] || hold_pad[PAD_LEFT_ANALOG_DOWN]) {
+      if (option_sel < n_options-1)
         option_sel++;
     }
   } else {
-    if (hold_buttons & SCE_CTRL_UP) {
+    if (hold_pad[PAD_UP] || hold_pad[PAD_LEFT_ANALOG_UP]) {
       if (rel_pos > 0) {
         rel_pos--;
       } else if (base_pos > 0) {
@@ -391,7 +391,7 @@ void ctrlStates() {
       }
     }
 
-    if (hold_buttons & SCE_CTRL_DOWN) {
+    if (hold_pad[PAD_DOWN] || hold_pad[PAD_LEFT_ANALOG_DOWN]) {
       if (rel_pos < MAX_STATES-1) {
         if (rel_pos < MAX_POSITION-1) {
           rel_pos++;
@@ -401,7 +401,7 @@ void ctrlStates() {
       }
     }
 
-    if (released_buttons & SCE_CTRL_ENTER) {
+    if (released_pad[PAD_ENTER]) {
       open_options = 1;
       option_sel = 0;
 

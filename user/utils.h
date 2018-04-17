@@ -19,8 +19,41 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
-extern uint32_t old_buttons, current_buttons, pressed_buttons, hold_buttons, hold2_buttons, released_buttons;
-extern int SCE_CTRL_ENTER, SCE_CTRL_CANCEL;
+#define ANALOG_CENTER 128
+#define ANALOG_THRESHOLD 64
+#define ANALOG_SENSITIVITY 16
+
+enum PadButtons {
+  PAD_UP,
+  PAD_DOWN,
+  PAD_LEFT,
+  PAD_RIGHT,
+  PAD_LTRIGGER,
+  PAD_RTRIGGER,
+  PAD_TRIANGLE,
+  PAD_CIRCLE,
+  PAD_CROSS,
+  PAD_SQUARE,
+  PAD_START,
+  PAD_SELECT,
+  PAD_PSBUTTON,
+  PAD_ENTER,
+  PAD_CANCEL,
+  PAD_LEFT_ANALOG_UP,
+  PAD_LEFT_ANALOG_DOWN,
+  PAD_LEFT_ANALOG_LEFT,
+  PAD_LEFT_ANALOG_RIGHT,
+  PAD_RIGHT_ANALOG_UP,
+  PAD_RIGHT_ANALOG_DOWN,
+  PAD_RIGHT_ANALOG_LEFT,
+  PAD_RIGHT_ANALOG_RIGHT,
+  PAD_N_BUTTONS
+};
+
+typedef uint8_t Pad[PAD_N_BUTTONS];
+
+extern Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
+extern Pad hold_count, hold2_count;
 
 void _init_vita_newlib(void);
 
