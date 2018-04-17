@@ -385,7 +385,12 @@ void getPopsScreenSize(float *scale_x, float *scale_y) {
 
   // PSTV scale fix
   if (sceKernelIsPSVitaTV()) {
-    (*scale_y) *= 0.845f;
+    if (config.screen_mode == SCREEN_MODE_NORMAL) {
+      (*scale_y) = 1.0f;
+      (*scale_x) = 1.0f / 0.845f;
+    } else {
+      (*scale_y) *= 0.845f;
+    }
   }
 }
 
