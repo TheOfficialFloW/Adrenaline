@@ -168,7 +168,7 @@ static int EnterAdrenalineMenu() {
   menu_open = 1;
   open_official_settings = 0;
 
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
   if (adrenaline->pops_mode)
     ScePspemuPausePops(1);
 
@@ -182,7 +182,7 @@ int ExitAdrenalineMenu() {
     WriteFile("ux0:app/" ADRENALINE_TITLEID "/adrenaline.bin", &config, sizeof(AdrenalineConfig));
   }
 
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
   if (adrenaline->pops_mode)
     ScePspemuPausePops(0);
 
@@ -482,14 +482,14 @@ int AdrenalineDraw(SceSize args, void *argp) {
   if (settings_semaid < 0)
     return settings_semaid;
 
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, SCE_COMPAT_CACHE_NONE, ADRENALINE_SIZE);
-
   // FPS counting
   SceUInt64 cur_micros = 0, delta_micros = 0, last_micros = 0;
   uint32_t frames = 0;
   float fps = 0.0f;
 
   while (1) {
+    SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+
     // Draw savestate screen
     if (adrenaline->savestate_mode != SAVESTATE_MODE_NONE) {
       vita2d_start_drawing();
