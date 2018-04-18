@@ -135,3 +135,7 @@ offical settings, then apply the custom screen mode. On the other hand, if you w
 - Fixed sound issue in 'MotorStorm' and some other games.
 - Fixed bug where 'ms0:/MUSIC' and 'ms0:/PICTURE' were not found in XMB.
 - Fixed bug where changing options in the official settings menu didn't have any effect.
+
+# Dependencies
+- [vita2dlib-fbo](https://github.com/frangarcj/libvita2d/tree/fbo)
+- [vita-shader-collection](https://github.com/frangarcj/vita-shader-collection)
