@@ -92,6 +92,9 @@ SceUID startUsb(const char *usbDevicePath, const char *imgFilePath, int type) {
   if (res < 0)
     goto ERROR_USBSTOR_VSTOR;
 
+  // Lock power
+  lockPower();
+
   return modid;
 
 ERROR_USBSTOR_VSTOR:
@@ -107,6 +110,10 @@ ERROR_LOAD_MODULE:
 int stopUsb(SceUID modid) {
   int res;
 
+  // Invalid module id
+  if (modid < 0)
+    return 0;
+
   // Stop USB storage
   res = sceUsbstorVStorStop();
   if (res < 0)
@@ -121,6 +128,9 @@ int stopUsb(SceUID modid) {
   res = taiStopUnloadKernelModule(modid, 0, NULL, 0, NULL, NULL);
   if (res < 0)
     return res;
+
+  // Unlock power
+  unlockPower();
 
   // Remount Memory Card
   remount(0x800);
