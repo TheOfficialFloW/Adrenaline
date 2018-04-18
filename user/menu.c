@@ -281,8 +281,6 @@ void drawMenu() {
 }
 
 void ctrlMenu() {
-  readPad();
-
   if (released_pad[PAD_PSBUTTON]) {
     ExitAdrenalineMenu();
   }
@@ -364,12 +362,12 @@ void ctrlMenu() {
   }
 }
 
-void getPspScreenSize(float *scale_x, float *scale_y) {
+void getPspScreenScale(float *scale_x, float *scale_y) {
   *scale_x = config.psp_screen_scale_x;
   *scale_y = config.psp_screen_scale_y;
 }
 
-void getPopsScreenSize(float *scale_x, float *scale_y) {
+void getPopsScreenScale(float *scale_x, float *scale_y) {
   *scale_x = config.ps1_screen_scale_x;
   *scale_y = config.ps1_screen_scale_y;
 }
@@ -484,6 +482,40 @@ int AdrenalineDraw(SceSize args, void *argp) {
       continue;
     }
 
+    // Read pad
+    readPad();
+
+    // Double click detection
+    if (menu_open == 0) {
+      if (doubleClick(SCE_CTRL_PSBUTTON, 300 * 1000)) {
+        stopUsb(usbdevice_modid);
+
+        if (sceAppMgrLaunchAppByName2(ADRENALINE_TITLEID, NULL, NULL) < 0)
+          ScePspemuErrorExit(0);
+      }
+    }
+
+    // Fast forward in pops
+    if (adrenaline->pops_mode) {
+      // FSM for button combination
+      static int combo_state = 0;
+      if (current_pad[PAD_LTRIGGER] && current_pad[PAD_SELECT]) {
+        combo_state = 1;
+      } else {
+        if (combo_state == 1)
+          combo_state = 2;
+        else
+          combo_state = 0;
+      }
+
+      if (combo_state == 2) {
+        uint8_t *val = (uint8_t *)ScePspemuConvertAddress(0xABCD00A9, 0, 1);
+        *val = !(*val);
+        ScePspemuWritebackCache(val, 1);
+        combo_state = 0;
+      }
+    }
+
     // Do not draw if dialog is running
     if (sceCommonDialogIsRunning() || (config.graphics_filtering == 0 && menu_open == 0)) {
       sceDisplayWaitVblankStart();
@@ -527,15 +559,13 @@ int AdrenalineDraw(SceSize args, void *argp) {
       // Draw psp screen
       float scale_x = 2.00f;
       float scale_y = 2.00f;
-      if (config.graphics_filtering != 0)
-        getPspScreenSize(&scale_x, &scale_y);
+      getPspScreenScale(&scale_x, &scale_y);
       vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, scale_x, scale_y, 0.0, 240.0, 136.0);
     } else {
       // Draw pops screen
       float scale_x = 1.0f;
       float scale_y = 1.0f;
-      if (config.graphics_filtering != 0)
-        getPopsScreenSize(&scale_x, &scale_y);
+      getPopsScreenScale(&scale_x, &scale_y);
       vita2d_draw_texture_scale_rotate_hotspot(pops_tex, 480.0f, 272.0f, scale_x, scale_y, 0.0, 480.0, 272.0);
     }
 
@@ -544,8 +574,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
       drawMenu();
 
     // f.lux filter drawing
-    if (config.flux_mode != 0){
-
+    if (config.flux_mode != 0) {
       uint8_t flux_idx = (config.flux_mode * 4) - 1;
 
       // Updating our rectangle alpha value depending on daytime
@@ -578,7 +607,6 @@ int AdrenalineDraw(SceSize args, void *argp) {
       // Performing f.lux filter draw
       sceGxmSetVertexStream(_vita2d_context, 0, flux_vertices);
       sceGxmDraw(_vita2d_context, SCE_GXM_PRIMITIVE_TRIANGLE_FAN, SCE_GXM_INDEX_FORMAT_U16, flux_indices, 4);
-
     }
 
     // Show FPS
@@ -589,7 +617,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
     if (cur_micros >= (last_micros + 1000000)) {
       delta_micros = cur_micros - last_micros;
       last_micros = cur_micros;
-      fps = (frames/(double)delta_micros)*1000000.0f;
+      fps = (frames / (double)delta_micros) * 1000000.0f;
       frames = 0;
     }
 

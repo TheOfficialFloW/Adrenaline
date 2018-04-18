@@ -314,7 +314,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
     } else if (request->cmd == ADRENALINE_VITA_CMD_PAUSE_POPS) {
       ScePspemuPausePops(1);
       sceDisplayWaitVblankStart();
-       sceDisplayWaitVblankStart();
+      sceDisplayWaitVblankStart();
       SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
       adrenaline->draw_psp_screen_in_pops = 1;
       ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
@@ -323,7 +323,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
       if (!menu_open)
         ScePspemuPausePops(0);
       sceDisplayWaitVblankStart();
-       sceDisplayWaitVblankStart();
+      sceDisplayWaitVblankStart();
       SetPspemuFrameBuffer((void *)SCE_PSPEMU_FRAMEBUFFER);
       adrenaline->draw_psp_screen_in_pops = 0;
       ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
@@ -337,24 +337,6 @@ int AdrenalineCompat(SceSize args, void *argp) {
     }
 
     ScePspemuKermitSendResponse(KERMIT_MODE_EXTRA_2, request, (uint64_t)res);
-  }
-
-  return sceKernelExitDeleteThread(0);
-}
-
-static int AdrenalineExit(SceSize args, void *argp) {
-  while (1) {
-    // Double click detection
-    if (menu_open == 0) {
-      if (doubleClick(SCE_CTRL_PSBUTTON, 300 * 1000)) {
-        stopUsb(usbdevice_modid);
-
-        if (sceAppMgrLaunchAppByName2(ADRENALINE_TITLEID, NULL, NULL) < 0)
-          ScePspemuErrorExit(0);
-      }
-    }
-
-    sceDisplayWaitVblankStart();
   }
 
   return sceKernelExitDeleteThread(0);
@@ -467,14 +449,9 @@ static int sceCompatWaitSpecialRequestPatched(int mode) {
   // Init Adrenaline
   InitAdrenaline();
 
-  // Create and start AdrenalineExit thread
-  SceUID thid = sceKernelCreateThread("AdrenalineExit", AdrenalineExit, 0x10000100, 0x1000, 0, 0, NULL);
-  if (thid >= 0)
-    sceKernelStartThread(thid, 0, NULL);
-
   // Clear 0x8A000000 memory
   sceDmacMemset((void *)0x63000000, 0, 16 * 1024 * 1024);
-  sceCompatCache(2, (void *)0x63000000, 16 * 1024 * 1024);
+  sceCompatCache(SCE_COMPAT_CACHE_WRITEBACK, (void *)0x63000000, 16 * 1024 * 1024);
 
   return TAI_CONTINUE(int, sceCompatWaitSpecialRequestRef, mode);
 }

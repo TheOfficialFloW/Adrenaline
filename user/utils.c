@@ -94,7 +94,6 @@ int WriteFile(char *file, void *buf, int size) {
 extern int enter_button;
 void readPad() {
   SceCtrlData pad;
-  memset(&pad, 0, sizeof(SceCtrlData));
   sceCtrlPeekBufferPositive(0, &pad, 1);
 
   SceCtrlData home;
@@ -230,7 +229,7 @@ int doubleClick(uint32_t buttons, uint64_t max_time) {
 
   if (released_buttons & buttons) {
     if (clicked) {
-      if ((sceKernelGetProcessTimeWide()-last_time) < max_time) {
+      if ((sceKernelGetProcessTimeWide() - last_time) < max_time) {
         double_clicked = 1;
         clicked = 0;
         last_time = 0;
