@@ -20,6 +20,7 @@
 #include <psp2/mtpif.h>
 #include <psp2/udcd.h>
 #include <psp2/usbstorvstor.h>
+#include <psp2/io/dirent.h>
 
 #include <taihen.h>
 
@@ -46,6 +47,15 @@ void remount(int id) {
   vshIoUmount(id, 0, 0, 0);
   vshIoUmount(id, 1, 0, 0);
   vshIoMount(id, NULL, 0, 0, 0, 0);
+}
+
+int checkFolderExist(const char *folder) {
+  SceUID dfd = sceIoDopen(folder);
+  if (dfd < 0)
+    return 0;
+
+  sceIoDclose(dfd);
+  return 1;
 }
 
 SceUID startUsb(const char *usbDevicePath, const char *imgFilePath, int type) {
@@ -82,9 +92,6 @@ SceUID startUsb(const char *usbDevicePath, const char *imgFilePath, int type) {
   if (res < 0)
     goto ERROR_USBSTOR_VSTOR;
 
-  // Lock power
-  lockPower();
-
   return modid;
 
 ERROR_USBSTOR_VSTOR:
@@ -99,9 +106,6 @@ ERROR_LOAD_MODULE:
 
 int stopUsb(SceUID modid) {
   int res;
-
-  if (modid < 0)
-    return 0;
 
   // Stop USB storage
   res = sceUsbstorVStorStop();
@@ -118,11 +122,20 @@ int stopUsb(SceUID modid) {
   if (res < 0)
     return res;
 
-  // Unlock power
-  unlockPower();
-
-  // Remount
+  // Remount Memory Card
   remount(0x800);
+
+  // Remount imc0:
+  if (checkFolderExist("imc0:"))
+    remount(0xD00);
+
+  // Remount xmc0:
+  if (checkFolderExist("xmc0:"))
+    remount(0xE00);
+
+  // Remount uma0:
+  if (checkFolderExist("uma0:"))
+    remount(0xF00);
 
   return 0;
 }
