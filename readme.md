@@ -43,6 +43,7 @@ Changelog
 ---------
 
 ### Changelog v6.3
+- Added support for 3.68.
 - Added ability to freely adjust the screen size to your desire in both psp and ps1 modes.
 - Removed 'Screen Mode' and 'Screen Size' from menu.
 - Improved Adrenaline Menu.
