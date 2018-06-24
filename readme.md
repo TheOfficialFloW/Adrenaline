@@ -3,11 +3,6 @@
 
 A software that transforms your PS Vita into a two-in-one device
 
-Donation
---------
-If you wish to donate me some money, I'd really appreciate. But just don't write thanks for PSP piracy xD
-[Donation link](http://goo.gl/uAIPIY)
-
 What is Adrenaline?
 -------------------
 Adrenaline is a software that modifies the official PSP Emulator using [taiHEN CFW framework](https://github.com/yifanlu/taiHEN)
