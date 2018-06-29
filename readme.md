@@ -15,17 +15,18 @@ How to install
 2. Launch Adrenaline and press X to download the 6.61 firmware. After finishing it will automatically terminate.
 3. Relaunch Adrenaline, this time it will go into pspemu mode. Follow the instructions on screen.
 
-**Note #1:** Adrenaline has been redesigned in `6.61 Adrenaline-6`, so you'd need to launch Adrenaline twice everytime you reboot your device. To get rid of that, simply write this line to `*KERNEL`
+Getting rid of double launch bug
+--------------------------------
+Adrenaline has been redesigned in `6.61 Adrenaline-6`, so you'd need to launch Adrenaline twice everytime you reboot your device. To get rid of that, simply write this line to `*KERNEL`
 
 ```text
 *KERNEL
 ux0:app/PSPEMUCFW/sce_module/adrenaline_kernel.skprx
 ```
 
-**Note #2:** If you have been using a previous Adrenaline, please uninstall it before using `6.61 Adrenaline-6` or higher. Just remove the directory `ux0:adrenaline` to avoid interference.
-
 Network update
 --------------
+**CURRENTLY NOT WORKING**
 For 6.61 Adrenaline-4 or higher, you can use the 'System Update' in the XMB to update Adrenaline to the latest version.
 1. Choose 'System Update' in XMB, then click 'Update via Internet'.
 2. If a connection name does already exist, skip to 5).
@@ -36,6 +37,10 @@ For 6.61 Adrenaline-4 or higher, you can use the 'System Update' in the XMB to u
 
 Changelog
 ---------
+
+### Changelog v6.4
+- Added ability to fast forward in PS1 games by pressing L+SELECT.
+- Fixed double launch bug when using without enso. You need to add the kernel module to config to do so.
 
 ### Changelog v6.3
 - Added support for 3.68.
