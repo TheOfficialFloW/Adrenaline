@@ -1,6 +1,6 @@
 /*
   Adrenaline
-  Copyright (C) 2016-2017, TheFloW
+  Copyright (C) 2016-2018, TheFloW
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 
 #include "../adrenaline_compat.h"
 
-int ksceKernelGetProcessInfo(SceUID pid, void *info);
+int module_get_export_func(SceUID pid, const char *modname, uint32_t libnid, uint32_t funcnid, uintptr_t *func);
 
 static tai_hook_ref_t ksceKernelAllocMemBlockRef;
 static tai_hook_ref_t ksceKernelFreeMemBlockRef;
@@ -113,27 +113,6 @@ static int sm_stuff_patched() {
 static int ksceSblAimgrIsDEXPatched() {
   TAI_CONTINUE(int, ksceSblAimgrIsDEXRef);
   return 1;
-}
-
-static int getShellPid() {
-  uint32_t info[0xE8/4];
-  memset(info, 0, sizeof(info));
-  info[0] = sizeof(info);
-
-  SceUID current_pid = 0, parent_pid = 0;
-
-  do {
-    current_pid = parent_pid;
-    if (ksceKernelGetProcessInfo(current_pid, info) < 0)
-      return -1;
-
-    parent_pid = info[5];
-
-    if (parent_pid == -1)
-      return -1;
-  } while (parent_pid != KERNEL_PID);
-
-  return current_pid;
 }
 
 static int ksceKernelStartPreloadedModulesPatched(SceUID pid) {
@@ -217,7 +196,52 @@ int module_start(SceSize args, void *argp) {
   n_hooks++;
 
   // Load plugin for SceShell
-  ksceKernelLoadStartModuleForPid(getShellPid(), "ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_vsh.suprx", 0, NULL, 0, NULL, NULL);
+  int (* _sceAppMgrGetIdByName)(SceUID *pid, const char *name) = NULL;
+  int (* _ksceKernelGetModuleInfo)(SceUID pid, SceUID modid, SceKernelModuleInfo *info) = NULL;
+
+  res = module_get_export_func(KERNEL_PID, "SceKernelModulemgr", 0xC445FA63, 0xD269F915, (uintptr_t *)&_ksceKernelGetModuleInfo);
+  if (res < 0)
+    res = module_get_export_func(KERNEL_PID, "SceKernelModulemgr", 0x92C9FFC2, 0xDAA90093, (uintptr_t *)&_ksceKernelGetModuleInfo);
+  if (res < 0)
+    return res;
+
+  tai_info.size = sizeof(tai_module_info_t);
+  res = taiGetModuleInfoForKernel(KERNEL_PID, "SceAppMgr", &tai_info);
+  if (res < 0)
+    return res;
+
+  // Module info
+  SceKernelModuleInfo mod_info;
+  mod_info.size = sizeof(SceKernelModuleInfo);
+  res = _ksceKernelGetModuleInfo(KERNEL_PID, tai_info.modid, &mod_info);
+  if (res < 0)
+    return res;
+
+  // Addresses
+  uint32_t text_addr = (uint32_t)mod_info.segments[0].vaddr;
+
+  switch (tai_info.module_nid) {
+    case 0xDBB29DB7: // 3.60 retail
+      _sceAppMgrGetIdByName = (void *)(text_addr + 0x32325);
+      break;
+
+    case 0x1C9879D6: // 3.65 retail
+      _sceAppMgrGetIdByName = (void *)(text_addr + 0x3230D);
+      break;
+
+    case 0x54E2E984: // 3.67 retail
+    case 0xC3C538DE: // 3.68 retail
+      _sceAppMgrGetIdByName = (void *)(text_addr + 0x3231D);
+      break;
+  }
+
+  if (!_sceAppMgrGetIdByName)
+    return SCE_KERNEL_START_FAILED;
+
+  SceUID shell_pid = -1;
+  _sceAppMgrGetIdByName(&shell_pid, "NPXS19999");
+  if (shell_pid != -1)
+    ksceKernelLoadStartModuleForPid(shell_pid, "ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_vsh.suprx", 0, NULL, 0, NULL, NULL);
 
   return SCE_KERNEL_START_SUCCESS;
 }
