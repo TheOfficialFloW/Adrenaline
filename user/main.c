@@ -59,7 +59,7 @@ int _newlib_heap_size_user = 8 * 1024 * 1024;
 
 int (* ScePspemuDivide)(uint64_t x, uint64_t y);
 int (* ScePspemuErrorExit)(int error);
-int (* ScePspemuConvertAddress)(uint32_t addr, int invalidate, uint32_t cache_size);
+int (* ScePspemuConvertAddress)(uint32_t addr, int mode, uint32_t cache_size);
 int (* ScePspemuWritebackCache)(void *addr, int size);
 int (* ScePspemuKermitWaitAndGetRequest)(int mode, SceKermitRequest **request);
 int (* ScePspemuKermitSendResponse)(int mode, SceKermitRequest *request, uint64_t response);
@@ -131,7 +131,7 @@ void GetFunctions() {
 }
 
 void SendAdrenalineRequest(int cmd) {
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 0, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_OUTPUT_MODE, ADRENALINE_SIZE);
   adrenaline->psp_cmd = cmd;
   ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 
@@ -142,7 +142,7 @@ void SendAdrenalineRequest(int cmd) {
 #define SAVESTATE_TEMP_SIZE (32 * 1024 * 1024)
 
 int SaveState(SceAdrenaline *adrenaline, void *savestate_data) {
-  void *ram = (void *)ScePspemuConvertAddress(0x88000000, 1, PSP_RAM_SIZE);
+  void *ram = (void *)ScePspemuConvertAddress(0x88000000, KERMIT_INPUT_MODE, PSP_RAM_SIZE);
 
   char path[128];
   makeSaveStatePath(path, adrenaline->num);
@@ -192,7 +192,7 @@ int SaveState(SceAdrenaline *adrenaline, void *savestate_data) {
 }
 
 int LoadState(SceAdrenaline *adrenaline, void *savestate_data) {
-  void *ram = (void *)ScePspemuConvertAddress(0x88000000, 0, PSP_RAM_SIZE);
+  void *ram = (void *)ScePspemuConvertAddress(0x88000000, KERMIT_OUTPUT_MODE, PSP_RAM_SIZE);
 
   char path[128];
   makeSaveStatePath(path, adrenaline->num);
@@ -252,7 +252,7 @@ int AdrenalineCompat(SceSize args, void *argp) {
     SceKermitRequest *request;
     ScePspemuKermitWaitAndGetRequest(KERMIT_MODE_EXTRA_2, &request);
 
-    SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+    SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE | KERMIT_OUTPUT_MODE, ADRENALINE_SIZE);
 
     int res = -1;
 
@@ -426,11 +426,11 @@ static int sceCompatWriteSharedCtrlPatched(SceCtrlDataPsp *pad_data) {
 static int sceCompatWaitSpecialRequestPatched(int mode) {
   ScePspemuBuildFlash0();
 
-  uint32_t *m = (uint32_t *)ScePspemuConvertAddress(0x88FC0000, 0, size_payloadex);
+  uint32_t *m = (uint32_t *)ScePspemuConvertAddress(0x88FC0000, KERMIT_OUTPUT_MODE, size_payloadex);
   memcpy(m, payloadex, size_payloadex);
   ScePspemuWritebackCache(m, size_payloadex);
 
-  void *n = (void *)ScePspemuConvertAddress(0x88FB0000, 0, 0x100);
+  void *n = (void *)ScePspemuConvertAddress(0x88FB0000, KERMIT_OUTPUT_MODE, 0x100);
   memset(n, 0, 0x100);
 
   SceCtrlData pad;

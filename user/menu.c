@@ -170,7 +170,7 @@ static int EnterAdrenalineMenu() {
   menu_open = 1;
   open_official_settings = 0;
 
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
   if (adrenaline->pops_mode)
     ScePspemuPausePops(1);
 
@@ -184,7 +184,7 @@ int ExitAdrenalineMenu() {
     WriteFile("ux0:app/" ADRENALINE_TITLEID "/adrenaline.bin", &config, sizeof(AdrenalineConfig));
   }
 
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
   if (adrenaline->pops_mode)
     ScePspemuPausePops(0);
 
@@ -461,7 +461,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
   float fps = 0.0f;
 
   while (1) {
-    SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+    SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
 
     // Draw savestate screen
     if (adrenaline->savestate_mode != SAVESTATE_MODE_NONE) {
@@ -509,7 +509,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
       }
 
       if (combo_state == 2) {
-        uint8_t *val = (uint8_t *)ScePspemuConvertAddress(0xABCD00A9, 0, 1);
+        uint8_t *val = (uint8_t *)ScePspemuConvertAddress(0xABCD00A9, KERMIT_OUTPUT_MODE, 1);
         *val = !(*val);
         ScePspemuWritebackCache(val, 1);
         combo_state = 0;

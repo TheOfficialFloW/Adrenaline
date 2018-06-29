@@ -95,6 +95,11 @@ enum KermitVirtualInterrupts {
 	KERMIT_VIRTUAL_INTR_USBPSPCM_CH1,
 };
 
+enum KermitArgumentModes {
+  KERMIT_INPUT_MODE = 0x1,
+  KERMIT_OUTPUT_MODE = 0x2,
+}
+
 typedef struct {
 	uint32_t cmd; //0x0
 	SceUID sema_id; //0x4

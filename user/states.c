@@ -87,7 +87,7 @@ int saveFrameBuffer(SceUID fd) {
 
   int i = 0;
 
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
 
   if (adrenaline->pops_mode) {
     int y;
@@ -134,7 +134,7 @@ void saveState(int num) {
     sceIoClose(fd);
   }
 
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 0, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_OUTPUT_MODE, ADRENALINE_SIZE);
   adrenaline->num = num;
   ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 
@@ -143,7 +143,7 @@ void saveState(int num) {
 }
 
 void loadState(int num) {
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 0, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_OUTPUT_MODE, ADRENALINE_SIZE);
   adrenaline->num = num;
   ScePspemuWritebackCache(adrenaline, ADRENALINE_SIZE);
 

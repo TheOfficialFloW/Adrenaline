@@ -76,7 +76,7 @@ extern SceUID usbdevice_modid;
 
 extern int (* ScePspemuDivide)(uint64_t x, uint64_t y);
 extern int (* ScePspemuErrorExit)(int error);
-extern int (* ScePspemuConvertAddress)(uint32_t addr, int invalidate, uint32_t cache_size);
+extern int (* ScePspemuConvertAddress)(uint32_t addr, int mode, uint32_t cache_size);
 extern int (* ScePspemuWritebackCache)(void *addr, int size);
 extern int (* ScePspemuKermitWaitAndGetRequest)(int mode, SceKermitRequest **request);
 extern int (* ScePspemuKermitSendResponse)(int mode, SceKermitRequest *request, uint64_t response);

@@ -80,7 +80,7 @@ int sceAudioOutOpenPortPatched(int type, int len, int freq, int mode) {
 }
 
 int sceAudioOutOutputPatched(int port, const void *buf) {
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
 
   if (port == pops_audio_port && !adrenaline->pops_mode) {
     sceDisplayWaitVblankStart();
@@ -91,7 +91,7 @@ int sceAudioOutOutputPatched(int port, const void *buf) {
 }
 
 int ScePspemuDecodePopsAudioPatched(int a1, int a2, int a3, int a4) {
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
 
   if (!adrenaline->pops_mode) {
     return 0;
@@ -108,7 +108,7 @@ int sceCtrlPeekBufferNegative2Patched(int port, SceCtrlData *pad_data, int count
       if (config.use_ds3_ds4 && port == 1) {
         return TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, 0, pad_data, count);
       } else {
-        uint8_t *val = (uint8_t *)ScePspemuConvertAddress(0xABCD00A7, 0, 1);
+        uint8_t *val = (uint8_t *)ScePspemuConvertAddress(0xABCD00A7, KERMIT_OUTPUT_MODE, 1);
         *val = 0;
         ScePspemuWritebackCache(val, 1);
       }
@@ -119,7 +119,7 @@ int sceCtrlPeekBufferNegative2Patched(int port, SceCtrlData *pad_data, int count
 }
 
 char *ScePspemuGetTitleidPatched() {
-  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+  SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
   return adrenaline->titleid;
 }
 
@@ -136,7 +136,7 @@ SceUID sceIoOpenPatched(const char *file, int flags, SceMode mode) {
   if (p) {
     static char new_file[256];
 
-    SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+    SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
 
     if (strcmp(p+1, "__sce_menuinfo") == 0) {
       char *filename = adrenaline->filename;
@@ -167,7 +167,7 @@ int sceIoGetstatPatched(const char *file, SceIoStat *stat) {
   if (p) {
     static char new_file[256];
 
-    SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, 1, ADRENALINE_SIZE);
+    SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
 
     if (strcmp(p+1, "PARAM.SFO") == 0 ||
         strcmp(p+1, "SCEVMC0.VMP") == 0 ||

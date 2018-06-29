@@ -356,7 +356,7 @@ static int ScePspemuMsfsIoctl(SceUID fd, unsigned int cmd, void *indata, int inl
 
   // Directory filter command
   if (cmd == 0x02415050 && indata && inlen == sizeof(uint32_t)) {
-    char *name = (char *)ScePspemuConvertAddress(*(uint32_t *)indata, 1, 0x4000);
+    char *name = (char *)ScePspemuConvertAddress(*(uint32_t *)indata, KERMIT_INPUT_MODE, 0x4000);
     strcpy(descriptor->filter, name);
     return 0;
   }
@@ -513,7 +513,7 @@ static int ScePspemuMsfsDread(SceUID fd, SceIoDirent *dir) {
   dir->d_private = private;
 
   if (dir->d_private) {
-    SceFatMsDirent *ms_dirent = (SceFatMsDirent *)ScePspemuConvertAddress((uint32_t)dir->d_private, 0, sizeof(SceFatMsDirent));
+    SceFatMsDirent *ms_dirent = (SceFatMsDirent *)ScePspemuConvertAddress((uint32_t)dir->d_private, KERMIT_OUTPUT_MODE, sizeof(SceFatMsDirent));
     if (ms_dirent && ms_dirent->size == sizeof(SceFatMsDirent)) {
       snprintf(ms_dirent->longFileName, MAX_PATH_LENGTH, dir->d_name);
       ScePspemuWritebackCache(ms_dirent, sizeof(SceFatMsDirent));
@@ -647,7 +647,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
       case KERMIT_CMD_MSFS_OPEN:
       {
-        char *file = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
+        char *file = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
         int flags = request->args[1];
         SceMode mode = (SceMode)request->args[2];
         res = ScePspemuMsfsOpen(file, flags, mode);
@@ -665,7 +665,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
       {
         SceUID fd = request->args[0];
         SceSize size = request->args[2];
-        void *data = (void *)ScePspemuConvertAddress(request->args[1], 0, size);
+        void *data = (void *)ScePspemuConvertAddress(request->args[1], KERMIT_OUTPUT_MODE, size);
 
         res = ScePspemuMsfsRead(fd, data, size);
         if (res >= 0)
@@ -678,7 +678,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
       {
         SceUID fd = request->args[0];
         SceSize size = request->args[2];
-        void *data = (void *)ScePspemuConvertAddress(request->args[1], 1, size);
+        void *data = (void *)ScePspemuConvertAddress(request->args[1], KERMIT_INPUT_MODE, size);
         res = ScePspemuMsfsWrite(fd, data, size);
         break;
       }
@@ -698,8 +698,8 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
         unsigned int cmd = request->args[1];
         int inlen = request->args[3];
         int outlen = request->args[5];
-        void *indata = (void *)ScePspemuConvertAddress(request->args[2], 1, inlen);
-        void *outdata = (void *)ScePspemuConvertAddress(request->args[4], 0, outlen);
+        void *indata = (void *)ScePspemuConvertAddress(request->args[2], KERMIT_INPUT_MODE, inlen);
+        void *outdata = (void *)ScePspemuConvertAddress(request->args[4], KERMIT_OUTPUT_MODE, outlen);
 
         res = ScePspemuMsfsIoctl(fd, cmd, indata, inlen, outdata, outlen);
         if (res >= 0)
@@ -710,14 +710,14 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
       case KERMIT_CMD_MSFS_REMOVE:
       {
-        char *file = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
+        char *file = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
         res = ScePspemuMsfsRemove(file);
         break;
       }
 
       case KERMIT_CMD_MSFS_MKDIR:
       {
-        char *dir = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
+        char *dir = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
         SceMode mode = (SceMode)request->args[1];
         res = ScePspemuMsfsMkdir(dir, mode);
         break;
@@ -725,14 +725,14 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
       case KERMIT_CMD_MSFS_RMDIR:
       {
-        char *path = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
+        char *path = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
         res = ScePspemuMsfsRmdir(path);
         break;
       }
 
       case KERMIT_CMD_MSFS_DOPEN:
       {
-        char *dirname = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
+        char *dirname = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
         res = ScePspemuMsfsDopen(dirname);
         break;
       }
@@ -747,7 +747,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
       case KERMIT_CMD_MSFS_DREAD:
       {
         SceUID fd = request->args[0];
-        SceIoDirent *dir = (SceIoDirent *)ScePspemuConvertAddress(request->args[1], 1, sizeof(SceIoDirent));
+        SceIoDirent *dir = (SceIoDirent *)ScePspemuConvertAddress(request->args[1], KERMIT_OUTPUT_MODE, sizeof(SceIoDirent));
 
         res = ScePspemuMsfsDread(fd, dir);
         if (res >= 0)
@@ -758,8 +758,8 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
       case KERMIT_CMD_MSFS_GETSTAT:
       {
-        char *file = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
-        SceIoStat *stat = (SceIoStat *)ScePspemuConvertAddress(request->args[1], 1, sizeof(SceIoStat));
+        char *file = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
+        SceIoStat *stat = (SceIoStat *)ScePspemuConvertAddress(request->args[1], KERMIT_OUTPUT_MODE, sizeof(SceIoStat));
 
         res = ScePspemuMsfsGetstat(file, stat);
         if (res >= 0)
@@ -770,8 +770,8 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
       case KERMIT_CMD_MSFS_CHSTAT:
       {
-        char *file = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
-        SceIoStat *stat = (SceIoStat *)ScePspemuConvertAddress(request->args[1], 1, sizeof(SceIoStat));
+        char *file = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
+        SceIoStat *stat = (SceIoStat *)ScePspemuConvertAddress(request->args[1], KERMIT_INPUT_MODE, sizeof(SceIoStat));
         int bits = request->args[2];
         res = ScePspemuMsfsChstat(file, stat, bits);
         break;
@@ -779,27 +779,27 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
 
       case KERMIT_CMD_MSFS_RENAME:
       {
-        char *oldname = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
-        char *newname = (char *)ScePspemuConvertAddress(request->args[1], 1, 0x4000);
+        char *oldname = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
+        char *newname = (char *)ScePspemuConvertAddress(request->args[1], KERMIT_INPUT_MODE, 0x4000);
         res = ScePspemuMsfsRename(oldname, newname);
         break;
       }
 
       case KERMIT_CMD_MSFS_CHDIR:
       {
-        char *path = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
+        char *path = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
         res = ScePspemuMsfsChdir(path);
         break;
       }
 
       case KERMIT_CMD_MSFS_DEVCTL:
       {
-        char *dev = (char *)ScePspemuConvertAddress(request->args[0], 1, 0x4000);
+        char *dev = (char *)ScePspemuConvertAddress(request->args[0], KERMIT_INPUT_MODE, 0x4000);
         unsigned int cmd = request->args[1];
         int inlen = request->args[3];
         int outlen = request->args[5];
-        void *indata = (void *)ScePspemuConvertAddress(request->args[2], 1, inlen);
-        void *outdata = (void *)ScePspemuConvertAddress(request->args[4], 0, outlen);
+        void *indata = (void *)ScePspemuConvertAddress(request->args[2], KERMIT_INPUT_MODE, inlen);
+        void *outdata = (void *)ScePspemuConvertAddress(request->args[4], KERMIT_OUTPUT_MODE, outlen);
 
         res = ScePspemuMsfsDevctl(dev, cmd, indata, inlen, outdata, outlen);
         if (res >= 0)
