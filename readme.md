@@ -15,6 +15,10 @@ How to install
 2. Launch Adrenaline and press X to download the 6.61 firmware. After finishing it will automatically terminate.
 3. Relaunch Adrenaline, this time it will go into pspemu mode. Follow the instructions on screen.
 
+How to update
+-------------
+If you have already been using Adrenaline and want to quickly update, simply open Adrenaline.vpk as zip file and copy all modules from sce_module to ux0:app/PSPEMUCFW/sce_module.
+
 Getting rid of double launch bug
 --------------------------------
 Adrenaline has been redesigned in `6.61 Adrenaline-6`, so you'd need to launch Adrenaline twice everytime you reboot your device. To get rid of that, simply write this line to `*KERNEL`
