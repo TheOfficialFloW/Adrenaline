@@ -747,7 +747,7 @@ int ScePspemuRemoteMsfs(SceSize args, void *argp) {
       case KERMIT_CMD_MSFS_DREAD:
       {
         SceUID fd = request->args[0];
-        SceIoDirent *dir = (SceIoDirent *)ScePspemuConvertAddress(request->args[1], KERMIT_OUTPUT_MODE, sizeof(SceIoDirent));
+        SceIoDirent *dir = (SceIoDirent *)ScePspemuConvertAddress(request->args[1], KERMIT_INPUT_MODE | KERMIT_OUTPUT_MODE, sizeof(SceIoDirent));
 
         res = ScePspemuMsfsDread(fd, dir);
         if (res >= 0)
