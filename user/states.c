@@ -232,7 +232,7 @@ int initStates() {
             sceIoRead(fd, &header, sizeof(AdrenalineStateHeader));
 
             // Check header info
-            if (header.magic == ADRENALINE_SAVESTATE_MAGIC && header.version == ADRENALINE_SAVESTATE_VERSION) {
+            if (header.magic == ADRENALINE_SAVESTATE_MAGIC) { // header.version == ADRENALINE_SAVESTATE_VERSION
               // Set number
               states[num].num = num;
 

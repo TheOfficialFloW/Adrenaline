@@ -42,6 +42,12 @@ For 6.61 Adrenaline-4 or higher, you can use the 'System Update' in the XMB to u
 Changelog
 ---------
 
+### Changelog v6.5
+- Added option to choose USB device.
+- Added xmc0: option.
+- Fixed little bug in msfs.
+- Removed savestate version restriction, old savestates will not disappear anymore.
+
 ### Changelog v6.4
 - Added ability to fast forward in PS1 games by pressing L+SELECT.
 - Fixed double launch bug when using without enso. You need to add the kernel module to config to do so.

@@ -37,7 +37,15 @@ enum MemoryStickLocations {
   MEMORY_STICK_LOCATION_UX0,
   MEMORY_STICK_LOCATION_UR0,
   MEMORY_STICK_LOCATION_IMC0,
+  MEMORY_STICK_LOCATION_XMC0,
   MEMORY_STICK_LOCATION_UMA0,
+};
+
+enum UsbDevices {
+  USBDEVICE_MODE_MEMORY_CARD,
+  USBDEVICE_MODE_INTERNAL_STORAGE,
+  USBDEVICE_MODE_SD2VITA,
+  USBDEVICE_MODE_PSVSD,
 };
 
 enum AdrenalineScreenSizes {
@@ -69,6 +77,7 @@ typedef struct {
   float psp_screen_scale_y;
   float ps1_screen_scale_x;
   float ps1_screen_scale_y;
+  int usbdevice;
 } AdrenalineConfig;
 
 extern AdrenalineConfig config;

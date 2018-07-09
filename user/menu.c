@@ -83,7 +83,8 @@ static char *graphics_options[] = { "Original", "Bilinear", "Sharp bilinear", "A
 static char *flux_mode_options[] = { "None", "Yellow", "Blue", "Black" };
 static char *no_yes_options[] = { "No", "Yes" };
 static char *yes_no_options[] = { "Yes", "No" };
-static char *ms_location_options[] = { "ux0:pspemu", "ur0:pspemu", "imc0:pspemu", "uma0:pspemu" };
+static char *ms_location_options[] = { "ux0:pspemu", "ur0:pspemu", "imc0:pspemu", "xmc0:pspemu", "uma0:pspemu" };
+static char *usbdevice_options[] = { "Memory Card", "Internal Storage", "sd2vita", "psvsd" };
 
 static MenuEntry main_entries[] = {
   { "Enter Standby Mode",        MENU_ENTRY_TYPE_CALLBACK, 0, EnterStandbyMode, NULL, NULL, 0 },
@@ -101,6 +102,7 @@ static MenuEntry settings_entries[] = {
   { "Screen Scale X (PS1)",      MENU_ENTRY_TYPE_SCALE,  0, NULL, &config.ps1_screen_scale_x, NULL, 0 },
   { "Screen Scale Y (PS1)",      MENU_ENTRY_TYPE_SCALE,  0, NULL, &config.ps1_screen_scale_y, NULL, 0 },
   { "Memory Stick Location",     MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.ms_location, ms_location_options, sizeof(ms_location_options) / sizeof(char **) },
+  { "USB device",                MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.usbdevice, usbdevice_options, sizeof(usbdevice_options) / sizeof(char **) },
   { "Use DS3/DS4 controller",    MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.use_ds3_ds4, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
   { "Skip Adrenaline Boot Logo", MENU_ENTRY_TYPE_OPTION, 0, NULL, &config.skip_logo, no_yes_options, sizeof(no_yes_options) / sizeof(char **) },
   { "Reset Adrenaline Settings", MENU_ENTRY_TYPE_CALLBACK, 0, ResetAdrenalineSettings, NULL, NULL, 0 },

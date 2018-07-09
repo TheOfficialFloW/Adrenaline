@@ -319,6 +319,8 @@ char *getPspemuMemoryStickLocation() {
       return "ur0:pspemu";
     case MEMORY_STICK_LOCATION_IMC0:
       return "imc0:pspemu";
+    case MEMORY_STICK_LOCATION_XMC0:
+      return "xmc0:pspemu";
     case MEMORY_STICK_LOCATION_UMA0:
       return "uma0:pspemu";
     default:
