@@ -43,6 +43,7 @@ Changelog
 ---------
 
 ### Changelog v6.5
+- Added updated inferno driver by codestation which improves performance of CSO reading.
 - Added option to choose USB device.
 - Added xmc0: option.
 - Fixed little bug in msfs.
