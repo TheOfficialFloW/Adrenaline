@@ -281,11 +281,11 @@ int AdrenalineCompat(SceSize args, void *argp) {
       if (usbdevice_modid < 0 && !sceKernelIsPSVitaTV()) {
         char *path;
 
-        if (config.ms_location == USBDEVICE_MODE_INTERNAL_STORAGE) {
+        if (config.usbdevice == USBDEVICE_MODE_INTERNAL_STORAGE) {
           path = "sdstor0:int-lp-ign-user";
-        } else if (config.ms_location == USBDEVICE_MODE_SD2VITA) {
+        } else if (config.usbdevice == USBDEVICE_MODE_SD2VITA) {
           path = "sdstor0:gcd-lp-ign-entire";
-        } else if (config.ms_location == USBDEVICE_MODE_PSVSD) {
+        } else if (config.usbdevice == USBDEVICE_MODE_PSVSD) {
           path = "sdstor0:uma-pp-act-a";
         } else {
           path = "sdstor0:xmc-lp-ign-userext";
