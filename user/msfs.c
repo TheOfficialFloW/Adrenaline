@@ -513,7 +513,7 @@ static int ScePspemuMsfsDread(SceUID fd, SceIoDirent *dir) {
   dir->d_private = private;
 
   if (dir->d_private) {
-    SceFatMsDirent *ms_dirent = (SceFatMsDirent *)ScePspemuConvertAddress((uint32_t)dir->d_private, KERMIT_OUTPUT_MODE, sizeof(SceFatMsDirent));
+    SceFatMsDirent *ms_dirent = (SceFatMsDirent *)ScePspemuConvertAddress((uint32_t)dir->d_private, KERMIT_INPUT_MODE | KERMIT_OUTPUT_MODE, sizeof(SceFatMsDirent));
     if (ms_dirent && ms_dirent->size == sizeof(SceFatMsDirent)) {
       snprintf(ms_dirent->longFileName, MAX_PATH_LENGTH, dir->d_name);
       ScePspemuWritebackCache(ms_dirent, sizeof(SceFatMsDirent));
