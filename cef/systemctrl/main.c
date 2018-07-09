@@ -441,7 +441,9 @@ int OnModuleStart(SceModule2 *mod) {
 	} else if (strcmp(modname, "sceSAScore") == 0) {
 		PatchSasCore();
 	} else if (strcmp(modname, "DJMAX") == 0 || strcmp(modname, "djmax") == 0) {
-		MAKE_DUMMY_FUNCTION(sctrlHENFindImport(modname, "IoFileMgrForUser", 0xE3EB004C), 0);
+    u32 func = sctrlHENFindImport(modname, "IoFileMgrForUser", 0xE3EB004C);
+    if (func)
+      MAKE_DUMMY_FUNCTION(func, 0);
 		ClearCaches();
 	} else if (strcmp(modname, "KHBBS_patch") == 0) {
 		MAKE_DUMMY_FUNCTION(mod->entry_addr, 1);
