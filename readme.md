@@ -14,6 +14,7 @@ How to install
 1. Download [Adrenaline.vpk](https://github.com/TheOfficialFloW/Adrenaline/releases) and install it using [VitaShell](https://github.com/TheOfficialFloW/VitaShell/releases).
 2. Launch Adrenaline and press X to download the 6.61 firmware. After finishing it will automatically terminate.
 3. Relaunch Adrenaline, this time it will go into pspemu mode. Follow the instructions on screen.
+4. Note that by installing the vpk, it will erase the PSP firmware files and 661.PBP, thus I recommend you to use the methods described below.
 
 How to update
 -------------
