@@ -281,7 +281,13 @@ int AdrenalineCompat(SceSize args, void *argp) {
       if (usbdevice_modid < 0 && !sceKernelIsPSVitaTV()) {
         char *path;
 
-        if (config.usbdevice == USBDEVICE_MODE_MEMORY_CARD) {
+        if (config.ms_location == USBDEVICE_MODE_INTERNAL_STORAGE) {
+          path = "sdstor0:int-lp-ign-user";
+        } else if (config.ms_location == USBDEVICE_MODE_SD2VITA) {
+          path = "sdstor0:gcd-lp-ign-entire";
+        } else if (config.ms_location == USBDEVICE_MODE_PSVSD) {
+          path = "sdstor0:uma-pp-act-a";
+        } else {
           path = "sdstor0:xmc-lp-ign-userext";
 
           SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
@@ -290,12 +296,6 @@ int AdrenalineCompat(SceSize args, void *argp) {
             path = "sdstor0:int-lp-ign-userext";
           else
             sceIoClose(fd);
-        } else if (config.ms_location == USBDEVICE_MODE_INTERNAL_STORAGE) {
-          path = "sdstor0:int-lp-ign-user";
-        } else if (config.ms_location == USBDEVICE_MODE_SD2VITA) {
-          path = "sdstor0:gcd-lp-ign-entire";
-        } else if (config.ms_location == USBDEVICE_MODE_PSVSD) {
-          path = "sdstor0:uma-pp-act-a";
         }
 
         usbdevice_modid = startUsb("ux0:app/" ADRENALINE_TITLEID "/sce_module/usbdevice.skprx", path, SCE_USBSTOR_VSTOR_TYPE_FAT);

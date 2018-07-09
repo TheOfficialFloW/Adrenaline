@@ -32,7 +32,7 @@
 
 int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
   int res = 0;
-  uint32_t *info;
+  uint32_t *info = NULL;
 
   if (module_nid == 0x2714F07D) { // 3.60 retail
     // Make __sce_menuinfo path
@@ -44,6 +44,8 @@ int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
     snprintf((char *)(data_addr + 0x11C7E0C), 0x80, "ms0:PSP/GAME/%s/__sce_menuinfo", titleid);
 
     info = (uint32_t *)(data_addr + 0x1156550);
+  } else {
+    return -1;
   }
 
   // Video delay

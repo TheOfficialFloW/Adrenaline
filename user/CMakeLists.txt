@@ -75,3 +75,8 @@ add_custom_target(pkg
   COMMAND cp adrenaline_user.suprx ../../bubble/pkg/sce_module/adrenaline_user.suprx
   DEPENDS adrenaline_user.suprx
 )
+
+add_custom_target(updater
+  COMMAND bin2c adrenaline_user.suprx ../../cef/updater/adrenaline_user.h adrenaline_user
+  DEPENDS adrenaline_user.suprx
+)

@@ -18,9 +18,7 @@
 
 #include <common.h>
 
-#include "adrenaline_suprx.h"
-#include "adrenaline_skprx.h"
-#include "usbdevice_skprx.h"
+#include "adrenaline_user.h"
 
 PSP_MODULE_INFO("updater", 0x800, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_VSH);
@@ -36,21 +34,19 @@ typedef struct {
 } File;
 
 File files[] = {
-	{ "ms0:/__ADRENALINE__/adrenaline.suprx", adrenaline_suprx, sizeof(adrenaline_suprx) },
-	{ "ms0:/__ADRENALINE__/adrenaline.skprx", adrenaline_skprx, sizeof(adrenaline_skprx) },
-	{ "ms0:/__ADRENALINE__/usbdevice.skprx", usbdevice_skprx, sizeof(usbdevice_skprx) },
+	{ "ms0:/__ADRENALINE__/sce_module/adrenaline_user.suprx", adrenaline_user, sizeof(adrenaline_user) },
 };
 
 void ErrorExit(int milisecs, char *fmt, ...) {
 	va_list list;
-	char msg[256];	
+	char msg[256];
 
 	va_start(list, fmt);
 	vsprintf(msg, fmt, list);
 	va_end(list);
 
 	printf(msg);
-	
+
 	sceKernelDelayThread(milisecs * 1000);
 	sceKernelExitGame();
 	sceKernelSleepThread();
@@ -70,41 +66,23 @@ int WriteFile(char *file, void *buf, int size) {
 int main(void) {
 	pspDebugScreenInit();
 
-	if (sctrlSEGetVersion() >= 0x00050001) {
+	if (sctrlSEGetVersion() < 0x00060004) {
+		ErrorExit(5000, "This update can only be applied with v6.4 or higher.\n");
+	}
+
+	if (sctrlSEGetVersion() >= 0x00060005) {
 		ErrorExit(5000, "This update or a higher one was already applied.\n");
 	}
 
-	printf("6.61 Adrenaline-5.1 Installer\n");
+	printf("6.61 Adrenaline-6.5 Installer\n");
 	printf("Changes:\n\n");
 
-	if (sctrlSEGetVersion() <= 0x00050000) {
-		printf("- Added ability to skip adrenaline boot logo.\n");
-		printf("- Added message for original filter.\n");
-		printf("- Fixed bug where payloadex was not updated and caused some bugs.\n");
-		printf("- Fixed '20000006' bug on PS TV. Network update will work on PS TV in the future.\n");
-		printf("- Changed CPU clock back to 333 MHz.\n");
-		printf("\n");
-	}
-
-	if (sctrlSEGetVersion() <= 0x00040002) {
-		printf("- Added 'Hide DLC's in game menu' functionality.\n");
-		printf("- Readded 'Original' graphics filtering, since PS1 games have got framedrops using custom filters.\n");
-		printf("- Fixed corrupted icons bug that was introduced in the previous update.\n");
-		printf("- Fixed bug where the framebuffer was corrupted after loading savestate.\n");
-		printf("- Adrenaline icon is now hidden in game menu.\n");
-		printf("\n");
-	}
-
-	if (sctrlSEGetVersion() <= 0x00040001) {
-		printf("- Added support for ISO sorting using 'Game Categories Lite' plugin.\n");
-		printf("- Fixed compatiblity with 'Kingdom Hearts: Birth by Sleep' english patch.\n");
-		printf("\n");
-	}
-
-	if (sctrlSEGetVersion() <= 0x00040000) {
-		printf("- Fixed bug where holding R trigger while launching Adrenaline didn't open the recovery menu.\n");
-		printf("- Fixed msfs truncation bug that caused savedata corruption for Little Big Planet and maybe other games.\n");
-		printf("- Fixed wrong scale of PS1 games on PS TV.\n");
+	if (sctrlSEGetVersion() < 0x00060005) {
+		printf("- Added updated inferno driver by codestation which improves performance of CSO reading.\n");
+		printf("- Added option to choose USB device.\n");
+		printf("- Added xmc0: option.\n");
+		printf("- Fixed little bug in msfs.\n");
+		printf("- Removed savestate version restriction, old savestates will not disappear anymore.\n");
 		printf("\n");
 	}
 
@@ -149,5 +127,5 @@ int main(void) {
 	sceKernelDelayThread(2 * 1000 * 1000);
 	sctrlRebootDevice();
 
-    return 0;
+	return 0;
 }
