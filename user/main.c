@@ -52,8 +52,9 @@
 
 #include "lz4/lz4.h"
 
-#include "files/payloadex.h"
 #include "startdat.h"
+
+INCLUDE_EXTERN_RESOURCE(payloadex_bin);
 
 int _newlib_heap_size_user = 8 * 1024 * 1024;
 
@@ -425,6 +426,9 @@ static int sceCompatWriteSharedCtrlPatched(SceCtrlDataPsp *pad_data) {
 
 static int sceCompatWaitSpecialRequestPatched(int mode) {
   ScePspemuBuildFlash0();
+
+  void *payloadex = (void *)&_binary_flash0_payloadex_bin_start;
+  int size_payloadex = (int)&_binary_flash0_payloadex_bin_size;
 
   uint32_t *m = (uint32_t *)ScePspemuConvertAddress(0x88FC0000, KERMIT_OUTPUT_MODE, size_payloadex);
   memcpy(m, payloadex, size_payloadex);

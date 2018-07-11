@@ -14,7 +14,36 @@ include("${VITASDK}/share/vita.cmake" REQUIRED)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -Wall -O3 -nostartfiles")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions")
 
+# Builds
+FUNCTION(ADD_RESOURCES out_var)
+  SET(result)
+  FOREACH(in_f ${ARGN})
+  SET(out_f "${CMAKE_CURRENT_BINARY_DIR}/${in_f}.o")
+  GET_FILENAME_COMPONENT(out_dir ${out_f} DIRECTORY)
+  ADD_CUSTOM_COMMAND(OUTPUT ${out_f}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${out_dir}
+    COMMAND ${CMAKE_LINKER} -r -b binary -o ${out_f} ${in_f}
+    DEPENDS ${in_f}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Building resource ${out_f}"
+    VERBATIM
+    )
+  LIST(APPEND result ${out_f})
+  ENDFOREACH()
+  SET(${out_var} "${result}" PARENT_SCOPE)
+ENDFUNCTION()
+
+file(GLOB res_files RELATIVE
+  ${CMAKE_SOURCE_DIR}
+  flash0/kd/*.prx
+  flash0/kd/*.bin
+  flash0/vsh/module/*.prx
+  flash0/*.bin
+)
+add_resources(cef_res ${res_files})
+
 add_executable(adrenaline_user
+  ${cef_res}
   main.c
   pops.c
   titleinfo.c

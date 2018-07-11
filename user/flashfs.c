@@ -29,21 +29,23 @@
 
 #include "files.h"
 
-#include "files/galaxy.h"
-#include "files/inferno.h"
-#include "files/kermit_idstorage.h"
-#include "files/libpsardumper.h"
-#include "files/march33.h"
-#include "files/pspbtjnf.h"
-#include "files/pspbtknf.h"
-#include "files/pspbtlnf.h"
-#include "files/pspbtmnf.h"
-#include "files/pspbtrnf.h"
-#include "files/systemctrl.h"
-#include "files/popcorn.h"
-#include "files/vshctrl.h"
-#include "files/recovery.h"
-#include "files/satelite.h"
+#define FLASH0_FILE(path, name) { path, (void *)&_binary_flash0_##name##_start, (int)&_binary_flash0_##name##_size }
+
+INCLUDE_EXTERN_RESOURCE(kd_galaxy_prx);
+INCLUDE_EXTERN_RESOURCE(kd_inferno_prx);
+INCLUDE_EXTERN_RESOURCE(kd_kermit_idstorage_prx);
+INCLUDE_EXTERN_RESOURCE(kd_libpsardumper_prx);
+INCLUDE_EXTERN_RESOURCE(kd_march33_prx);
+INCLUDE_EXTERN_RESOURCE(kd_pspbtjnf_bin);
+INCLUDE_EXTERN_RESOURCE(kd_pspbtknf_bin);
+INCLUDE_EXTERN_RESOURCE(kd_pspbtlnf_bin);
+INCLUDE_EXTERN_RESOURCE(kd_pspbtmnf_bin);
+INCLUDE_EXTERN_RESOURCE(kd_pspbtrnf_bin);
+INCLUDE_EXTERN_RESOURCE(kd_systemctrl_prx);
+INCLUDE_EXTERN_RESOURCE(kd_popcorn_prx);
+INCLUDE_EXTERN_RESOURCE(kd_vshctrl_prx);
+INCLUDE_EXTERN_RESOURCE(vsh_module_recovery_prx);
+INCLUDE_EXTERN_RESOURCE(vsh_module_satelite_prx);
 
 typedef struct {
   char *name;
@@ -52,21 +54,21 @@ typedef struct {
 } ScePspemuFlash0Package;
 
 static ScePspemuFlash0Package custom_package[] = {
-  { "/kd/galaxy.prx", galaxy, sizeof(galaxy) },
-  { "/kd/inferno.prx", inferno, sizeof(inferno) },
-  { "/kd/kermit_idstorage.prx", kermit_idstorage, sizeof(kermit_idstorage) },
-  { "/kd/libpsardumper.prx", libpsardumper, sizeof(libpsardumper) },
-  { "/kd/march33.prx", march33, sizeof(march33) },
-  { "/kd/pspbtjnf.bin", pspbtjnf, sizeof(pspbtjnf) },
-  { "/kd/pspbtknf.bin", pspbtknf, sizeof(pspbtknf) },
-  { "/kd/pspbtlnf.bin", pspbtlnf, sizeof(pspbtlnf) },
-  { "/kd/pspbtmnf.bin", pspbtmnf, sizeof(pspbtmnf) },
-  { "/kd/pspbtrnf.bin", pspbtrnf, sizeof(pspbtrnf) },
-  { "/kd/systemctrl.prx", systemctrl, sizeof(systemctrl) },
-  { "/kd/popcorn.prx", popcorn, sizeof(popcorn) },
-  { "/kd/vshctrl.prx", vshctrl, sizeof(vshctrl) },
-  { "/vsh/module/recovery.prx", recovery, sizeof(recovery) },
-  { "/vsh/module/satelite.prx", satelite, sizeof(satelite) },
+  FLASH0_FILE("/kd/galaxy.prx",           kd_galaxy_prx),
+  FLASH0_FILE("/kd/inferno.prx",          kd_inferno_prx),
+  FLASH0_FILE("/kd/kermit_idstorage.prx", kd_kermit_idstorage_prx),
+  FLASH0_FILE("/kd/libpsardumper.prx",    kd_libpsardumper_prx),
+  FLASH0_FILE("/kd/march33.prx",          kd_march33_prx),
+  FLASH0_FILE("/kd/pspbtjnf.bin",         kd_pspbtjnf_bin),
+  FLASH0_FILE("/kd/pspbtknf.bin",         kd_pspbtknf_bin),
+  FLASH0_FILE("/kd/pspbtlnf.bin",         kd_pspbtlnf_bin),
+  FLASH0_FILE("/kd/pspbtmnf.bin",         kd_pspbtmnf_bin),
+  FLASH0_FILE("/kd/pspbtrnf.bin",         kd_pspbtrnf_bin),
+  FLASH0_FILE("/kd/systemctrl.prx",       kd_systemctrl_prx),
+  FLASH0_FILE("/kd/popcorn.prx",          kd_popcorn_prx),
+  FLASH0_FILE("/kd/vshctrl.prx",          kd_vshctrl_prx),
+  FLASH0_FILE("/vsh/module/recovery.prx", vsh_module_recovery_prx),
+  FLASH0_FILE("/vsh/module/satelite.prx", vsh_module_satelite_prx),
 };
 
 #define SCE_PSPEMU_TEMP_SIZE 1 * 1024 * 1024

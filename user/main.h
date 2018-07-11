@@ -25,6 +25,8 @@
 #include <taihen.h>
 #include "../adrenaline_compat.h"
 
+#define INCLUDE_EXTERN_RESOURCE(name) extern unsigned char _binary_flash0_##name##_start; extern unsigned char _binary_flash0_##name##_size;
+
 #define ALIGN(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
 
 #define MAX_PATH_LENGTH 1024
