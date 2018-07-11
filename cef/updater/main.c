@@ -70,21 +70,17 @@ int main(void) {
 		ErrorExit(5000, "This update can only be applied with v6.4 or higher.\n");
 	}
 
-	if (sctrlSEGetVersion() >= 0x00060005) {
+	if (sctrlSEGetVersion() >= 0x00060006) {
 		ErrorExit(5000, "This update or a higher one was already applied.\n");
 	}
 
-	printf("6.61 Adrenaline-6.5 Installer\n");
+	printf("6.61 Adrenaline-6.6 Installer\n");
 	printf("Changes:\n\n");
 
-	if (sctrlSEGetVersion() < 0x00060005) {
-		printf("- Added updated inferno driver by codestation which improves performance of CSO reading.\n");
-		printf("- Added option to choose USB device.\n");
-		printf("- Added xmc0: option.\n");
-		printf("- Fixed little bug in msfs.\n");
-		printf("- Removed savestate version restriction, old savestates will not disappear anymore.\n");
-		printf("\n");
-	}
+	printf("- Fixed bug from previous update that caused black screen in other DJ max games.\n");
+	printf("- Inferno driver was not included correcty, now it is.\n");
+	printf("- Tekken 6 can now be played with any CPU speed.\n");
+	printf("\n");
 
 	printf("Press X to install, R to exit.\n\n");
 

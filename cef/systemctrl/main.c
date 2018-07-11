@@ -442,9 +442,16 @@ int OnModuleStart(SceModule2 *mod) {
 		PatchSasCore();
 	} else if (strcmp(modname, "DJMAX") == 0 || strcmp(modname, "djmax") == 0) {
 		u32 func = sctrlHENFindImport(modname, "IoFileMgrForUser", 0xE3EB004C);
-		if (func)
+		if (func) {
 			MAKE_DUMMY_FUNCTION(func, 0);
-		ClearCaches();
+      ClearCaches();
+    }
+  } else if (strcmp(modname, "tekken") == 0) {
+		u32 func = sctrlHENFindImport(modname, "scePower", 0x34F9C463);
+		if (func) {
+			MAKE_DUMMY_FUNCTION(func, 222);
+      ClearCaches();
+    }
 	} else if (strcmp(modname, "KHBBS_patch") == 0) {
 		MAKE_DUMMY_FUNCTION(mod->entry_addr, 1);
 		ClearCaches();
