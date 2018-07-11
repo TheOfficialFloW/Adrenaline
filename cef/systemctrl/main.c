@@ -444,14 +444,14 @@ int OnModuleStart(SceModule2 *mod) {
 		u32 func = sctrlHENFindImport(modname, "IoFileMgrForUser", 0xE3EB004C);
 		if (func) {
 			MAKE_DUMMY_FUNCTION(func, 0);
-      ClearCaches();
-    }
-  } else if (strcmp(modname, "tekken") == 0) {
+			ClearCaches();
+		}
+	} else if (strcmp(modname, "tekken") == 0) {
 		u32 func = sctrlHENFindImport(modname, "scePower", 0x34F9C463);
 		if (func) {
 			MAKE_DUMMY_FUNCTION(func, 222);
-      ClearCaches();
-    }
+			ClearCaches();
+		}
 	} else if (strcmp(modname, "KHBBS_patch") == 0) {
 		MAKE_DUMMY_FUNCTION(mod->entry_addr, 1);
 		ClearCaches();
