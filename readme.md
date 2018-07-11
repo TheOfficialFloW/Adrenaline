@@ -42,6 +42,11 @@ For 6.61 Adrenaline-6.4 or higher, you can use the `System Update` in the XMB to
 Changelog
 ---------
 
+### Changelog v6.6
+- Fixed bug from previous update that caused black screen in other DJ max games.
+- Inferno driver was not included correcty, now it is.
+- Tekken 6 can now be played with any CPU speed.
+
 ### Changelog v6.5
 - Added updated inferno driver by codestation which improves performance of CSO reading.
 - Added option to choose USB device.
