@@ -42,6 +42,9 @@ For 6.61 Adrenaline-6.4 or higher, you can use the `System Update` in the XMB to
 Changelog
 ---------
 
+### Changelog v6.7
+- Added support for PS1 multiplayer on PS Vita using an upcoming DS3/DS4 plugin.
+
 ### Changelog v6.6
 - Fixed bug from previous update that caused black screen in other DJ max games.
 - Inferno driver was not included correcty, now it is.

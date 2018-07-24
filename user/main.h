@@ -108,7 +108,6 @@ extern tai_hook_ref_t sceIoOpenRef;
 extern tai_hook_ref_t sceIoGetstatRef;
 extern tai_hook_ref_t sceAudioOutOpenPortRef;
 extern tai_hook_ref_t sceAudioOutOutputRef;
-extern tai_hook_ref_t sceCtrlPeekBufferNegative2Ref;
 extern tai_hook_ref_t sceDisplaySetFrameBufForCompatRef;
 
 extern tai_hook_ref_t ScePspemuInitTitleSpecificInfoRef;

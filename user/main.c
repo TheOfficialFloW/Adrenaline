@@ -81,7 +81,6 @@ tai_hook_ref_t sceIoOpenRef;
 tai_hook_ref_t sceIoGetstatRef;
 tai_hook_ref_t sceAudioOutOpenPortRef;
 tai_hook_ref_t sceAudioOutOutputRef;
-tai_hook_ref_t sceCtrlPeekBufferNegative2Ref;
 tai_hook_ref_t sceDisplaySetFrameBufForCompatRef;
 
 tai_hook_ref_t ScePspemuInitTitleSpecificInfoRef;
@@ -568,9 +567,6 @@ int module_start(SceSize args, void *argp) {
   hooks[n_hooks++] = taiHookFunctionImport(&sceAudioOutOpenPortRef, "ScePspemu", 0x438BB957, 0x5BC341E4, sceAudioOutOpenPortPatched);
   hooks[n_hooks++] = taiHookFunctionImport(&sceAudioOutOutputRef, "ScePspemu", 0x438BB957, 0x02DB3F5F, sceAudioOutOutputPatched);
 
-  // SceCtrl
-  hooks[n_hooks++] = taiHookFunctionImport(&sceCtrlPeekBufferNegative2Ref, "ScePspemu", 0xD197E3C7, 0x81A89660, sceCtrlPeekBufferNegative2Patched);
-
   // SceDisplayUser
   hooks[n_hooks++] = taiHookFunctionImport(&sceDisplaySetFrameBufForCompatRef, "ScePspemu", 0x4FAACD11, 0x8C36B628, sceDisplaySetFrameBufForCompatPatched);
 
@@ -686,24 +682,6 @@ int module_start(SceSize args, void *argp) {
     isPopsPatched[2] = 0xBF006800; // ldr a1, [a1]
     isPopsPatched[3] = 0xBF004770; // bx lr
     uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x20384, isPopsPatched, sizeof(isPopsPatched));
-
-    if (!sceKernelIsPSVitaTV()) {
-      // Fake isVitaTV for pops ctrl
-      uint32_t bl_is_vita_tv_patched_opcode_1 = encode_bl(text_addr + 0x2F5BC, text_addr + 0x20394);
-      uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x2F5BC, &bl_is_vita_tv_patched_opcode_1, sizeof(bl_is_vita_tv_patched_opcode_1));
-      uint32_t bl_is_vita_tv_patched_opcode_2 = encode_bl(text_addr + 0x2F74E, text_addr + 0x20394);
-      uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x2F74E, &bl_is_vita_tv_patched_opcode_2, sizeof(bl_is_vita_tv_patched_opcode_2));
-
-      // Use available code memory at text_addr + 0x20394 (ScePspemuInitTitleSpecificInfo)
-      // For custom function: isVitaTVPatched
-      uint32_t isVitaTVPatched[4];
-      uint32_t use_ds3_ds4_offset = (uint32_t)&config.use_ds3_ds4;
-      isVitaTVPatched[0] = encode_movw(0, use_ds3_ds4_offset & 0xFFFF);
-      isVitaTVPatched[1] = encode_movt(0, use_ds3_ds4_offset >> 0x10);
-      isVitaTVPatched[2] = 0xBF006800; // ldr a1, [a1]
-      isVitaTVPatched[3] = 0xBF004770; // bx lr
-      uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x20394, isVitaTVPatched, sizeof(isVitaTVPatched));
-    }
 
     // Fake vita mode for ctrlEmulation
     uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x2073C, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
@@ -821,24 +799,6 @@ int module_start(SceSize args, void *argp) {
     isPopsPatched[3] = 0xBF004770; // bx lr
     uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x20388, isPopsPatched, sizeof(isPopsPatched));
 
-    if (!sceKernelIsPSVitaTV()) {
-      // Fake isVitaTV for pops ctrl
-      uint32_t bl_is_vita_tv_patched_opcode_1 = encode_bl(text_addr + 0x2F5CC, text_addr + 0x20398);
-      uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x2F5CC, &bl_is_vita_tv_patched_opcode_1, sizeof(bl_is_vita_tv_patched_opcode_1));
-      uint32_t bl_is_vita_tv_patched_opcode_2 = encode_bl(text_addr + 0x2F762, text_addr + 0x20398);
-      uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x2F762, &bl_is_vita_tv_patched_opcode_2, sizeof(bl_is_vita_tv_patched_opcode_2));
-
-      // Use available code memory at text_addr + 0x20398 (ScePspemuInitTitleSpecificInfo)
-      // For custom function: isVitaTVPatched
-      uint32_t isVitaTVPatched[4];
-      uint32_t use_ds3_ds4_offset = (uint32_t)&config.use_ds3_ds4;
-      isVitaTVPatched[0] = encode_movw(0, use_ds3_ds4_offset & 0xFFFF);
-      isVitaTVPatched[1] = encode_movt(0, use_ds3_ds4_offset >> 0x10);
-      isVitaTVPatched[2] = 0xBF006800; // ldr a1, [a1]
-      isVitaTVPatched[3] = 0xBF004770; // bx lr
-      uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x20398, isVitaTVPatched, sizeof(isVitaTVPatched));
-    }
-
     // Fake vita mode for ctrlEmulation
     uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x20740, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
     uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x20852, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
@@ -863,7 +823,6 @@ int module_stop(SceSize args, void *argp) {
   taiHookRelease(hooks[--n_hooks], ScePspemuInitTitleSpecificInfoRef);
 
   taiHookRelease(hooks[--n_hooks], sceDisplaySetFrameBufForCompatRef);
-  taiHookRelease(hooks[--n_hooks], sceCtrlPeekBufferNegative2Ref);
   taiHookRelease(hooks[--n_hooks], sceAudioOutOutputRef);
   taiHookRelease(hooks[--n_hooks], sceAudioOutOpenPortRef);
   taiHookRelease(hooks[--n_hooks], sceIoGetstatRef);

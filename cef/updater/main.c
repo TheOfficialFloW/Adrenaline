@@ -70,16 +70,14 @@ int main(void) {
 		ErrorExit(5000, "This update can only be applied with v6.4 or higher.\n");
 	}
 
-	if (sctrlSEGetVersion() >= 0x00060006) {
+	if (sctrlSEGetVersion() >= 0x00060007) {
 		ErrorExit(5000, "This update or a higher one was already applied.\n");
 	}
 
-	printf("6.61 Adrenaline-6.6 Installer\n");
+	printf("6.61 Adrenaline-6.7 Installer\n");
 	printf("Changes:\n\n");
 
-	printf("- Fixed bug from previous update that caused black screen in other DJ max games.\n");
-	printf("- Inferno driver was not included correcty, now it is.\n");
-	printf("- Tekken 6 can now be played with any CPU speed.\n");
+	printf("- Added support for PS1 multiplayer on PS Vita using an upcoming DS3/DS4 plugin.\n");
 	printf("\n");
 
 	printf("Press X to install, R to exit.\n\n");

@@ -100,24 +100,6 @@ int ScePspemuDecodePopsAudioPatched(int a1, int a2, int a3, int a4) {
   return TAI_CONTINUE(int, ScePspemuDecodePopsAudioRef, a1, a2, a3, a4);
 }
 
-int sceCtrlPeekBufferNegative2Patched(int port, SceCtrlData *pad_data, int count) {
-  int res = TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, port, pad_data, count);
-
-  if (res == 0x80340001) {
-    if (!sceKernelIsPSVitaTV()) {
-      if (config.use_ds3_ds4 && port == 1) {
-        return TAI_CONTINUE(int, sceCtrlPeekBufferNegative2Ref, 0, pad_data, count);
-      } else {
-        uint8_t *val = (uint8_t *)ScePspemuConvertAddress(0xABCD00A7, KERMIT_OUTPUT_MODE, 1);
-        *val = 0;
-        ScePspemuWritebackCache(val, 1);
-      }
-    }
-  }
-
-  return res;
-}
-
 char *ScePspemuGetTitleidPatched() {
   SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
   return adrenaline->titleid;
