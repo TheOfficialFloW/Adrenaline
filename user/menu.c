@@ -467,8 +467,22 @@ int AdrenalineDraw(SceSize args, void *argp) {
   uint32_t frames = 0;
   float fps = 0.0f;
 
+  // keep track of entering pops mode
+  int lastPops = 0;
+
   while (1) {
     SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
+
+    // wait once for vblank after switching from psp to pops mode
+    // this fixes slowdown in PS1 games that used to require enter/exit Adrenaline menu
+    if (!adrenaline->pops_mode) {
+      lastPops = 0;
+    }
+
+    if (adrenaline->pops_mode && lastPops == 0) {
+      sceDisplayWaitVblankStart();
+      lastPops = 1;
+    }
 
     // Draw savestate screen
     if (adrenaline->savestate_mode != SAVESTATE_MODE_NONE) {
