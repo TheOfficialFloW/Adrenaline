@@ -473,13 +473,16 @@ int AdrenalineDraw(SceSize args, void *argp) {
   while (1) {
     SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
 
-    // wait once for vblank after switching from psp to pops mode
-    // this fixes slowdown in PS1 games that used to require enter/exit Adrenaline menu
+    // pause/unpause pops once after switching from psp to pops mode
+    // this pause/unpause fixes slowdown in PS1 games that used to require manually entering/exiting menu
     if (!adrenaline->pops_mode) {
       lastPops = 0;
     }
 
     if (adrenaline->pops_mode && lastPops == 0) {
+      ScePspemuPausePops(1);
+      sceDisplayWaitVblankStart();
+      ScePspemuPausePops(0);
       sceDisplayWaitVblankStart();
       lastPops = 1;
     }
