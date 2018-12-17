@@ -12,7 +12,7 @@ inject custom code into the IPL which allows unsigned code to run at boottime.
 How to install
 --------------
 1. Download [Adrenaline.vpk](https://github.com/TheOfficialFloW/Adrenaline/releases) and install it using [VitaShell](https://github.com/TheOfficialFloW/VitaShell/releases).
-2. Launch Adrenaline and press X to download the 6.61 firmware. After finishing it will automatically terminate.
+2. Launch Adrenaline and press ❌ to download the 6.61 firmware. After finishing it will automatically terminate.
 3. Relaunch Adrenaline, this time it will go into pspemu mode. Follow the instructions on screen.
 
 How to update
@@ -34,8 +34,8 @@ For 6.61 Adrenaline-6.4 or higher, you can use the `System Update` in the XMB to
 1. Choose 'System Update' in XMB, then click `Update via Internet`.
 2. If a connection name does already exist, skip to step 5.
 3. Otherwise select `[New Connection]`, then `Enter Manually`, press RIGHT three times until you need to enter a connection name.
-4. Type any connection name and press RIGHT two times. You'll now see the message `Press the X/O button to save settings`.
-5. Press X/O on any connection name.
+4. Type any connection name and press RIGHT two times. You'll now see the message `Press the ❌/⭕ button to save settings`.
+5. Press ❌/⭕ on any connection name.
 6. Follow the instructions to update Adrenaline.
 7. After updating and rebooting you can then delete the update file.
 
