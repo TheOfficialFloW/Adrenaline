@@ -45,6 +45,7 @@ Changelog
 ### Changelog v6.8
 - Added sharp bilinear without scanlines filter. Thanks to rsn8887.
 - Fixed PS1 slowdowns. Thanks to rsn8887.
+- Fixed compatiblity with h-encore 2.0.
 
 ### Changelog v6.7
 - Added support for PS1 multiplayer on PS Vita using an upcoming DS3/DS4 plugin.
