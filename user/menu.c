@@ -386,7 +386,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
   sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_DATE_FORMAT, &date_format);
   sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_TIME_FORMAT, &time_format);
 
-  vita2d_init_advanced_with_msaa(0x100000, SCE_GXM_MULTISAMPLE_4X);
+  vita2d_init();
   font = vita2d_load_default_pgf();
 
   vita2d_texture *psp_tex = vita2d_create_empty_texture(PSP_SCREEN_LINE, PSP_SCREEN_HEIGHT);

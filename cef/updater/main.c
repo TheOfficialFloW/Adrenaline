@@ -19,6 +19,7 @@
 #include <common.h>
 
 #include "adrenaline_user.h"
+#include "adrenaline_kernel.h"
 
 PSP_MODULE_INFO("updater", 0x800, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_VSH);
@@ -35,6 +36,7 @@ typedef struct {
 
 File files[] = {
 	{ "ms0:/__ADRENALINE__/sce_module/adrenaline_user.suprx", adrenaline_user, sizeof(adrenaline_user) },
+	{ "ms0:/__ADRENALINE__/sce_module/adrenaline_kernel.skprx", adrenaline_kernel, sizeof(adrenaline_kernel) },
 };
 
 void ErrorExit(int milisecs, char *fmt, ...) {
@@ -70,11 +72,11 @@ int main(void) {
 		ErrorExit(5000, "This update can only be applied with v6.4 or higher.\n");
 	}
 
-	if (sctrlSEGetVersion() >= 0x00060007) {
+	if (sctrlSEGetVersion() >= 0x00060008) {
 		ErrorExit(5000, "This update or a higher one was already applied.\n");
 	}
 
-	printf("6.61 Adrenaline-6.7 Installer\n");
+	printf("6.61 Adrenaline-6.8 Installer\n");
 	printf("Changes:\n\n");
 
 	printf("- Added support for PS1 multiplayer on PS Vita using an upcoming DS3/DS4 plugin.\n");

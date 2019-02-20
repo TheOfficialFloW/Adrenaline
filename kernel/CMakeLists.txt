@@ -30,6 +30,7 @@ target_link_libraries(adrenaline_kernel
   SceSysclibForDriver_stub
   SceSysmemForDriver_stub
   SceSysrootForKernel_stub
+  SceSysrootForDriver_stub
   SceThreadmgrForDriver_stub
 )
 
@@ -49,5 +50,10 @@ add_custom_target(copy
 
 add_custom_target(pkg
   COMMAND cp adrenaline_kernel.skprx ../../bubble/pkg/sce_module/adrenaline_kernel.skprx
+  DEPENDS adrenaline_kernel.skprx
+)
+
+add_custom_target(updater
+  COMMAND bin2c adrenaline_kernel.skprx ../../cef/updater/adrenaline_kernel.h adrenaline_kernel
   DEPENDS adrenaline_kernel.skprx
 )
