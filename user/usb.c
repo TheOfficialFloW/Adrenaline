@@ -74,7 +74,7 @@ SceUID startUsb(const char *usbDevicePath, const char *imgFilePath, int type) {
 
   // Stop MTP driver
   res = sceMtpIfStopDriver(1);
-  if (res < 0)
+  if (res < 0 && res != 0x8054360C)
     goto ERROR_STOP_DRIVER;
 
   // Set device information
