@@ -122,7 +122,7 @@ void GetFunctions() {
     ScePspemuPausePops                  = (void *)(text_addr + 0x300C0 + 0x1);
     ScePspemuInitPops                   = (void *)(text_addr + 0x30678 + 0x1);
     ScePspemuInitPocs                   = (void *)(text_addr + 0x227C4 + 0x1);
-  } else if (module_nid == 0x3F75D4D3) { // 3.65-3.69 retail
+  } else if (module_nid == 0x3F75D4D3) { // 3.65-3.70 retail
     ScePspemuSetDisplayConfig           = (void *)(text_addr + 0x20E54 + 0x1);
     ScePspemuPausePops                  = (void *)(text_addr + 0x300D4 + 0x1);
     ScePspemuInitPops                   = (void *)(text_addr + 0x3068C + 0x1);
@@ -687,7 +687,7 @@ int module_start(SceSize args, void *argp) {
     uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x2073C, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
     uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x2084E, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
     uids[n_uids++] = taiInjectData(tai_info.modid, 0, 0x301DC, &movs_a1_0_nop_opcode, sizeof(movs_a1_0_nop_opcode));
-  } else if (module_nid == 0x3F75D4D3) { // 3.65-3.69 retail
+  } else if (module_nid == 0x3F75D4D3) { // 3.65-3.70 retail
     hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuInitTitleSpecificInfoRef, tai_info.modid, 0, 0x20378, 0x1, ScePspemuInitTitleSpecificInfoPatched);
     hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuGetStartupPngRef, tai_info.modid, 0, 0x3C88, 0x1, ScePspemuGetStartupPngPatched);
     hooks[n_hooks++] = taiHookFunctionOffset(&ScePspemuGetTitleidRef, tai_info.modid, 0, 0x20600, 0x1, ScePspemuGetTitleidPatched);

@@ -32,6 +32,7 @@
 
 #include "../adrenaline_compat.h"
 
+int ksceKernelSysrootGetShellPid();
 int module_get_export_func(SceUID pid, const char *modname, uint32_t libnid, uint32_t funcnid, uintptr_t *func);
 
 static tai_hook_ref_t ksceKernelAllocMemBlockRef;
@@ -104,7 +105,8 @@ static int sm_stuff_patched() {
     } else if (module_nid == 0x07937779 ||
                module_nid == 0x71BF9CC5 ||
                module_nid == 0x7C185186 ||
-               module_nid == 0x52DFE3A7) { // 3.65-3.69 retail
+               module_nid == 0x52DFE3A7 ||
+               module_nid == 0xE0E3AA51) { // 3.65-3.70 retail
       ksceKernelMemcpyKernelToUser(0x70602D70, &a, sizeof(uint32_t));
       ksceKernelCpuDcacheWritebackRange((void *)0x70602D70, sizeof(uint32_t));
     }
@@ -160,25 +162,26 @@ int module_start(SceSize args, void *argp) {
   int res;
 
   // Tai module info
-  tai_module_info_t tai_info;
-  tai_info.size = sizeof(tai_module_info_t);
-  res = taiGetModuleInfoForKernel(KERNEL_PID, "SceCompat", &tai_info);
+  tai_module_info_t info;
+  info.size = sizeof(tai_module_info_t);
+  res = taiGetModuleInfoForKernel(KERNEL_PID, "SceCompat", &info);
   if (res < 0)
     return res;
 
-  module_nid = tai_info.module_nid;
+  module_nid = info.module_nid;
 
   // SceCompat
-  switch (tai_info.module_nid) {
+  switch (info.module_nid) {
     case 0x8F2D0378: // 3.60 retail
-      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AA4, 1, sm_stuff_patched);
+      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, info.modid, 0, 0x2AA4, 1, sm_stuff_patched);
       break;
 
     case 0x07937779: // 3.65 retail
     case 0x71BF9CC5: // 3.67 retail
     case 0x7C185186: // 3.68 retail
     case 0x52DFE3A7: // 3.69 retail
-      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, tai_info.modid, 0, 0x2AE8, 1, sm_stuff_patched);
+    case 0xE0E3AA51: // 3.70 retail
+      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, info.modid, 0, 0x2AE8, 1, sm_stuff_patched);
       break;
   }
 
@@ -199,57 +202,8 @@ int module_start(SceSize args, void *argp) {
     hooks[n_hooks] = taiHookFunctionExportForKernel(KERNEL_PID, &ksceKernelStartPreloadedModulesRef, "SceKernelModulemgr", 0x92C9FFC2, 0x998C7AE9, ksceKernelStartPreloadedModulesPatched);
   n_hooks++;
 
-  // Load plugin for SceShell
-  int (* _sceAppMgrGetIdByName)(SceUID *pid, const char *name) = NULL;
-  int (* _ksceKernelGetModuleInfo)(SceUID pid, SceUID modid, SceKernelModuleInfo *info) = NULL;
-
-  res = module_get_export_func(KERNEL_PID, "SceKernelModulemgr", 0xC445FA63, 0xD269F915, (uintptr_t *)&_ksceKernelGetModuleInfo);
-  if (res < 0)
-    res = module_get_export_func(KERNEL_PID, "SceKernelModulemgr", 0x92C9FFC2, 0xDAA90093, (uintptr_t *)&_ksceKernelGetModuleInfo);
-  if (res < 0)
-    return res;
-
-  tai_info.size = sizeof(tai_module_info_t);
-  res = taiGetModuleInfoForKernel(KERNEL_PID, "SceAppMgr", &tai_info);
-  if (res < 0)
-    return res;
-
-  // Module info
-  SceKernelModuleInfo mod_info;
-  mod_info.size = sizeof(SceKernelModuleInfo);
-  res = _ksceKernelGetModuleInfo(KERNEL_PID, tai_info.modid, &mod_info);
-  if (res < 0)
-    return res;
-
-  // Addresses
-  uint32_t text_addr = (uint32_t)mod_info.segments[0].vaddr;
-
-  switch (tai_info.module_nid) {
-    case 0xDBB29DB7: // 3.60 retail
-      _sceAppMgrGetIdByName = (void *)(text_addr + 0x32325);
-      break;
-
-    case 0x1C9879D6: // 3.65 retail
-      _sceAppMgrGetIdByName = (void *)(text_addr + 0x3230D);
-      break;
-
-    case 0x54E2E984: // 3.67 retail
-    case 0xC3C538DE: // 3.68 retail
-      _sceAppMgrGetIdByName = (void *)(text_addr + 0x3231D);
-      break;
-
-    case 0x321E4852: // 3.69 retail
-      _sceAppMgrGetIdByName = (void *)(text_addr + 0x32345);
-      break;
-  }
-
-  if (!_sceAppMgrGetIdByName)
-    return SCE_KERNEL_START_FAILED;
-
-  SceUID shell_pid = -1;
-  _sceAppMgrGetIdByName(&shell_pid, "NPXS19999");
-  if (shell_pid != -1)
-    ksceKernelLoadStartModuleForPid(shell_pid, "ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_vsh.suprx", 0, NULL, 0, NULL, NULL);
+  SceUID shell_pid = ksceKernelSysrootGetShellPid();
+  ksceKernelLoadStartModuleForPid(shell_pid, "ux0:app/" ADRENALINE_TITLEID "/sce_module/adrenaline_vsh.suprx", 0, NULL, 0, NULL, NULL);
 
   return SCE_KERNEL_START_SUCCESS;
 }
