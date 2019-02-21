@@ -79,7 +79,10 @@ int main(void) {
 	printf("6.61 Adrenaline-6.8 Installer\n");
 	printf("Changes:\n\n");
 
-	printf("- Added support for PS1 multiplayer on PS Vita using an upcoming DS3/DS4 plugin.\n");
+	printf("- Added sharp bilinear without scanlines filter. Thanks to rsn8887.\n");
+	printf("- Fixed PS1 slowdowns. Thanks to rsn8887.\n");
+	printf("- Fixed compatiblity with h-encore 2.0.\n");
+	printf("- Fixed compatiblity with udcd_uvc.skprx plugin.\n");
 	printf("\n");
 
 	printf("Press X to install, R to exit.\n\n");
