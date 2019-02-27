@@ -39,7 +39,7 @@ static tai_hook_ref_t ksceKernelAllocMemBlockRef;
 static tai_hook_ref_t ksceKernelFreeMemBlockRef;
 static tai_hook_ref_t ksceKernelUnmapMemBlockRef;
 static tai_hook_ref_t SceGrabForDriver_E9C25A28_ref;
-static tai_hook_ref_t sm_stuff_ref;
+static tai_hook_ref_t sceCompatSecSetSSRAMAclRef;
 static tai_hook_ref_t ksceSblAimgrIsDEXRef;
 static tai_hook_ref_t ksceKernelStartPreloadedModulesRef;
 
@@ -90,7 +90,7 @@ static int SceGrabForDriver_E9C25A28_patched(int unk, uint32_t paddr) {
   return TAI_CONTINUE(int, SceGrabForDriver_E9C25A28_ref, unk, paddr);
 }
 
-static int sm_stuff_patched() {
+static int sceCompatSecSetSSRAMAclPatched() {
   uint32_t a;
 
   a = 0;
@@ -112,7 +112,7 @@ static int sm_stuff_patched() {
     }
   }
 
-  return TAI_CONTINUE(int, sm_stuff_ref);
+  return TAI_CONTINUE(int, sceCompatSecSetSSRAMAclRef);
 }
 
 static int ksceSblAimgrIsDEXPatched() {
@@ -173,7 +173,7 @@ int module_start(SceSize args, void *argp) {
   // SceCompat
   switch (info.module_nid) {
     case 0x8F2D0378: // 3.60 retail
-      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, info.modid, 0, 0x2AA4, 1, sm_stuff_patched);
+      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sceCompatSecSetSSRAMAclRef, info.modid, 0, 0x2AA4, 1, sceCompatSecSetSSRAMAclPatched);
       break;
 
     case 0x07937779: // 3.65 retail
@@ -181,7 +181,7 @@ int module_start(SceSize args, void *argp) {
     case 0x7C185186: // 3.68 retail
     case 0x52DFE3A7: // 3.69 retail
     case 0xE0E3AA51: // 3.70 retail
-      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sm_stuff_ref, info.modid, 0, 0x2AE8, 1, sm_stuff_patched);
+      hooks[n_hooks++] = taiHookFunctionOffsetForKernel(KERNEL_PID, &sceCompatSecSetSSRAMAclRef, info.modid, 0, 0x2AE8, 1, sceCompatSecSetSSRAMAclPatched);
       break;
   }
 
@@ -215,7 +215,7 @@ int module_stop(SceSize args, void *argp) {
   taiHookReleaseForKernel(hooks[--n_hooks], ksceKernelUnmapMemBlockRef);
   taiHookReleaseForKernel(hooks[--n_hooks], ksceKernelFreeMemBlockRef);
   taiHookReleaseForKernel(hooks[--n_hooks], ksceKernelAllocMemBlockRef);
-  taiHookReleaseForKernel(hooks[--n_hooks], sm_stuff_ref);
+  taiHookReleaseForKernel(hooks[--n_hooks], sceCompatSecSetSSRAMAclRef);
 
   return SCE_KERNEL_STOP_SUCCESS;
 }
