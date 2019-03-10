@@ -389,6 +389,10 @@ int AdrenalineDraw(SceSize args, void *argp) {
   vita2d_init();
   font = vita2d_load_default_pgf();
 
+  vita2d_texture *native_tex = vita2d_create_empty_texture_data(SCREEN_WIDTH, SCREEN_HEIGHT, CONVERT_ADDRESS(NATIVE_FRAMEBUFFER), SCE_GXM_TEXTURE_FORMAT_U5U6U5_BGR);
+  if (!native_tex)
+    return -1;
+
   vita2d_texture *psp_tex = vita2d_create_empty_texture(PSP_SCREEN_LINE, PSP_SCREEN_HEIGHT);
   if (!psp_tex)
     return -1;
@@ -471,6 +475,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
   int lastPops = 0;
 
   while (1) {
+    int draw_native = *(uint32_t *)CONVERT_ADDRESS(DRAW_NATIVE);
     SceAdrenaline *adrenaline = (SceAdrenaline *)CONVERT_ADDRESS(ADRENALINE_ADDRESS);
 
     // pause/unpause pops once after switching from psp to pops mode
@@ -541,7 +546,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
     }
 
     // Do not draw if dialog is running
-    if (sceCommonDialogIsRunning() || (config.graphics_filtering == 0 && menu_open == 0)) {
+    if (sceCommonDialogIsRunning() || (config.graphics_filtering == 0 && menu_open == 0 && draw_native == 0)) {
       sceDisplayWaitVblankStart();
       continue;
     }
@@ -578,7 +583,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
       vita2d_texture_set_filters(pops_tex, SCE_GXM_TEXTURE_FILTER_POINT, SCE_GXM_TEXTURE_FILTER_POINT);
     }
 
-    if (!adrenaline->pops_mode || adrenaline->draw_psp_screen_in_pops) {
+    if ((!adrenaline->pops_mode && !draw_native) || adrenaline->draw_psp_screen_in_pops) {
       // Copy PSP framebuffer
       sceDmacMemcpy(psp_data, (void *)SCE_PSPEMU_FRAMEBUFFER, SCE_PSPEMU_FRAMEBUFFER_SIZE);
 
@@ -587,6 +592,8 @@ int AdrenalineDraw(SceSize args, void *argp) {
       float scale_y = 2.00f;
       getPspScreenScale(&scale_x, &scale_y);
       vita2d_draw_texture_scale_rotate_hotspot(psp_tex, 480.0f, 272.0f, scale_x, scale_y, 0.0, 240.0, 136.0);
+    } else if (draw_native) {
+      vita2d_draw_texture_scale_rotate_hotspot(native_tex, 480.0f, 272.0f, 1.0f, 1.0f, 0.0, 480.0, 272.0);
     } else {
       // Draw pops screen
       float scale_x = 1.0f;
@@ -653,7 +660,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
     frames++;
 
     // Sync
-    if (!adrenaline->pops_mode || adrenaline->draw_psp_screen_in_pops)
+    if ((!adrenaline->pops_mode && !draw_native) || adrenaline->draw_psp_screen_in_pops)
       sceCompatLCDCSync();
     else
       sceDisplayWaitVblankStart();

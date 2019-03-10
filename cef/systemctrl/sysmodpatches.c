@@ -330,8 +330,9 @@ void PatchImposeDriver(u32 text_addr) {
 	if (sceKernelInitKeyConfig() == PSP_INIT_KEYCONFIG_POPS) {
 		SetupCallbacks();
 		MAKE_DUMMY_FUNCTION(text_addr + 0x91C8, PSP_INIT_KEYCONFIG_GAME);
-		REDIRECT_FUNCTION(text_addr + 0x92B0, sceKernelWaitEventFlagPatched);
 	}
+
+	REDIRECT_FUNCTION(text_addr + 0x92B0, sceKernelWaitEventFlagPatched);
 
 	ClearCaches();
 }
@@ -354,7 +355,7 @@ void PatchMediaSync(u32 text_addr) {
 }
 
 void SetSpeed(int cpu, int bus) {
-	if (cpu == 20  || cpu == 75 || cpu == 100 || cpu == 133 || cpu == 333 || cpu == 300 || cpu == 266 || cpu == 222) {
+	if (cpu == 20 || cpu == 75 || cpu == 100 || cpu == 133 || cpu == 333 || cpu == 300 || cpu == 266 || cpu == 222) {
 		scePowerSetClockFrequency_k = (void *)FindPowerFunction(0x737486F2);
 		scePowerSetClockFrequency_k(cpu, cpu, bus);
 

@@ -78,6 +78,19 @@ void makeSaveStatePath(char *path, int num) {
 
 extern void *pops_data;
 
+static uint32_t convert565To8888(uint16_t color) {
+  uint8_t red_value = (color & 0xF800) >> 11;
+  uint8_t green_value = (color & 0x7E0) >> 5;
+  uint8_t blue_value = (color & 0x1F);
+
+  uint8_t alpha = 0xFF;
+  uint8_t red = red_value << 3;
+  uint8_t green = green_value << 2;
+  uint8_t blue = blue_value << 3;
+
+  return (alpha << 24) | (red << 16) | (green << 8) | blue;
+}
+
 int saveFrameBuffer(SceUID fd) {
   sceCompatLCDCSync();
 
@@ -87,9 +100,19 @@ int saveFrameBuffer(SceUID fd) {
 
   int i = 0;
 
+  int draw_native = *(uint32_t *)CONVERT_ADDRESS(DRAW_NATIVE);
   SceAdrenaline *adrenaline = (SceAdrenaline *)ScePspemuConvertAddress(ADRENALINE_ADDRESS, KERMIT_INPUT_MODE, ADRENALINE_SIZE);
 
-  if (adrenaline->pops_mode) {
+  if (draw_native) {
+    int y;
+    for (y = 0; y < SCREEN_HEIGHT; y += 4) {
+      int x;
+      for (x = 0; x < SCREEN_WIDTH; x += 4) {
+        uint16_t color = ((uint16_t *)CONVERT_ADDRESS(NATIVE_FRAMEBUFFER))[x + SCREEN_WIDTH * y];
+        buf[i++] = convert565To8888(color);
+      }
+    }
+  } else if (adrenaline->pops_mode) {
     int y;
     for (y = 0; y < SCREEN_HEIGHT; y += 4) {
       int x;

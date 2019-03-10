@@ -96,7 +96,7 @@ vita_create_self(adrenaline_user.suprx adrenaline_user CONFIG exports.yml UNSAFE
 vita_create_stubs(stubs adrenaline_user ${CMAKE_SOURCE_DIR}/exports.yml)
 
 add_custom_target(copy
-  COMMAND cp adrenaline_user.suprx H:/app/PSPEMUCFW/sce_module/adrenaline_user.suprx
+  COMMAND cp adrenaline_user.suprx F:/app/PSPEMUCFW/sce_module/adrenaline_user.suprx
   DEPENDS adrenaline_user.suprx
 )
 
