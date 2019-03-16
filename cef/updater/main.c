@@ -72,17 +72,14 @@ int main(void) {
 		ErrorExit(5000, "This update can only be applied with v6.4 or higher.\n");
 	}
 
-	if (sctrlSEGetVersion() >= 0x00060008) {
+	if (sctrlSEGetVersion() >= ADRENALINE_VERSION) {
 		ErrorExit(5000, "This update or a higher one was already applied.\n");
 	}
 
-	printf("6.61 Adrenaline-6.8 Installer\n");
+	printf("6.61 Adrenaline-%d.%d Installer\n", ADRENALINE_VERSION_MAJOR, ADRENALINE_VERSION_MINOR);
 	printf("Changes:\n\n");
 
-	printf("- Added sharp bilinear without scanlines filter. Thanks to rsn8887.\n");
-	printf("- Fixed PS1 slowdowns. Thanks to rsn8887.\n");
-	printf("- Fixed compatiblity with h-encore 2.0.\n");
-	printf("- Fixed compatiblity with udcd_uvc.skprx plugin.\n");
+	printf("- Added support for native resolution patches.\n");
 	printf("\n");
 
 	printf("Press X to install, R to exit.\n\n");
