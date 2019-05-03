@@ -17,7 +17,7 @@ How to install
 
 How to update
 -------------
-If you have already been using Adrenaline and want to quickly update, simply open Adrenaline.vpk as zip file and copy all modules from sce_module to ux0:app/PSPEMUCFW/sce_module.
+If you have already been using Adrenaline and want to quickly update, simply open Adrenaline.vpk as zip file and copy all modules from bubble/pkg/sce_module to ux0:app/PSPEMUCFW/sce_module.
 
 Getting rid of double launch bug
 --------------------------------
