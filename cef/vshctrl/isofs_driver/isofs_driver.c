@@ -21,7 +21,7 @@ int IsofsReadSectors(int lba, int nsectors, void *buf) {
 	return Umd9660ReadSectors2(lba, nsectors, buf);
 }
 
-inline int SizeToSectors(int size) {
+static inline int SizeToSectors(int size) {
 	int len = size / SECTOR_SIZE;
 	if ((size % SECTOR_SIZE) != 0) len++;
 	return len;
