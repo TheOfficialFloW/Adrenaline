@@ -20,7 +20,7 @@ add_executable(adrenaline_vsh
 )
 
 target_link_libraries(adrenaline_vsh
-  taiHEN_stub
+  taihen_stub
   SceAppMgr_stub
   SceLsdb_stub_weak
 )
