@@ -56,8 +56,6 @@
 #include "includes/sharp_bilinear_simple_v.h"
 #include "includes/advanced_aa_v.h"
 #include "includes/advanced_aa_f.h"
-#include "includes/fxaa_v.h"
-#include "includes/fxaa_f.h"
 #include "includes/vflux_f.h"
 #include "includes/vflux_v.h"
 
@@ -83,7 +81,7 @@ static float flux_colors[] = {
   0.0f, 0.0f, 0.0f, 0.0f  // Black
 };
 
-static char *graphics_options[] = { "Original", "Bilinear", "Sharp bilinear", "Advanced AA", "LCD3x", "Sharp bilinear without scanlines", "FXAA" };
+static char *graphics_options[] = { "Original", "Bilinear", "Sharp bilinear", "Advanced AA", "LCD3x", "Sharp bilinear without scanlines" };
 static char *flux_mode_options[] = { "None", "Yellow", "Blue", "Black" };
 static char *no_yes_options[] = { "No", "Yes" };
 static char *yes_no_options[] = { "Yes", "No" };
@@ -124,7 +122,7 @@ static MenuEntry about_entries[] = {
   { "Credits", MENU_ENTRY_TYPE_TEXT, ORANGE, NULL, NULL, NULL, 0 },
   { "Team molecule for HENkaku", MENU_ENTRY_TYPE_TEXT, WHITE, NULL, NULL, NULL, 0 },
   { "frangarcj for graphics filtering", MENU_ENTRY_TYPE_TEXT, WHITE, NULL, NULL, NULL, 0 },
-  { "Rinnegatamante for f.lux and FXAA", MENU_ENTRY_TYPE_TEXT, WHITE, NULL, NULL, NULL, 0 },
+  { "Rinnegatamante for f.lux", MENU_ENTRY_TYPE_TEXT, WHITE, NULL, NULL, NULL, 0 },
   { "xerpi for vita2dlib", MENU_ENTRY_TYPE_TEXT, WHITE, NULL, NULL, NULL, 0 },
 };
 
@@ -410,7 +408,6 @@ int AdrenalineDraw(SceSize args, void *argp) {
   vita2d_shader *opaque_shader = vita2d_create_shader((SceGxmProgram *)opaque_v, (SceGxmProgram *)texture_f);
   vita2d_shader *sharp_shader = vita2d_create_shader((SceGxmProgram *)sharp_bilinear_v, (SceGxmProgram *)sharp_bilinear_f);
   vita2d_shader *advanced_aa_shader = vita2d_create_shader((SceGxmProgram *)advanced_aa_v, (SceGxmProgram *)advanced_aa_f);
-  vita2d_shader *fxaa_shader = vita2d_create_shader((SceGxmProgram *)fxaa_v, (SceGxmProgram *)fxaa_f);
   vita2d_shader *lcd3x_shader = vita2d_create_shader((SceGxmProgram *)lcd3x_v, (SceGxmProgram *)lcd3x_f);
   vita2d_shader *sharp_simple_shader = vita2d_create_shader((SceGxmProgram *)sharp_bilinear_simple_v, (SceGxmProgram *)sharp_bilinear_simple_f);
 
@@ -569,8 +566,6 @@ int AdrenalineDraw(SceSize args, void *argp) {
       shader = lcd3x_shader;
     else if (config.graphics_filtering == 5)
       shader = sharp_simple_shader;
-    else if (config.graphics_filtering == 6)
-      shader = fxaa_shader;
     else
       shader = opaque_shader;
 
