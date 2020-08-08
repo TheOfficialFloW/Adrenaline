@@ -91,7 +91,7 @@ tai_hook_ref_t ScePspemuConvertAddressRef;
 tai_hook_ref_t ScePspemuDecodePopsAudioRef;
 tai_hook_ref_t ScePspemuGetParamRef;
 
-static SceUID hooks[16];
+static SceUID hooks[64];
 static SceUID uids[64];
 static int n_hooks = 0;
 static int n_uids = 0;
