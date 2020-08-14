@@ -35,6 +35,7 @@ add_custom_target(copy
 )
 
 add_custom_target(pkg
+  COMMAND mkdir -p ../../bubble/pkg/sce_module
   COMMAND cp adrenaline_vsh.suprx ../../bubble/pkg/sce_module/adrenaline_vsh.suprx
   DEPENDS adrenaline_vsh.suprx
 )

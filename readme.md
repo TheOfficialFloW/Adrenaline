@@ -167,5 +167,38 @@ offical settings, then apply the custom screen mode. On the other hand, if you w
 - Fixed bug where changing options in the official settings menu didn't have any effect.
 
 # Dependencies
+- [vitasdk](https://vitasdk.org/)
 - [vita2dlib-fbo](https://github.com/frangarcj/vita2dlib/tree/fbo)
 - [vita-shader-collection](https://github.com/frangarcj/vita-shader-collection)
+- [pspdev](https://github.com/pspdev/pspdev)
+- [psp-packer](https://bitbucket.org/DaveeFTW/psp-packer)
+
+# Building
+A set of build scripts in the `buildscripts` folder is provided for convenience.
+On a *nix systems with `bash` installed, Adrenaline can be built by running:
+
+```
+./buildscripts/build.sh
+```
+
+Adrenaline can also be built using an isolated containerized environment using [Docker](https://www.docker.com/).
+Install Docker for your operating system and run the following script:
+
+```
+./buildscripts/build_docker.sh
+```
+
+This will create the container image with all the required dependencies and build Adrenaline afterwards.
+Docker caches images, so running this script again to build Adrenaline will _not_ require a full rebuild 
+of the container image.
+
+If a full rebuild is desired, however (e.g. to update the `vitasdk` version), you can run:
+
+```
+./buildscripts/build_docker.sh --no-cache
+```
+
+The final product from building is:
+* Uncompressed modules at `bubble/pkg/sce_modules`.
+* The `eboot.bin` file at `bubble/build/eboot.bin`.
+* The packaged application (includes all above) at `bubble/build/Adrenaline.vpk`.

@@ -44,20 +44,20 @@
 #include "utils.h"
 #include "math_utils.h"
 
-#include "includes/lcd3x_v.h"
-#include "includes/lcd3x_f.h"
-#include "includes/texture_v.h"
-#include "includes/texture_f.h"
-#include "includes/opaque_v.h"
-#include "includes/bicubic_f.h"
-#include "includes/sharp_bilinear_f.h"
-#include "includes/sharp_bilinear_v.h"
-#include "includes/sharp_bilinear_simple_f.h"
-#include "includes/sharp_bilinear_simple_v.h"
-#include "includes/advanced_aa_v.h"
-#include "includes/advanced_aa_f.h"
-#include "includes/vflux_f.h"
-#include "includes/vflux_v.h"
+#include <lcd3x_v.h>
+#include <lcd3x_f.h>
+#include <texture_v.h>
+#include <texture_f.h>
+#include <opaque_v.h>
+#include <bicubic_f.h>
+#include <sharp_bilinear_f.h>
+#include <sharp_bilinear_v.h>
+#include <sharp_bilinear_simple_f.h>
+#include <sharp_bilinear_simple_v.h>
+#include <advanced_aa_v.h>
+#include <advanced_aa_f.h>
+#include "vflux_f.h"
+#include "vflux_v.h"
 
 static const SceGxmProgram *const gxm_program_vflux_v = (SceGxmProgram*)&vflux_v;
 static const SceGxmProgram *const gxm_program_vflux_f = (SceGxmProgram*)&vflux_f;
@@ -389,7 +389,7 @@ int AdrenalineDraw(SceSize args, void *argp) {
   vita2d_init();
   font = vita2d_load_default_pgf();
 
-  vita2d_texture *native_tex = vita2d_create_empty_texture_data(SCREEN_WIDTH, SCREEN_HEIGHT, CONVERT_ADDRESS(NATIVE_FRAMEBUFFER), SCE_GXM_TEXTURE_FORMAT_U5U6U5_BGR);
+  vita2d_texture *native_tex = vita2d_create_empty_texture_data(SCREEN_WIDTH, SCREEN_HEIGHT, (void*)CONVERT_ADDRESS(NATIVE_FRAMEBUFFER), SCE_GXM_TEXTURE_FORMAT_U5U6U5_BGR);
   if (!native_tex)
     return -1;
 
@@ -466,10 +466,12 @@ int AdrenalineDraw(SceSize args, void *argp) {
   if (settings_semaid < 0)
     return settings_semaid;
 
+  #ifdef SHOW_FPS
   // FPS counting
   SceUInt64 cur_micros = 0, delta_micros = 0, last_micros = 0;
   uint32_t frames = 0;
   float fps = 0.0f;
+  #endif
 
   // keep track of entering pops mode
   int lastPops = 0;
@@ -642,8 +644,9 @@ int AdrenalineDraw(SceSize args, void *argp) {
       sceGxmDraw(_vita2d_context, SCE_GXM_PRIMITIVE_TRIANGLE_FAN, SCE_GXM_INDEX_FORMAT_U16, flux_indices, 4);
     }
 
+    #ifdef SHOW_FPS
     // Show FPS
-    // pgf_draw_textf(0.0f, 0.0f, WHITE, FONT_SIZE, "FPS: %.2f", fps);
+    pgf_draw_textf(0.0f, 0.0f, WHITE, FONT_SIZE, "FPS: %.2f", fps);
 
     // Calculate FPS
     cur_micros = sceKernelGetProcessTimeWide();
@@ -653,18 +656,22 @@ int AdrenalineDraw(SceSize args, void *argp) {
       fps = (frames / (double)delta_micros) * 1000000.0f;
       frames = 0;
     }
+    #endif
 
     // End drawing
     vita2d_end_drawing();
     vita2d_swap_buffers();
+    
+    #ifdef SHOW_FPS
     frames++;
+    #endif
 
     // Sync
     if ((!adrenaline->pops_mode && !draw_native) || adrenaline->draw_psp_screen_in_pops)
       sceCompatLCDCSync();
     else
       sceDisplayWaitVblankStart();
-
+      
     // Ctrl
     if (menu_open)
       ctrlMenu();

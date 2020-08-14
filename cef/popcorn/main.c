@@ -18,6 +18,7 @@
 
 #include <common.h>
 #include "main.h"
+#include "pspcrypt.h"
 
 PSP_MODULE_INFO("M33PopcornManager", 0x1007, 1, 0);
 
