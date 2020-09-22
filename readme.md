@@ -28,17 +28,6 @@ Adrenaline has been redesigned in `6.61 Adrenaline-6`, so you'd need to launch A
 ux0:app/PSPEMUCFW/sce_module/adrenaline_kernel.skprx
 ```
 
-Network update
---------------
-For 6.61 Adrenaline-6.4 or higher, you can use the `System Update` in the XMB to update Adrenaline to the latest version.
-1. Choose 'System Update' in XMB, then click `Update via Internet`.
-2. If a connection name does already exist, skip to step 5.
-3. Otherwise select `[New Connection]`, then `Enter Manually`, press RIGHT three times until you need to enter a connection name.
-4. Type any connection name and press RIGHT two times. You'll now see the message `Press the ❌/⭕ button to save settings`.
-5. Press ❌/⭕ on any connection name.
-6. Follow the instructions to update Adrenaline.
-7. After updating and rebooting you can then delete the update file.
-
 Changelog
 ---------
 
