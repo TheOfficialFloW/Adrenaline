@@ -42,6 +42,10 @@ For 6.61 Adrenaline-6.4 or higher, you can use the `System Update` in the XMB to
 Changelog
 ---------
 
+### Changelog v7
+- Fixed issue where plugins were loaded in recovery mode.
+- Moved native display buffer to a different location, so GePatch works for some more games.
+
 ### Changelog v6.9
 - Added support for native resolution patches.
 

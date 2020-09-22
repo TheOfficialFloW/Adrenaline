@@ -33,7 +33,6 @@ $/kd/chkreg.prx VUP
 $/kd/mesg_led_01g.prx VGUPAEM
 $/kd/semawm.prx V
 $/kd/amctrl.prx VGPAEM
-$/kd/npdrm.prx VPEM
 $/kd/iofilemgr_dnas.prx VGPAEM
 $/kd/mediaman.prx VGUA
 $/kd/np9660.prx EM
