@@ -36,7 +36,7 @@ Changelog
 
 ### Changelog v7
 - Fixed issue where plugins were loaded in recovery mode.
-- Moved native display buffer to a different location, so GePatch works for some more games. Please note that only GePatch v0.18 or above will only work, older versions will cause a black screen.
+- Moved native display buffer to a different location, so GePatch works for some more games. Please note that only GePatch v0.18 or above will only work, older versions will cause a black screen. If you're using GTANativeRes, please download the latest binary as well.
 
 ### Changelog v6.9
 - Added support for native resolution patches.
