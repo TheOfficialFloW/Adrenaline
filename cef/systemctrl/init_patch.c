@@ -193,9 +193,13 @@ int sceKernelStartModulePatched(SceUID modid, SceSize argsize, void *argp, int *
 
 				plugindone = 1;
 
-				char *file = NULL;
-
 				int type = sceKernelInitKeyConfig();
+
+				if (type == PSP_INIT_KEYCONFIG_VSH && !sceKernelFindModuleByName661("scePspNpDrm_Driver")) {
+					goto START_MODULE;
+				}
+
+				char *file = NULL;
 				if (type == PSP_INIT_KEYCONFIG_VSH && !config.notusexmbplugins) {
 					file = "ms0:/seplugins/vsh.txt";
 				} else if (type == PSP_INIT_KEYCONFIG_GAME && !config.notusegameplugins) {
