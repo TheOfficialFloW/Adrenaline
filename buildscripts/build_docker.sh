@@ -10,4 +10,4 @@ cd "${script_root}"
 docker/build.sh $@
 
 cd ..
-docker run -it -v"$(pwd)":/root/Adrenaline --rm io.github.theflow.adrenaline_build:latest Adrenaline/buildscripts/build.sh
+docker run -it -v"$(pwd)":/root/Adrenaline --user "$(id -u):$(id -g)" --rm io.github.theflow.adrenaline_build:latest Adrenaline/buildscripts/build.sh
