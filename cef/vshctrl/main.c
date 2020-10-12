@@ -18,6 +18,7 @@
 
 #include <common.h>
 
+#include "main.h"
 #include "virtualpbpmgr.h"
 #include "isofs_driver/umd9660_driver.h"
 #include "isofs_driver/isofs_driver.h"

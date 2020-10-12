@@ -101,6 +101,7 @@ add_custom_target(copy
 )
 
 add_custom_target(pkg
+  COMMAND mkdir -p ../../bubble/pkg
   COMMAND cp adrenaline_user.suprx ../../bubble/pkg/sce_module/adrenaline_user.suprx
   DEPENDS adrenaline_user.suprx
 )

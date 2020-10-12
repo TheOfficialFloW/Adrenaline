@@ -49,6 +49,7 @@ add_custom_target(copy
 )
 
 add_custom_target(pkg
+  COMMAND mkdir -p ../../bubble/pkg/sce_module
   COMMAND cp adrenaline_kernel.skprx ../../bubble/pkg/sce_module/adrenaline_kernel.skprx
   DEPENDS adrenaline_kernel.skprx
 )
