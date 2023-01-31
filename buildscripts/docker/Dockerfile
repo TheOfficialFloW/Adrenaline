@@ -1,4 +1,4 @@
-FROM debian:10.5-slim
+FROM debian:11.6-slim
 
 RUN apt update \
     && apt full-upgrade -y \
@@ -12,7 +12,7 @@ RUN apt update \
         wget \
         jq \
         sudo \
-        python \
+        python3 \
         zlib1g-dev
 
 ENV PSPDEV "/usr/local/pspdev"
@@ -33,7 +33,7 @@ RUN chmod +x scripts/vita_scripts/build_vdpm.sh \
     && scripts/vita_scripts/build_vdpm.sh
 
 COPY ./scripts scripts
-RUN chmod +x scripts/vita_scripts/*.sh \ 
+RUN chmod +x scripts/vita_scripts/*.sh \
     && chmod +x scripts/psp_scripts/*.sh \
     && scripts/psp_scripts/build_psp-packer.sh \
     && scripts/vita_scripts/build_vita-shader-collection.sh \

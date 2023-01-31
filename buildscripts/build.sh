@@ -19,6 +19,9 @@ cd "${script_root}"
 
 ./clean.sh
 
+# For debugging CMake
+# export VERBOSE=1
+
 modules/cef.sh
 modules/kernel.sh
 modules/vsh.sh

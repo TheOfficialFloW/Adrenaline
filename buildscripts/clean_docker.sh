@@ -10,4 +10,10 @@ cd "${script_root}"
 docker/build.sh $@
 
 cd ..
-docker run -it -v"$(pwd)":/root/Adrenaline --user "$(id -u):$(id -g)" --rm io.github.theflow.adrenaline_build:latest Adrenaline/buildscripts/clean.sh
+
+#Git Bash for Windows requires special handling
+if [[ "$OSTYPE" == "msys" ]]; then
+  winpty docker run -it -v"/$PWD":/root/Adrenaline --rm io.github.theflow.adrenaline_build:latest Adrenaline/buildscripts/clean.sh
+else
+  docker run -it -v"$(pwd)":/root/Adrenaline --user "$(id -u):$(id -g)" --rm io.github.theflow.adrenaline_build:latest Adrenaline/buildscripts/clean.sh
+fi
