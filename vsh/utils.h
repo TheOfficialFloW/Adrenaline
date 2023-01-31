@@ -19,6 +19,8 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+void _free_vita_newlib(void);
+
 int debugPrintf(char *text, ...);
 int ReadFile(char *file, void *buf, int size);
 int WriteFile(char *file, void *buf, int size);
