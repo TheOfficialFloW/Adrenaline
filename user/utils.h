@@ -56,6 +56,7 @@ extern Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
 extern Pad hold_count, hold2_count;
 
 void _init_vita_newlib(void);
+void _free_vita_newlib(void);
 
 int debugPrintf(char *text, ...);
 int ReadFile(char *file, void *buf, int size);
