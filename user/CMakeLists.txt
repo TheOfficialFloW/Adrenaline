@@ -78,6 +78,7 @@ target_link_libraries(adrenaline_user
   SceKernelThreadMgr_stub
   SceLibKernel_stub
   SceMtpIfDriver_stub
+  SceNet_stub_weak
   ScePgf_stub_weak
   ScePower_stub
   SceProcessmgr_stub
