@@ -23,6 +23,7 @@ target_link_libraries(adrenaline_vsh
   taihen_stub
   SceAppMgr_stub
   SceLsdb_stub_weak
+  SceNet_stub_weak
 )
 
 vita_create_self(adrenaline_vsh.suprx adrenaline_vsh CONFIG exports.yml UNSAFE)
