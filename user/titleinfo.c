@@ -33,20 +33,26 @@
 int ScePspemuInitTitleSpecificInfoPatched(const char *titleid, SceUID uid) {
   int res = 0;
   uint32_t *info = NULL;
+  uint32_t *unk = NULL;
 
   if (module_nid == 0x2714F07D) { // 3.60 retail
     // Make __sce_menuinfo path
     snprintf((char *)(data_addr + 0x11C7D0C), 0x80, "ms0:PSP/GAME/%s/__sce_menuinfo", titleid);
 
     info = (uint32_t *)(data_addr + 0x1156450);
+    unk = (uint32_t *)(data_addr + 0x115644c);
   } else if (module_nid == 0x3F75D4D3) { // 3.65/3.67/3.68 retail
     // Make __sce_menuinfo path
     snprintf((char *)(data_addr + 0x11C7E0C), 0x80, "ms0:PSP/GAME/%s/__sce_menuinfo", titleid);
 
     info = (uint32_t *)(data_addr + 0x1156550);
+    unk = (uint32_t *)(data_addr + 0x115654c);
   } else {
     return -1;
   }
+
+  // enable usbpspcm pairing
+  unk[0] = 0x10;
 
   // Video delay
   // Buzz!: Brain Bender: 3000. Fixes buggy PMF sequence
