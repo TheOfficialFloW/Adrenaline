@@ -324,11 +324,11 @@ NEXT:
 			strcat(fullpath, "/");
 			strcat(fullpath, dir->d_name);
 
-			if (IsCached(fullpath, &dir->d_stat.st_mtime, &vpbp)) {
+			if (IsCached(fullpath, &dir->d_stat.sce_st_mtime, &vpbp)) {
 				res2 = virtualpbp_fastadd(&vpbp);
 				docache = 0;
 			} else {
-				res2 = virtualpbp_add(fullpath, &dir->d_stat.st_mtime, &vpbp);
+				res2 = virtualpbp_add(fullpath, &dir->d_stat.sce_st_mtime, &vpbp);
 				docache = 1;
 			}
 			
@@ -341,7 +341,7 @@ NEXT:
 				dir->d_stat.st_size = 0;
 				
 				// Change the modifcation time to creation time
-				memcpy(&dir->d_stat.st_mtime, &dir->d_stat.st_ctime, sizeof(ScePspDateTime));
+				memcpy(&dir->d_stat.sce_st_mtime, &dir->d_stat.sce_st_ctime, sizeof(ScePspDateTime));
 
 				if (docache) {
 					Cache(&vpbp);

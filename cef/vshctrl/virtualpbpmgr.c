@@ -569,7 +569,7 @@ int virtualpbp_getstat(int i, SceIoStat *stat)
 	res =  sceIoGetstat(vpbps[i].isofile, stat);
 	stat->st_size = vpbps[i].filesize;
 
-	memcpy(&stat->st_mtime, &stat->st_ctime, sizeof(ScePspDateTime));
+	memcpy(&stat->sce_st_mtime, &stat->sce_st_ctime, sizeof(ScePspDateTime));
 
 	sceKernelSignalSema(vpsema, 1);
 	return res;
@@ -650,7 +650,7 @@ int virtualpbp_dread(SceUID fd, SceIoDirent *dir)
 	}
 
 	sceIoGetstat(vpbps[fd].isofile, &dir->d_stat);
-	memcpy(&dir->d_stat.st_mtime, &dir->d_stat.st_ctime, sizeof(ScePspDateTime));
+	memcpy(&dir->d_stat.sce_st_mtime, &dir->d_stat.sce_st_ctime, sizeof(ScePspDateTime));
 	private = (SceFatMsDirentPrivate *)dir->d_private;
 
 	if (states[fd].dread == 1)
