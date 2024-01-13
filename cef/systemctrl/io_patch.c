@@ -33,6 +33,12 @@ int (* _sceIoDelDrv)(const char *drv_name);
 int (* _sceIoUnassign)(const char *dev);
 int (* _sceIoAssign)(const char *dev1, const char *dev2, const char *dev3, int mode, void* unk1, long unk2);
 
+char mytolower(const char in) {
+	if(in >=65 && in<=90)
+		return in + 32;
+	return in;
+}
+
 char *stristr(const char *str1, const char *str2) {
 	#define MAXLEN 256
 
@@ -45,11 +51,11 @@ char *stristr(const char *str1, const char *str2) {
 
 	int i;
 	for (i = 0; i < MAXLEN && (temp1[i] != 0); i++) {
-		temp1[i] = tolower((int)temp1[i]);
+		temp1[i] = mytolower((int)temp1[i]);
 	}
 
 	for (i = 0; i < MAXLEN && (temp2[i] != 0); i++) {
-		temp2[i] = tolower((int)temp2[i]);
+		temp2[i] = mytolower((int)temp2[i]);
 	}
 
 	const char *pos = strstr(temp1, temp2);
